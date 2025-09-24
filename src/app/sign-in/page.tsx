@@ -5,8 +5,9 @@ export default function SignInPage() {
         <div>
             <h1>Sign In to Launchpad</h1>
             <SignIn 
-                redirectUrl="/"
-                signUpUrl="/signup"
+                forceRedirectUrl={"/"}
+                signUpUrl="/sign-up"
+                routing="hash"  
             />
         </div>
     );

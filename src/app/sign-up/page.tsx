@@ -131,6 +131,7 @@ export default function SignUpPage() {
                     {error && <div style={{color: 'red'}}>{error}</div>}
                     
                     <button type="submit">Sign Up</button>
+                    <div id="clerk-captcha" ></div>
                 </form>
             )}
             

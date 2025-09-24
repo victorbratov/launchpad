@@ -1,7 +1,7 @@
 
 'use client';
 
-import {  SignedIn, SignedOut, UserButton, useUser } from '@clerk/nextjs';
+import {  SignedIn, SignedOut, SignOutButton, UserButton, useUser } from '@clerk/nextjs';
 import Link from 'next/link';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -31,7 +31,7 @@ export default function Home() {
     <main>
       <div>
         <h1>Welcome to Launchpad</h1>
-        <p>Choose your portal to get started</p>
+        
         
         <SignedOut>
           <div>
@@ -40,7 +40,7 @@ export default function Home() {
               <button>Sign In</button>
             </Link>
             <p>
-              Don&apos;t have an account? <Link href="/signup">Sign Up</Link>
+              Don&apos;t have an account? <Link href="/sign-up">Sign Up</Link>
             </p>
           </div>
         </SignedOut>
@@ -52,15 +52,11 @@ export default function Home() {
           </div>
           
           <div>
-            <h2>Choose Your Portal:</h2>
-            <Link href="/investor-portal">
-              <button>Investor Portal</button>
-            </Link>
-            
-            <Link href="/business-portal">
-              <button>Business Portal</button>
-            </Link>
+            <SignOutButton>
+              Sign Out
+            </SignOutButton>
           </div>
+
         </SignedIn>
       </div>
     </main>
