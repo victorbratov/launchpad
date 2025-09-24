@@ -1,7 +1,10 @@
+import { JSX } from "react";
+
 /**
- * Home Screen
+ * Home Screen with basic information about launchpad and links to sign in and sign up pages
+ * @returns {JSX.Element} A simple home page
 */
-export default function Page() {
+export default function Page(): JSX.Element {
   return (
     <div className="font-mono grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
       <header>
