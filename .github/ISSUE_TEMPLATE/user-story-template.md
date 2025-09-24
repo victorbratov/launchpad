@@ -13,12 +13,12 @@ I want to:
 So that: 
 
 ## Summary
-Brief description of the task
+<!-- Brief description of the task -->
 
 ## Related PRs or Issues
 
 ## Notes
-Any additional context, resources, or references.
+<!-- Any additional context, resources, or references. -->
 
 ## Acceptance Criteria
 1. 
@@ -26,7 +26,8 @@ Any additional context, resources, or references.
 3.
 
 ## Definition of Done
-[ ] Code complete and reviewed
-[ ] Unit tests written and passed
-[ ] Code commented
-[ ] Documentation updated
+- [ ] Code complete and reviewed
+- [ ] Unit tests written and passed
+- [ ] Code commented
+- [ ] Documentation updated
+- [ ] Acceptance criteria met
