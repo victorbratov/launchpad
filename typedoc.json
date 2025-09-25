@@ -1,0 +1,19 @@
+{
+  "entryPoints": [
+    "src"
+  ],
+  "entryPointStrategy": "expand",
+  "out": "docs",
+  "plugin": [
+    "typedoc-plugin-markdown"
+  ],
+  "exclude": [
+    "src/__tests__/**/*"
+  ],
+  "readme": "none",
+  "entryFileName": "index.md",
+  "flattenOutputFiles": true,
+  "hideBreadcrumbs": true,
+  "hidePageTitle": true,
+  "categorizeByGroup": false
+}
