@@ -9,7 +9,7 @@ export const InvestorAccounts = pgTable("InvestorAccounts", {
   InvBankACNumber: varchar("InvBankACNumber", {length: 34}).notNull(),     // investors bank account number
   InvestorID: text("InvestorID").notNull().primaryKey(),      // investors clerk ID 
   InvWallet: numeric("InvWallet", { precision: 15, scale: 2 }).notNull(), // timestamp
-});
+}); 
 
 
       //InvestmentLedger
