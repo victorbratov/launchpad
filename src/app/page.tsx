@@ -21,9 +21,9 @@ export default function Page(): JSX.Element {
       
       // Auto-redirect based on role if they have one set
       if (userRole === 'investor') {
-        router.push('/investor-portal');
+        router.push('/investview');
       } else if (userRole === 'business_owner') {
-        router.push('/business-portal');
+        router.push('/pitchview');
       }
     }
   }, [isLoaded, user, router]);
