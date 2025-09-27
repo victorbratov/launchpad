@@ -1,0 +1,322 @@
+{
+  "id": "124c432d-c776-47a1-a0f1-0ccbda7b4a9e",
+  "prevId": "4b1bd352-cb73-4594-bd13-910cca469db7",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.BusinessAccount": {
+      "name": "BusinessAccount",
+      "schema": "",
+      "columns": {
+        "BusEmail": {
+          "name": "BusEmail",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "BusName": {
+          "name": "BusName",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "BusAccountID": {
+          "name": "BusAccountID",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "BusBankAcc": {
+          "name": "BusBankAcc",
+          "type": "varchar(34)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "BusWallet": {
+          "name": "BusWallet",
+          "type": "numeric(15, 2)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.BusniessPitchs": {
+      "name": "BusniessPitchs",
+      "schema": "",
+      "columns": {
+        "BusPitchID": {
+          "name": "BusPitchID",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "BusAccountID": {
+          "name": "BusAccountID",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "statusOfPitch": {
+          "name": "statusOfPitch",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ProductTitle": {
+          "name": "ProductTitle",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ElevatorPitch": {
+          "name": "ElevatorPitch",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "DetailedPitch": {
+          "name": "DetailedPitch",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "SuportingMedia": {
+          "name": "SuportingMedia",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "TargetInvAmount": {
+          "name": "TargetInvAmount",
+          "type": "numeric(15, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "InvestmentStart": {
+          "name": "InvestmentStart",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "InvestmentEnd": {
+          "name": "InvestmentEnd",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "InvProfShare": {
+          "name": "InvProfShare",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "pricePerShare": {
+          "name": "pricePerShare",
+          "type": "numeric(12, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "bronseTierMulti": {
+          "name": "bronseTierMulti",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "bronseInvMax": {
+          "name": "bronseInvMax",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "silverTierMulti": {
+          "name": "silverTierMulti",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "silverInvMax": {
+          "name": "silverInvMax",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "goldTierMulti": {
+          "name": "goldTierMulti",
+          "type": "numeric(10, 2)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "goldTierMax": {
+          "name": "goldTierMax",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "dividEndPayout": {
+          "name": "dividEndPayout",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "DividEndPayoutPeriod": {
+          "name": "DividEndPayoutPeriod",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "BusniessPitchs_BusAccountID_BusinessAccount_BusAccountID_fk": {
+          "name": "BusniessPitchs_BusAccountID_BusinessAccount_BusAccountID_fk",
+          "tableFrom": "BusniessPitchs",
+          "tableTo": "BusinessAccount",
+          "columnsFrom": [
+            "BusAccountID"
+          ],
+          "columnsTo": [
+            "BusAccountID"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.InvestmentLedger": {
+      "name": "InvestmentLedger",
+      "schema": "",
+      "columns": {
+        "InvestorID": {
+          "name": "InvestorID",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "BusPitchID": {
+          "name": "BusPitchID",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "TierOfInvestment": {
+          "name": "TierOfInvestment",
+          "type": "varchar(10)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "AmountInvested": {
+          "name": "AmountInvested",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "Shares": {
+          "name": "Shares",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "InvestmentLedger_InvestorID_InvestorAccounts_InvestorID_fk": {
+          "name": "InvestmentLedger_InvestorID_InvestorAccounts_InvestorID_fk",
+          "tableFrom": "InvestmentLedger",
+          "tableTo": "InvestorAccounts",
+          "columnsFrom": [
+            "InvestorID"
+          ],
+          "columnsTo": [
+            "InvestorID"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "InvestmentLedger_BusPitchID_BusniessPitchs_BusPitchID_fk": {
+          "name": "InvestmentLedger_BusPitchID_BusniessPitchs_BusPitchID_fk",
+          "tableFrom": "InvestmentLedger",
+          "tableTo": "BusniessPitchs",
+          "columnsFrom": [
+            "BusPitchID"
+          ],
+          "columnsTo": [
+            "BusPitchID"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.InvestorAccounts": {
+      "name": "InvestorAccounts",
+      "schema": "",
+      "columns": {
+        "InvEmail": {
+          "name": "InvEmail",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "InvName": {
+          "name": "InvName",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "InvBankACNumber": {
+          "name": "InvBankACNumber",
+          "type": "varchar(34)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "InvestorID": {
+          "name": "InvestorID",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "InvWallet": {
+          "name": "InvWallet",
+          "type": "numeric(15, 2)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}
