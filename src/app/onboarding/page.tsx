@@ -23,16 +23,25 @@ export default function OnboardingPage() {
   const [role, setRole] = useState<string>("business");
   const [name, setName] = useState("");
   const [bankAccount, setBankAccount] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
 
-    const status = await completeOnboarding(role, name, bankAccount);
+    try {
+      const status = await completeOnboarding(role, name, bankAccount);
 
-    if (status.success) {
-      router.push("/");
-    } else {
-      alert("There was an error completing your onboarding. Please try again.");
+      if (status.success) {
+        router.push("/");
+      } else {
+        alert("There was an error completing your onboarding. Please try again.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -90,8 +99,8 @@ export default function OnboardingPage() {
               />
             </div>
 
-            <Button type="submit" className="w-full">
-              Continue
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Loading..." : "Continue"}
             </Button>
           </form>
         </CardContent>
