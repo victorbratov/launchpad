@@ -28,7 +28,8 @@ export async function POST(req: NextRequest) {
     }
 
     const userId = user.id;
-    const { userRole, email, name, bank_account_number }: CreateAccountRequest = await req.json();
+    const email = user.emailAddresses[0]?.emailAddress;
+    const { userRole, name, bank_account_number }: CreateAccountRequest = await req.json();
 
     if (!userRole || !email || !name || !bank_account_number) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
