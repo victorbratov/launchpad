@@ -30,13 +30,9 @@ export default function OnboardingPage() {
     setLoading(true);
 
     try {
-      const status = await completeOnboarding(role, name, bankAccount);
 
-      if (status.success) {
-        router.push("/");
-      } else {
-        alert("There was an error completing your onboarding. Please try again.");
-      }
+      await completeOnboarding(role, name, bankAccount);
+
     } catch (err) {
       console.error(err);
       alert("Something went wrong.");

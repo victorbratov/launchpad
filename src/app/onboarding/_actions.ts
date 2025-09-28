@@ -16,7 +16,7 @@ export const completeOnboarding = async (role: string, name: string, bank_accoun
   const client = await clerkClient();
 
   if (clerkUser?.publicMetadata?.onboardingComplete) {
-    return { success: true };
+    redirect("/");
   }
 
   if (role === 'investor') {
