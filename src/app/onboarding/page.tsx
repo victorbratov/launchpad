@@ -24,12 +24,16 @@ export default function OnboardingPage() {
   const [name, setName] = useState("");
   const [bankAccount, setBankAccount] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    completeOnboarding(role, name, bankAccount);
+    const status = await completeOnboarding(role, name, bankAccount);
 
-    router.push("/");
+    if (status.success) {
+      router.push("/");
+    } else {
+      alert("There was an error completing your onboarding. Please try again.");
+    }
   };
 
   return (
