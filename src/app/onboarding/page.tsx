@@ -27,7 +27,7 @@ export default function OnboardingPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    let status = await completeOnboarding(role, name, bankAccount);
+    const status = await completeOnboarding(role, name, bankAccount);
 
     if (!status.success) {
       return alert("Error completing onboarding. Please try again.");
