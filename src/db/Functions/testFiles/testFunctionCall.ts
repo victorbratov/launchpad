@@ -1,11 +1,11 @@
 
 import { InvestorAccounts } from "@/db/schema";
-import { db } from "../../db";
+import { db } from "../../../db";
 //import { BusinessAccount } from "../../schema";
 
-import {DisplayAllInvestors, CreateInvestor, getInvBankNumber} from "./InvestorAccountsFunctions"
+import {DisplayAllInvestors, CreateInvestor, getInvBankNumber} from "../InvestorAccountsFunctions"
 
-import {DisplayAllBusinessAccs, CreateBusiness, SubtractWallet, AddWallet} from "./BusinessAccountFunctions"
+import {DisplayAllBusinessAccs, CreateBusiness, SubtractWallet, AddWallet} from "../BusinessAccountFunctions"
 
 // CreateInvestor({
 //     email: "drizzler@yahoo", 

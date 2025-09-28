@@ -42,7 +42,7 @@ export const BusinessAccount = pgTable("BusinessAccount", {
 
 
 export const BusinessPitchs = pgTable("BusniessPitchs", {
-  BusPitchID: serial("BusPitchID").primaryKey(), // auto-increment primary key
+  BusPitchID: serial("BusPitchID").primaryKey().notNull(), // auto-increment primary key
   BusAccountID: text("BusAccountID").notNull().references(() => BusinessAccount.BusAccountID ),  // reference to investor/user ID
 
   statusOfPitch: text("statusOfPitch").notNull(),
