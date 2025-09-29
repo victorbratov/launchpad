@@ -53,8 +53,20 @@ const pitches = [
   },
 ];
 
+interface Pitch {
+  pitchID: string;
+  pitchName: string;
+  pitchGoal: number;
+  currentAmount: number;
+  investors: number;
+  profitSharePercentage: number;
+  dividendPeriod: string;
+  pitchEnd: string;
+  detailedPitch: string;
+}
+
 export default function BusinessPortalPage() {
-  const [selectedPitch, setSelectedPitch] = useState<any | null>(null);
+  const [selectedPitch, setSelectedPitch] = useState<Pitch | null>(null);
 
   return (
     <div className="p-6 space-y-6">
