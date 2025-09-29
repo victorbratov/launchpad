@@ -1,6 +1,13 @@
-{/*This is the view Pitch page*/}
-import Link from "next/link";
-import { Navbar01 } from '@/components/ui/shadcn-io/navbar-pitch'
+/**
+ * Pitch View Page
+ *
+ * Displays a list of business pitches in a table.
+ * Includes a navbar, table of pitches, and pagination controls.
+ */
+
+//List of imports for various functions
+import Link from "next/link"; //Import link function for switching pages
+import { Navbar01 } from '@/components/ui/shadcn-io/navbar-pitch' //Navbar for investors. Links to Pitchview, Discover pages, Wallet, displays funds, and logout function
 import {
   Table,
   TableBody,
@@ -10,7 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import {
+import {  // Pagnation to be used to change through pages when function added
   Pagination,
   PaginationContent,
   PaginationEllipsis,
@@ -19,6 +26,9 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination"
+
+import { businessData } from "@/Data/businessData"
+
 
 
 const Example = () => (
@@ -44,37 +54,23 @@ const Example = () => (
           <TableHeader>
             <TableRow>
               <TableHead className="w-1/4 text-left text-black">Title</TableHead>
-              <TableHead className="w-1/4 text-center text-black">ROI</TableHead>
-              <TableHead className="w-1/4 text-right text-black">Tier</TableHead>
               <TableHead className="w-1/4 text-right text-black">Progress</TableHead>
             </TableRow>
           </TableHeader>
+
           <TableBody>
-            <TableRow>
-              <TableCell className="w-1/4 text-left text-black">Fresh Avocado</TableCell>
-              <TableCell className="w-1/4 text-center text-black">£12.00</TableCell>
-              <TableCell className="w-1/4 text-right text-black">Bronze Tier</TableCell>
-              <TableCell className="w-1/4 text-right text-black">Completed</TableCell>
-            </TableRow>
-            <TableRow className="border-b border-gray-300 h-16" />
-            <TableRow>
-              <TableCell className="w-1/4 text-left text-black">Fresh Avocado</TableCell>
-              <TableCell className="w-1/4 text-center text-black">£12.00</TableCell>
-              <TableCell className="w-1/4 text-right text-black">Bronze Tier</TableCell>
-              <TableCell className="w-1/4 text-right text-black">Completed</TableCell>
-            </TableRow>
-            <TableRow className="border-b border-gray-300 h-16" />
-            <TableRow>
-              <TableCell className="w-1/4 text-left text-black">Fresh Avocado</TableCell>
-              <TableCell className="w-1/4 text-center text-black">£12.00</TableCell>
-              <TableCell className="w-1/4 text-right text-black">Bronze Tier</TableCell>
-              <TableCell className="w-1/4 text-right text-black">Completed</TableCell>
-            </TableRow>
+            {businessData.map((item, idx) => (
+              <TableRow key={idx}>
+                <TableCell className="w-1/4 text-left text-black">{item.title}</TableCell>
+                <TableCell className="w-1/4 text-right text-black">{item.progress}</TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
 
         <div className="mt-6">
           <Pagination>
+           {/* Pagination list */}
             <PaginationContent className="text-black">
               <PaginationItem>
                 <PaginationPrevious className="text-black" href="#" />

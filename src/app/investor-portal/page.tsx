@@ -1,3 +1,9 @@
+/**
+ * Investor Portal Page
+ *
+ * Displays the investor portal with a header linking back to the Launchpad.
+ * Shows user account information when signed in via Clerk.
+ */
 import { SignedIn, UserButton } from '@clerk/nextjs';
 import Link from 'next/link';
 

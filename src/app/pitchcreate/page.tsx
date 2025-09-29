@@ -1,10 +1,17 @@
+/**
+ * Create Pitch Page
+ *
+ * Allows users to create a new pitch.
+ * Includes media upload, text input, elevator pitch textarea, preview card, and action buttons.
+ */
+
 {/*This is the create Pitch page*/}
 import Link from "next/link";
-import { Navbar01 } from '@/components/ui/shadcn-io/navbar-pitch'
+import { Navbar01 } from '@/components/ui/shadcn-io/navbar-pitch'//Navbar for investors. Links to Pitchview, Discover pages, Wallet, displays funds, and logout function
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import {
+import { //Import cards
   Card,
   CardAction,
   CardContent,
@@ -13,7 +20,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import {
+import { // Dialogue imports to bring up popup box to be used for AI overview
   Dialog,
   DialogContent,
   DialogDescription,
@@ -22,6 +29,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 
+{/*export for dialogue closing button*/}
 export function DialogCloseButton() {
   return (
     <Dialog>
@@ -50,6 +58,7 @@ export function DialogCloseButton() {
   )
 }
 
+{/*Input for the upload button*/}
 export function InputWithButton() {
   return (
     <div className="flex justify-center my-6">
@@ -63,6 +72,7 @@ export function InputWithButton() {
   )
 }
 
+{/*Export for the textbox feature*/}
 export function TextareaDemo() {
   return <Textarea placeholder="Type your message here." />
 }
@@ -120,13 +130,13 @@ const Example = () => (
           </div>
 
               
-          {/* Three buttons in a row */}
+          {/* Button row at bottom */}
           <div className="flex justify-center gap-8 mt-16">
             <Button asChild variant="outline" className="w-40 py-3 px-6 text-lg bg-white">
               <Link href="/pitchview">Return</Link>
             </Button>
 
-              {/* Buttons at bottom */}
+              {/* Link button for return */}
               <Dialog>
                 <DialogTrigger asChild>
                   <Button variant="outline" className="bg-white py-3 px-6 text-lg w-40">
@@ -136,6 +146,7 @@ const Example = () => (
 
                 <DialogContent>
                   <DialogHeader>
+                    {/* AI Rating will go here when implemented */}
                     <DialogTitle>AI RATING: NONEXISTANT</DialogTitle>
                     <DialogDescription>
                       AI rating will go here!.
@@ -144,6 +155,7 @@ const Example = () => (
                 </DialogContent>
               </Dialog>
 
+            {/* Third button that will submit form */}
               <Button variant="outline" className="bg-white py-3 px-6 text-lg w-40">
                 Okay
               </Button>
