@@ -1,18 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { ClerkProvider, SignInButton, SignUpButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
+import { ClerkProvider } from '@clerk/nextjs';
 import "./globals.css";
 import { MantineProvider } from '@mantine/core';
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import Navbar from "@/components/navbar";
+import { jetBrainsMono } from "./font";
 
 export const metadata: Metadata = {
   title: "Clerk Next.js Quickstart",
@@ -27,10 +19,11 @@ export default function RootLayout({
   return (
     <ClerkProvider afterSignOutUrl={"/"}>
       <html lang="en">
-        <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <body className={`${jetBrainsMono.variable} font-sans`}>
+          <Navbar></Navbar>
           <MantineProvider>
-          {children}
-           </MantineProvider>
+            {children}
+          </MantineProvider>
         </body>
       </html>
     </ClerkProvider>
