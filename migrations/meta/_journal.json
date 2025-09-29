@@ -15,6 +15,13 @@
       "when": 1758808444322,
       "tag": "0001_fearless_lockheed",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1758926185454,
+      "tag": "0002_slim_firelord",
+      "breakpoints": true
     }
   ]
 }

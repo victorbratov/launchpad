@@ -6,7 +6,7 @@ import { pgTable, serial, varchar, integer, text, timestamp, numeric } from "dri
 export const InvestorAccounts = pgTable("InvestorAccounts", {
   InvEmail: varchar("InvEmail", {length: 50}).notNull(),        // field for investor email
   InvName: varchar("InvName", {length: 100}).notNull(),  // investors name
-  InvBankACNumber: varchar("InvBankACNumber", {length: 34}).notNull(),     // investors bank account number
+  InvBankACNumber: varchar("InvBankACNumber", {length: 34}).notNull().references(() => TheBank.BankAccountNumber),     // investors bank account number
   InvestorID: text("InvestorID").notNull().primaryKey(),      // investors clerk ID 
   InvWallet: numeric("InvWallet", { precision: 15, scale: 2 }).notNull(), // timestamp
 }); 
@@ -30,7 +30,7 @@ export const BusinessAccount = pgTable("BusinessAccount", {
   BusName: varchar("BusName", {length: 100}).notNull(),  
   BusAccountID: text("BusAccountID").notNull().primaryKey(),      // business clerk ID 
 
-  BusBankAcc : varchar("BusBankAcc", {length: 34}).notNull(),     // business bank account number
+  BusBankAcc : varchar("BusBankAcc", {length: 34}).notNull().references(() => TheBank.BankAccountNumber),     // business bank account number
   BusWallet: numeric("BusWallet", { precision: 15, scale: 2 }).notNull(), // timestamp
 
   
@@ -42,7 +42,7 @@ export const BusinessAccount = pgTable("BusinessAccount", {
 
 
 export const BusinessPitchs = pgTable("BusniessPitchs", {
-  BusPitchID: serial("BusPitchID").primaryKey(), // auto-increment primary key
+  BusPitchID: serial("BusPitchID").primaryKey().notNull(), // auto-increment primary key
   BusAccountID: text("BusAccountID").notNull().references(() => BusinessAccount.BusAccountID ),  // reference to investor/user ID
 
   statusOfPitch: text("statusOfPitch").notNull(),
@@ -100,3 +100,4 @@ export const DividendPayouts = pgTable("DividendPayouts", {
   DataPayedOut: timestamp("DataPayedOut").notNull(),
  
 });
+
