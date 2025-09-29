@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Shield, Rocket, Bot } from "lucide-react";
+import { SignUpButton } from "@clerk/nextjs";
 
 export default function LandingPage() {
   return (
@@ -22,11 +23,11 @@ export default function LandingPage() {
           <Link href="/pitches">
             <Button size="lg">Discover Pitches</Button>
           </Link>
-          <Link href="/sign-up">
+          <SignUpButton mode="redirect">
             <Button size="lg" variant="outline">
               Get Started
             </Button>
-          </Link>
+          </SignUpButton>
         </div>
         {/* optional hero image */}
         <div className="mt-12">
@@ -106,11 +107,11 @@ export default function LandingPage() {
           your future.
         </p>
         <div className="mt-8 flex justify-center gap-4">
-          <Link href="/sign-up">
+          <SignUpButton>
             <Button size="lg" variant="secondary">
               Get Started
             </Button>
-          </Link>
+          </SignUpButton>
           <Link href="/pitches">
             <Button size="lg" variant="secondary">
               Explore Pitches
