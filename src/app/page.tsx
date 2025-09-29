@@ -1,70 +1,124 @@
+"use client";
 
-'use client';
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Shield, Rocket, Bot } from "lucide-react";
+import { SignUpButton } from "@clerk/nextjs";
 
-import { JSX } from "react";
-import {  SignedIn, SignedOut, SignOutButton, UserButton, useUser } from '@clerk/nextjs';
-import Link from 'next/link';
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-
-/**
- * Home Screen with basic information about launchpad and links to sign in and sign up pages
- * @returns {JSX.Element} A simple home page
-*/
-export default function Page(): JSX.Element {
-  const { user, isLoaded } = useUser();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (isLoaded && user) {
-      const userRole = user.unsafeMetadata?.role;
-      
-      // Auto-redirect based on role if they have one set
-      if (userRole === 'investor') {
-        router.push('/investor-portal');
-      } else if (userRole === 'business_owner') {
-        router.push('/business-portal');
-      }
-    }
-  }, [isLoaded, user, router]);
-
-  if (!isLoaded) {
-    return <div>Loading...</div>;
-  }
+export default function LandingPage() {
   return (
-    <div className="font-mono grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <header>
-        <div className="w-full items-center text-4xl">
-          <h1>Launchpad</h1>
+    <div className="flex flex-col">
+      {/* Hero Section */}
+      <section className="relative flex flex-col items-center justify-center text-center px-6 py-20 sm:py-32 bg-gradient-to-b from-slate-50 to-white">
+        <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight max-w-3xl">
+          Launchpad<br />
+          <span className="text-primary">Powered by AI</span>
+        </h1>
+        <p className="mt-6 text-lg text-muted-foreground max-w-2xl">
+          Launchpad helps small businesses craft winning pitches with AI while
+          empowering private investors to discover secure and fraud-free
+          opportunities.
+        </p>
+        <div className="mt-8 flex gap-4">
+          <Link href="/pitches">
+            <Button size="lg">Discover Pitches</Button>
+          </Link>
+          <SignUpButton mode="redirect">
+            <Button size="lg" variant="outline">
+              Get Started
+            </Button>
+          </SignUpButton>
         </div>
-      </header>
-      <main className="flex flex-col gap-[32px] row-start-2 items-center">
-        <div className="flex flex-col gap-[32px] row-start-2 items-center">
-          <SignedOut>
-            <h1 className="text-center">Welcome to Launchpad</h1>
-            <p className="w-1/2 text-center">Launchpad is an investment platform that allows businesses and investors to collaborate openly and effectively. </p>
-            <p className="w-1/2 text-center"> Log in to a business account to receive funding from investors. Log in to an investor account to support business ideas and gain from the profits.</p>
-            <div className="flex gap-4 items-center flex-col sm:flex-row">
-              <a
-                className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-                href="/sign-in"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Log In
-              </a>
-              <a
-                className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-                href="/sign-up"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Sign Up
-              </a>
-            </div>
-          </SignedOut>
+        {/* optional hero image */}
+        <div className="mt-12">
+          <img
+            src="https://placehold.co/800x400?text=AI+Helping+Small+Businesses"
+            alt="AI helping create pitches"
+            className="rounded-lg shadow-lg"
+          />
         </div>
-      </main>
+      </section>
+
+      {/* Features Section */}
+      <section className="px-6 py-20 bg-muted/30">
+        <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-10 text-center">
+          <div className="flex flex-col items-center gap-3">
+            <Bot className="w-10 h-10 text-primary" />
+            <h3 className="text-xl font-semibold">AI Pitch Assistance</h3>
+            <p className="text-muted-foreground">
+              Business owners get guided AI support to craft compelling,
+              professional pitches with ease.
+            </p>
+          </div>
+          <div className="flex flex-col items-center gap-3">
+            <Rocket className="w-10 h-10 text-primary" />
+            <h3 className="text-xl font-semibold">Investor Marketplace</h3>
+            <p className="text-muted-foreground">
+              Private investors discover vetted business opportunities in a
+              transparent and user-friendly marketplace.
+            </p>
+          </div>
+          <div className="flex flex-col items-center gap-3">
+            <Shield className="w-10 h-10 text-primary" />
+            <h3 className="text-xl font-semibold">Fraud Prevention</h3>
+            <p className="text-muted-foreground">
+              Our platform ensures verification of pitches, protecting both
+              businesses and investors from fraud.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works */}
+      <section className="px-6 py-20 max-w-5xl mx-auto text-center">
+        <h2 className="text-3xl font-bold">How Launchpad Works</h2>
+        <div className="mt-10 grid gap-8 md:grid-cols-3 text-left">
+          <div>
+            <h4 className="font-semibold text-lg">1. AI-Assisted Pitches</h4>
+            <p className="text-muted-foreground">
+              Use AI tools to craft, refine, and polish your business pitch in
+              minutes.
+            </p>
+          </div>
+          <div>
+            <h4 className="font-semibold text-lg">2. Share with Investors</h4>
+            <p className="text-muted-foreground">
+              Publish your pitch to our marketplace where private investors can
+              explore and connect.
+            </p>
+          </div>
+          <div>
+            <h4 className="font-semibold text-lg">3. Grow Securely</h4>
+            <p className="text-muted-foreground">
+              With fraud-prevention mechanisms and trusted connections, you can
+              grow your business safely.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="px-6 py-20 bg-primary text-white text-center">
+        <h2 className="text-3xl font-bold">
+          Ready to launch your next big idea?
+        </h2>
+        <p className="mt-4 text-lg">
+          Join Launchpad to create pitches, connect with investors, and build
+          your future.
+        </p>
+        <div className="mt-8 flex justify-center gap-4">
+          <SignUpButton>
+            <Button size="lg" variant="secondary">
+              Get Started
+            </Button>
+          </SignUpButton>
+          <Link href="/pitches">
+            <Button size="lg" variant="secondary">
+              Explore Pitches
+            </Button>
+          </Link>
+        </div>
+      </section>
     </div>
   );
 }
