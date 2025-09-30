@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { MediaCarousel } from "@/components/media_carousel";
+import Link from "next/link";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const mockPitch = {
   pitchID: "p1",
@@ -62,6 +64,17 @@ export default function PitchDetailsPage() {
   const [input, setInput] = useState<string>(""); // raw input as string
   const amount = parseFloat(input) || 0;
   const remaining = pitch.pitchGoal - pitch.currentAmount;
+
+  // Add pitchVersions and selectedVersion state
+  const pitchVersions = [
+    { id: "v1.0", label: "v1.0", date: "2024-01-01", current: false },
+    { id: "v1.1", label: "v1.1", date: "2024-01-15", current: false },
+    { id: "v1.2", label: "v1.2", date: "2024-01-20", current: false },
+    { id: "v1.3", label: "v1.3", date: "2024-01-25", current: true },
+  ];
+  const [selectedVersion, setSelectedVersion] = useState<string>(
+    pitchVersions.find((v) => v.current)?.id || pitchVersions[0].id
+  );
 
   const { tier, shares } = calculateShares(amount, pitch);
 
@@ -175,6 +188,35 @@ export default function PitchDetailsPage() {
               >
                 Invest {amount > 0 ? `$${amount.toLocaleString()}` : ""}
               </Button>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-muted-foreground">
+                  Pitch Version
+                </label>
+                <Select value={selectedVersion} onValueChange={setSelectedVersion}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select version" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {pitchVersions.map((version) => (
+                      <SelectItem key={version.id} value={version.id}>
+                        <div className="flex flex-col">
+                          <span className="font-medium">
+                            {version.label}
+                            {version.current && (
+                              <span className="ml-2 text-xs bg-primary text-primary-foreground px-1.5 py-0.5 rounded">
+                                Current
+                              </span>
+                            )}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {version.date}
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </CardContent>
           </Card>
         </div>
