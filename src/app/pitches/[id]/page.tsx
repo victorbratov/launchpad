@@ -188,6 +188,7 @@ export default function PitchDetailsPage() {
               >
                 Invest {amount > 0 ? `$${amount.toLocaleString()}` : ""}
               </Button>
+              {/* Pitch History */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-muted-foreground">
                   Pitch Version
