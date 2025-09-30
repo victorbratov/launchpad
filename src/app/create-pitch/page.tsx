@@ -13,12 +13,19 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { RAGGauge } from "@/components/rag_gauge";
 import { createPitch, checkBusinessAuthentication } from "./_actions";
+import { useRouter } from "next/navigation";
+import { validateDates, validateMaxes, validateMultipliers, setPitchStatus } from "./utils";
 
+/**
+ * Create pitch page where the user will create their pitch
+ * @returns Create pitch page
+ */
 export default function CreatePitchPage() {
+  const router = useRouter();
   const [title, setTitle] = useState("");
   const [elevatorPitch, setElevatorPitch] = useState("");
   const [detailedPitch, setDetailedPitch] = useState("");
-  const [goal, setGoal] = useState<string>("0");
+  const [goal, setGoal] = useState<string>();
   const [profitShare, setProfitShare] = useState("");
   const [dividendPeriod, setDividendPeriod] = useState("quarterly");
   const [endDate, setEndDate] = useState<Date>();
@@ -33,6 +40,7 @@ export default function CreatePitchPage() {
   const [feedback, setFeedback] = useState<string | null>(null);
   const [ragScore, setRagScore] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState<string>("");
 
   useEffect(() => {
     // check if the user is logged in with a business account
@@ -47,6 +55,10 @@ export default function CreatePitchPage() {
   }, []);
 
 
+  /**
+   * Handle AI evaluation button being clicked
+   * curently a mock, just gives a random score
+   */
   const handleEvaluate = () => {
     const scores = ["Red", "Amber", "Green"];
     const randomScore = scores[Math.floor(Math.random() * scores.length)];
@@ -56,31 +68,42 @@ export default function CreatePitchPage() {
     );
   };
 
-  // const handleSelect = (date: Date | undefined) => {
-  //   console.log("handling select for ", date)
-  //   if (!date) {
-  //     return
-  //   }
-  //   const localDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  //   console.log("local date", localDate)
-  //   setStartDate(format(localDate, "yyyy-MM-dd"))
-  //   console.log("starts: ", startDate)
-  // }
-
-  // Submit the pitch 
+  /**
+   * Handle the submission of the pitch
+   * @param e event triggered by form submission
+   * @returns {void} Return used to exit the function early
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
+    // validate dates
+    const { success: success, message: message } = validateDates(startDate!, endDate!)
+    if (!success) {
+      alert(message)
+      return
+    }
+    setStatus(setPitchStatus(startDate!))
+    
+    // validate tier max and multipliers
+    if (!validateMultipliers(bronzeMultiplier, silverMultiplier, goldMultiplier)) {
+      alert("Multiplier value must be lowest for bronze and highest for gold")
+      return
+    }
+    if (!validateMaxes(bronzeMax!, silverMax!, parseInt(goal!))) {
+      alert("Error with maximum tier values")
+      return
+    }
+
     try {
-      console.log("creating pitch")
       // non-null assertion, as the input is required by the form so it will always have a value
-      if (startDate && endDate) {
-        await createPitch(title, elevatorPitch, detailedPitch, goal, startDate, endDate, bronzeMultiplier, bronzeMax!, silverMultiplier, silverMax!, goldMultiplier, goldMax!, dividendPeriod);
-      }
+      await createPitch(title, status, elevatorPitch, detailedPitch, goal!, startDate!, endDate!, bronzeMultiplier, bronzeMax!, silverMultiplier, silverMax!, goldMultiplier, dividendPeriod);
+      router.push("/business-portal"); 
     } catch (err) {
-      console.error(err);
       alert("Error: Unable to create pitch");
+      setLoading(false)
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -93,53 +116,53 @@ export default function CreatePitchPage() {
             <CardTitle>Create New Pitch</CardTitle>
           </CardHeader>
           <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-6">
-            {/* Title */}
-            <div className="space-y-2">
-              <Label>Pitch Title</Label>
-              <Input
-                placeholder="Enter your pitch title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-              />
-            </div>
+            <CardContent className="space-y-6">
+              {/* Title */}
+              <div className="space-y-2">
+                <Label>Pitch Title</Label>
+                <Input
+                  placeholder="Enter your pitch title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  required
+                />
+              </div>
 
-            {/* Elevator Pitch */}
-            <div className="space-y-2">
-              <Label>Elevator Pitch</Label>
-              <Input
-                placeholder="One-sentence overview"
-                value={elevatorPitch}
-                onChange={(e) => setElevatorPitch(e.target.value)}
-                required
-              />
-            </div>
+              {/* Elevator Pitch */}
+              <div className="space-y-2">
+                <Label>Elevator Pitch</Label>
+                <Input
+                  placeholder="One-sentence overview"
+                  value={elevatorPitch}
+                  onChange={(e) => setElevatorPitch(e.target.value)}
+                  required
+                />
+              </div>
 
-            {/* Detailed Pitch */}
-            <div className="space-y-2">
-              <Label>Detailed Pitch</Label>
-              <Textarea
-                placeholder="Describe your pitch in detail"
-                value={detailedPitch}
-                onChange={(e) => setDetailedPitch(e.target.value)}
-                required
-              />
-            </div>
+              {/* Detailed Pitch */}
+              <div className="space-y-2">
+                <Label>Detailed Pitch</Label>
+                <Textarea
+                  placeholder="Describe your pitch in detail"
+                  value={detailedPitch}
+                  onChange={(e) => setDetailedPitch(e.target.value)}
+                  required
+                />
+              </div>
 
-            {/* Goal */}
-            <div className="space-y-2">
-              <Label>Funding Goal (USD)</Label>
-              <Input
-                type="number"
-                placeholder="10000"
-                value={goal}
-                onChange={(e) => setGoal((e.target.value))}
-                required
-              />
-            </div>
-            {/* Might be done later but leaving for now */}
-            {/* Profit Share
+              {/* Goal */}
+              <div className="space-y-2">
+                <Label>Funding Goal (USD)</Label>
+                <Input
+                  type="number"
+                  placeholder="10000"
+                  value={goal}
+                  onChange={(e) => setGoal((e.target.value))}
+                  required
+                />
+              </div>
+              {/* Might be done later but leaving for now */}
+              {/* Profit Share
             <div className="space-y-2">
               <Label>Profit Share % (Dividends)</Label>
               <Input
@@ -151,140 +174,140 @@ export default function CreatePitchPage() {
               />
             </div> */}
 
-            {/* Dividend Period */}
-            <div className="space-y-2">
-              <Label>Dividend Period</Label>
-              <Select value={dividendPeriod} onValueChange={setDividendPeriod}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select period" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="quarterly">Quarterly</SelectItem>
-                  <SelectItem value="yearly">Yearly</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+              {/* Dividend Period */}
+              <div className="space-y-2">
+                <Label>Dividend Period</Label>
+                <Select value={dividendPeriod} onValueChange={setDividendPeriod}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select period" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="quarterly">Quarterly</SelectItem>
+                    <SelectItem value="yearly">Yearly</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-            {/* Start Date */}
-            <div className="space-y-2">
-              <Label>Funding Start Date</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className="justify-start text-left font-normal"
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {startDate ? format(startDate, "PPP") : format(new Date(), "PPP") /* default to today if none picked */}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={startDate}
-                    onSelect={setStartDate}
-                    required
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
+              {/* Start Date */}
+              <div className="space-y-2">
+                <Label>Funding Start Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={"outline"}
+                      className="justify-start text-left font-normal"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {startDate ? format(startDate, "PPP") : "Pick a start date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={startDate}
+                      onSelect={(date) => setStartDate(date)}
+                      required
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
 
-            {/* End Date */}
-            <div className="space-y-2">
-              <Label>Funding End Date</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className="justify-start text-left font-normal"
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {endDate ? format(endDate, "PPP") : "Pick a date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    selected={endDate}
-                    onSelect={setEndDate}
-                    required
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
+              {/* End Date */}
+              <div className="space-y-2">
+                <Label>Funding End Date</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={"outline"}
+                      className="justify-start text-left font-normal"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {endDate ? format(endDate, "PPP") : "Pick an end date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={endDate}
+                      onSelect={(date) => setEndDate(date)}
+                      required
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
 
-            {/* Tier Max and Multipliers */}
-            <div className="pt-4">Set Tier Multipliers</div>
-            <div className="space-y-2">
-              <Label>Bronze Tier Maximum (USD)</Label>
-              <Input
-                type="number"
-                placeholder="500"
-                value={Number(bronzeMax)}
-                onChange={(e) => setBronzeMax(Number(e.target.value))}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Bronze Tier Multiplier</Label>
-              <Input
-                type="number"
-                placeholder="1.0"
-                value={bronzeMultiplier}
-                onChange={(e) => setBronzeMultiplier(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Silver Tier Maximum (USD)</Label>
-              <Input
-                type="number"
-                placeholder="1000"
-                value={Number(silverMax)}
-                onChange={(e) => setSilverMax(Number(e.target.value))}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Silver Tier Multiplier</Label>
-              <Input
-                type="number"
-                placeholder="1.2"
-                value={silverMultiplier}
-                onChange={(e) => setSilverMultiplier(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Gold Tier Maximum (USD)</Label>
-              <Input
-                type="number"
-                placeholder={goal}
-                disabled // Gold max is disabled as it is the same as the goal amount
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Gold Tier Multiplier</Label>
-              <Input
-                type="number"
-                placeholder="1.0"
-                value={goldMultiplier}
-                onChange={(e) => setGoldMultiplier(e.target.value)}
-                required
-              />
-            </div>
+              {/* Tier Max and Multipliers */}
+              <div className="pt-4">Set Tier Multipliers</div>
+              <div className="space-y-2">
+                <Label>Bronze Tier Maximum (USD)</Label>
+                <Input
+                  type="number"
+                  placeholder="500"
+                  value={bronzeMax !== undefined ? bronzeMax.toString() : ""}
+                  onChange={(e) => setBronzeMax(parseInt(e.target.value))}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Bronze Tier Multiplier</Label>
+                <Input
+                  type="number"
+                  placeholder="1.0"
+                   value={bronzeMultiplier}
+                  onChange={(e) => setBronzeMultiplier(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Silver Tier Maximum (USD)</Label>
+                <Input
+                  type="number"
+                  placeholder="1000"
+                  value={silverMax !== undefined ? silverMax.toString() : ""}
+                  onChange={(e) => setSilverMax(parseInt(e.target.value))}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Silver Tier Multiplier</Label>
+                <Input
+                  type="number"
+                  placeholder="1.2"
+                  value={silverMultiplier}
+                  onChange={(e) => setSilverMultiplier(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Gold Tier Maximum (USD)</Label>
+                <Input
+                  type="number"
+                  placeholder={goal}
+                  disabled // Gold max is disabled as it is the same as the goal amount
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Gold Tier Multiplier</Label>
+                <Input
+                  type="number"
+                  placeholder="1.0"
+                  value={goldMultiplier}
+                  onChange={(e) => setGoldMultiplier(e.target.value)}
+                  required
+                />
+              </div>
 
-            {/* Actions */}
-            <div className="flex gap-4">
-              <Button variant="outline" onClick={handleEvaluate}>
-                AI Evaluation
-              </Button>
-              <Button type="submit">Submit Pitch</Button>
-            </div>
+              {/* Actions */}
+              <div className="flex gap-4">
+                <Button variant="outline" onClick={handleEvaluate}>
+                  AI Evaluation
+                </Button>
+                <Button disabled={loading} type="submit">{loading ? "Loading..." : "Submit Pitch"} </Button>
+              </div>
             </CardContent>
-            </form>
+          </form>
         </Card>
 
 

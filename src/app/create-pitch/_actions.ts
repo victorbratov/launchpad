@@ -6,6 +6,7 @@ import { auth, clerkClient, currentUser } from '@clerk/nextjs/server';
 import { stat } from 'fs';
 import { redirect } from 'next/navigation';
 import { eq } from 'drizzle-orm';
+import { Goal } from 'lucide-react';
 
 /**
  * Function to check the user is authenticated and has a business account
@@ -42,30 +43,15 @@ export const checkBusinessAuthentication = async () => {
  * @param goldMax max amount the user spends to be in the gold tier
  * @param dividendPeriod Period for dividend payouts
  */
-export const createPitch = async (title: string, elevatorPitch: string, detailedPitch: string, targetAmount: string, startDate: Date, endDate: Date, bronzeMultiplier: string, bronzeMax: number, silverMultiplier: string, silverMax: number, goldMultiplier: string, goldMax: number, dividendPayoutPeriod: string) => {
+export const createPitch = async (title: string, status: string, elevatorPitch: string, detailedPitch: string, targetAmount: string, startDate: Date, endDate: Date, bronzeMultiplier: string, bronzeMax: number, silverMultiplier: string, silverMax: number, goldMultiplier: string, dividendPayoutPeriod: string) => {
     const { isAuthenticated, userId } = await auth();
 
     if (!isAuthenticated) {
         return { success: false, message: 'User not authenticated' };
     }
 
-    const clerkUser = await currentUser();
-    let status:string = 'Pending'
+    const dividendPayoutDate: Date = calculateDividendPayoutDate(dividendPayoutPeriod, endDate);
 
-    console.log("start: ", startDate)
-    console.log("end: ", endDate)
-    console.log("now: ", new Date())
-    // Validate pitch dates
-    // if (!validateDates(startDate, endDate)) {
-    //     return {success: false, message: 'Invalid start or end date'}
-    // }
-    
-    // if pitch is starting today, set it to open
-    // if (startDate.getDate() == new Date().getDate()) {
-    //     status = 'Open';
-    // }
-
-    console.log("Creating pitch for user: ", userId);
     await db.insert(BusinessPitchs).values({
         BusAccountID: userId,
         statusOfPitch: status,
@@ -83,35 +69,24 @@ export const createPitch = async (title: string, elevatorPitch: string, detailed
         silverTierMulti: silverMultiplier,
         silverInvMax: silverMax,
         goldTierMulti: goldMultiplier,
-        goldTierMax: goldMax,
-        dividEndPayout: new Date(), // this needs to be calculated based on the dividend period
+        goldTierMax: parseInt(targetAmount),
+        dividEndPayout: dividendPayoutDate, // this needs to be calculated based on the dividend period
         DividEndPayoutPeriod: dividendPayoutPeriod,
     });
 }
 
 /**
- * Turns a date and time into date only
- * @param date the date to convert to date only
- * @returns The new date object, without time
+ * Calcualte the dividend payout date based on the funding end date and the dividend period
+ * @param period 
+ * @param start 
+ * @returns 
  */
-function dateOnly(date: Date) {
-    return new Date(date.getFullYear(), date.getMonth(), date.getDay())
-}
-
-/**
- * Validates the start and end dates, checking end is not before start, and start date is not in the past
- * @param start start date
- * @param end end date
- * @returns True or false, if the dates are valid or not
- */
-function validateDates(start: Date, end: Date) {
-    if (start.getTime() >= end.getTime()) {
-        console.log("End date must be after start date");
-        return { success: false, message: 'End date must be after start date' };
+function calculateDividendPayoutDate(period: string, end: Date) {
+    const payoutDate = new Date(end)
+    if (period == "quarterly") {
+        payoutDate.setFullYear(payoutDate.getFullYear(), payoutDate.getMonth()+4)
+    } else if (period == "yearly") {
+        payoutDate.setFullYear(payoutDate.getFullYear()+1)
     }
-    if (start.getTime() < dateOnly(new Date()).getTime()) {
-        console.log("Start date must be today or in the future");
-        return { success: false, message: 'Start date must be today or in the future' };
-    }
-    console.log("dates ok")
+    return payoutDate
 }
