@@ -25,17 +25,15 @@ export default function CreatePitchPage() {
   const [title, setTitle] = useState("");
   const [elevatorPitch, setElevatorPitch] = useState("");
   const [detailedPitch, setDetailedPitch] = useState("");
-  const [goal, setGoal] = useState<string>();
-  const [profitShare, setProfitShare] = useState("");
+  const [goal, setGoal] = useState<string>("");
   const [dividendPeriod, setDividendPeriod] = useState("quarterly");
-  const [endDate, setEndDate] = useState<Date>();
-  const [startDate, setStartDate] = useState<Date>();
+  const [endDate, setEndDate] = useState<Date>(new Date());
+  const [startDate, setStartDate] = useState<Date>(new Date());
   const [bronzeMultiplier, setBronzeMultiplier] = useState<string>("");
   const [bronzeMax, setBronzeMax] = useState<number | undefined>(undefined);
   const [silverMultiplier, setSilverMultiplier] = useState<string>("");
   const [silverMax, setSilverMax] = useState<number>();
   const [goldMultiplier, setGoldMultiplier] = useState<string>("");
-  const [goldMax, setGoldMax] = useState<number>(0);
 
   const [feedback, setFeedback] = useState<string | null>(null);
   const [ragScore, setRagScore] = useState<string | null>(null);
@@ -78,12 +76,12 @@ export default function CreatePitchPage() {
     setLoading(true);
 
     // validate dates
-    const { success: success, message: message } = validateDates(startDate!, endDate!)
+    const { success: success, message: message } = validateDates(startDate, endDate)
     if (!success) {
       alert(message)
       return
     }
-    setStatus(setPitchStatus(startDate!))
+    setStatus(setPitchStatus(startDate))
     
     // validate tier max and multipliers
     if (!validateMultipliers(bronzeMultiplier, silverMultiplier, goldMultiplier)) {
@@ -97,7 +95,7 @@ export default function CreatePitchPage() {
 
     try {
       // non-null assertion, as the input is required by the form so it will always have a value
-      await createPitch(title, status, elevatorPitch, detailedPitch, goal!, startDate!, endDate!, bronzeMultiplier, bronzeMax!, silverMultiplier, silverMax!, goldMultiplier, dividendPeriod);
+      await createPitch(title, status, elevatorPitch, detailedPitch, goal!, startDate, endDate, bronzeMultiplier, bronzeMax!, silverMultiplier, silverMax!, goldMultiplier, dividendPeriod);
       router.push("/business-portal"); 
     } catch (err) {
       alert("Error: Unable to create pitch");
