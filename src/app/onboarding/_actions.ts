@@ -28,7 +28,6 @@ export const completeOnboarding = async (role: string, name: string, bank_accoun
       InvWallet: '0.00'
     });
   } else if (role === 'business') {
-    try {
       // store the businesses bank account in the bank table as this is needed to create the account
       await db.insert(TheBank).values({
         BankAccountNumber: bank_account_number,
@@ -42,11 +41,6 @@ export const completeOnboarding = async (role: string, name: string, bank_accoun
         BusBankAcc: bank_account_number,
         BusWallet: '0.00'
       });
-    } catch (error) {
-      console.error("Error inserting business account: ", error);
-      return { success: false, message: 'Error creating business account' };
-    }
-
   }
 
   await client.users.updateUser(userId, {
