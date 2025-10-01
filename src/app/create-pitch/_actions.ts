@@ -2,11 +2,8 @@
 
 import { db } from '@/db';
 import { BusinessPitchs, BusinessAccount } from '@/db/schema';
-import { auth, clerkClient, currentUser } from '@clerk/nextjs/server';
-import { stat } from 'fs';
-import { redirect } from 'next/navigation';
+import { auth } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
-import { Goal } from 'lucide-react';
 
 /**
  * Function to check the user is authenticated and has a business account

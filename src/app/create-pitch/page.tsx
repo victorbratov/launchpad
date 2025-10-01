@@ -15,7 +15,7 @@ import { RAGGauge } from "@/components/rag_gauge";
 import { createPitch, checkBusinessAuthentication } from "./_actions";
 import { useRouter } from "next/navigation";
 import { validateDates, validateMaxes, validateMultipliers, setPitchStatus } from "./utils";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 import { Dropzone, FileWithPath } from '@mantine/dropzone';
 import { Group, Text } from '@mantine/core';
