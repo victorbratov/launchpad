@@ -4,7 +4,7 @@
 
 > **areDatesEqual**(`date1`, `date2`): `boolean`
 
-Defined in: [src/app/create-pitch/utils.ts:59](https://github.com/victorbratov/launchpad/blob/2fb5c03d3b8a4ead86d4ea12df9db7edc90ac88e/src/app/create-pitch/utils.ts#L59)
+Defined in: [src/app/create-pitch/utils.ts:59](https://github.com/victorbratov/launchpad/blob/76a3946e066bd4867b4d8959b0de6dc2965f2137/src/app/create-pitch/utils.ts#L59)
 
 Check if two dates are equal
 

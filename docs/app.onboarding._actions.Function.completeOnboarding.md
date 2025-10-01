@@ -4,7 +4,7 @@
 
 > **completeOnboarding**(`role`, `name`, `bank_account_number`): `Promise`\<\{ `message`: `string`; `success`: `boolean`; \}\>
 
-Defined in: [src/app/onboarding/\_actions.ts:8](https://github.com/victorbratov/launchpad/blob/2fb5c03d3b8a4ead86d4ea12df9db7edc90ac88e/src/app/onboarding/_actions.ts#L8)
+Defined in: [src/app/onboarding/\_actions.ts:8](https://github.com/victorbratov/launchpad/blob/76a3946e066bd4867b4d8959b0de6dc2965f2137/src/app/onboarding/_actions.ts#L8)
 
 ## Parameters
 

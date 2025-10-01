@@ -4,7 +4,7 @@
 
 > **CardAction**(`__namedParameters`): `Element`
 
-Defined in: [src/components/ui/card.tsx:51](https://github.com/victorbratov/launchpad/blob/2fb5c03d3b8a4ead86d4ea12df9db7edc90ac88e/src/components/ui/card.tsx#L51)
+Defined in: [src/components/ui/card.tsx:51](https://github.com/victorbratov/launchpad/blob/76a3946e066bd4867b4d8959b0de6dc2965f2137/src/components/ui/card.tsx#L51)
 
 ## Parameters
 

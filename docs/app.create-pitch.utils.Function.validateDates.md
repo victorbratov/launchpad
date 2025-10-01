@@ -4,7 +4,7 @@
 
 > **validateDates**(`start`, `end`): `object`
 
-Defined in: [src/app/create-pitch/utils.ts:7](https://github.com/victorbratov/launchpad/blob/2fb5c03d3b8a4ead86d4ea12df9db7edc90ac88e/src/app/create-pitch/utils.ts#L7)
+Defined in: [src/app/create-pitch/utils.ts:7](https://github.com/victorbratov/launchpad/blob/76a3946e066bd4867b4d8959b0de6dc2965f2137/src/app/create-pitch/utils.ts#L7)
 
 Validates the start and end dates, checking end is not before start, and start date is not in the past
 
