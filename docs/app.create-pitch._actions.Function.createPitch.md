@@ -2,11 +2,11 @@
 
 ***
 
-> **createPitch**(`title`, `status`, `elevatorPitch`, `detailedPitch`, `targetAmount`, `startDate`, `endDate`, `bronzeMultiplier`, `bronzeMax`, `silverMultiplier`, `silverMax`, `goldMultiplier`, `dividendPayoutPeriod`): `Promise`\<`undefined` \| \{ `message`: `string`; `success`: `boolean`; \}\>
+> **createPitch**(`title`, `status`, `elevatorPitch`, `detailedPitch`, `targetAmount`, `startDate`, `endDate`, `bronzeMultiplier`, `bronzeMax`, `silverMultiplier`, `silverMax`, `goldMultiplier`, `dividendPayoutPeriod`): `Promise`\<\{ `message`: `string`; `success`: `boolean`; \}\>
 
 Defined in: [src/app/create-pitch/\_actions.ts:46](https://github.com/victorbratov/launchpad/blob/76a3946e066bd4867b4d8959b0de6dc2965f2137/src/app/create-pitch/_actions.ts#L46)
 
-Create pitch creates a new pitch in the database with all of the relevant data
+Create a pitch in the database
 
 ## Parameters
 
@@ -20,70 +20,76 @@ Pitch title
 
 `string`
 
+Pitch status (pending, open)
+
 ### elevatorPitch
 
 `string`
 
-Brief description of the pitch
+Elevator pitch
 
 ### detailedPitch
 
 `string`
 
-Detialed description of the pitch
+Detailed pitch overview
 
 ### targetAmount
 
 `string`
 
-The funding goal amount
+Target funding amount
 
 ### startDate
 
 `Date`
 
-Start date of the pitch
+Pitch start date
 
 ### endDate
 
 `Date`
 
-End date of the pitch
+Pitch end date
 
 ### bronzeMultiplier
 
 `string`
 
-Multiplier for bronze shares
+Bronze multiplier
 
 ### bronzeMax
 
 `number`
 
-Max amount the user spends to be in the bronze tier
+Bronze tier maximum
 
 ### silverMultiplier
 
 `string`
 
-multiplier for silver shares
+silver multiplier
 
 ### silverMax
 
 `number`
 
-Max amount the user spends to be in the silver tier
+Silver tier maximum
 
 ### goldMultiplier
 
 `string`
 
-multiplier for gold shares
+Gold multiplier
 
 ### dividendPayoutPeriod
 
 `string`
 
+How often dividends will be paid out (monthly, yearly, etc.)
+
 ## Returns
 
-`Promise`\<`undefined` \| \{ `message`: `string`; `success`: `boolean`; \}\>
+`Promise`\<\{ `message`: `string`; `success`: `boolean`; \}\>
+
+An object with success indicating the success of the pitch creation, and message holding either the successfully created pitch ID or an error message
