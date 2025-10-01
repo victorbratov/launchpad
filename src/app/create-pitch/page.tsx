@@ -15,6 +15,7 @@ import { RAGGauge } from "@/components/rag_gauge";
 import { createPitch, checkBusinessAuthentication } from "./_actions";
 import { useRouter } from "next/navigation";
 import { validateDates, validateMaxes, validateMultipliers, setPitchStatus } from "./utils";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 
 import { Dropzone, FileWithPath } from '@mantine/dropzone';
 import { Group, Text } from '@mantine/core';
@@ -42,8 +43,7 @@ export default function CreatePitchPage() {
   const [feedback, setFeedback] = useState<string | null>(null);
   const [ragScore, setRagScore] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState<string>("");
-  const [mediaStatus, setMediaStatus] = useState("idle"); // To track upload status
+  const [status, setStatus] = useState<string>("Pending");
   const [mediaFiles, setMediaFiles] = useState<File[]>([])
 
   useEffect(() => {
@@ -81,32 +81,22 @@ export default function CreatePitchPage() {
     e.preventDefault();
     setLoading(true);
 
-    // validate dates
-    const { success: success, message: message } = validateDates(startDate, endDate)
-    if (!success) {
-      alert(message)
-      return
+    if (!validateInput()) {
+      setLoading(false);
+      return // exit early if invalid input
     }
-    setStatus(setPitchStatus(startDate))
-
-    // validate tier max and multipliers
-    if (!validateMultipliers(bronzeMultiplier, silverMultiplier, goldMultiplier)) {
-      alert("Multiplier value must be lowest for bronze and highest for gold")
-      return
-    }
-    if (!validateMaxes(bronzeMax!, silverMax!, parseInt(goal!))) {
-      alert("Error with maximum tier values")
-      return
-    }
-
-    console.log("pitch createion page")
     try {
       // non-null assertion, as the input is required by the form so it will always have a value
       const { success, message } = await createPitch(title, status, elevatorPitch, detailedPitch, goal!, startDate, endDate, bronzeMultiplier, bronzeMax!, silverMultiplier, silverMax!, goldMultiplier, dividendPeriod);
       if (success) {
-        mediaFiles.forEach((file) => uploadMedia(file, message))
+        for (const file of mediaFiles) {
+          await uploadMedia(file, message);
+        }
+        router.push("/business-portal");
+      } else {
+        setLoading(false);
       }
-      //router.push("/business-portal");
+
     } catch (err) {
       alert("Error: Unable to create pitch");
       setLoading(false)
@@ -116,8 +106,33 @@ export default function CreatePitchPage() {
   };
 
   /**
-   * Handle files being dropped
-   * @param files 
+   * Calls all input validation functions
+   * @returns Whether the input is valid or not
+   */
+  function validateInput() {
+    // validate dates
+    const { success: success, message: message } = validateDates(startDate, endDate)
+    if (!success) {
+      alert(message)
+      return false
+    }
+    setStatus(setPitchStatus(startDate))
+
+    // validate tier max and multipliers
+    if (!validateMultipliers(bronzeMultiplier, silverMultiplier, goldMultiplier)) {
+      alert("Multiplier value must be lowest for bronze and highest for gold")
+      return false
+    }
+    if (!validateMaxes(bronzeMax!, silverMax!, parseInt(goal!))) {
+      alert("Error with maximum tier values")
+      return false
+    }
+    return true
+  }
+
+  /**
+   * Handle files being dropped and stores them
+   * @param files files that were dropped
    */
   const handleDrop = (files: File[]) => {
     setMediaFiles((prev) => [...prev, ...files]);
@@ -144,6 +159,14 @@ export default function CreatePitchPage() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
+      <Dialog open={loading}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Creating pitch</DialogTitle>
+          </DialogHeader>
+          <Text className="text-center">Your pitch is being created. Please wait ....</Text>
+        </DialogContent>
+      </Dialog>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left: Pitch Form */}
         <Card className="lg:col-span-2">
@@ -221,22 +244,6 @@ export default function CreatePitchPage() {
                           <Label key={index}>{file.name}</Label>
                         ))}
                       </div>
-
-                      {/* {status == "processing" && <Text size="sm" inline>Uploading...</Text>}
-                      {status == "success" &&
-                        <>
-                          <Text size="sm" data-testid="success" style={{ color: "green" }} inline>Upload successful!</Text>
-                          <Text size="sm" inline>Drag images or videos here or click to select files</Text>
-                        </>
-                      }
-                      {status == "failed" &&
-                        <>
-                          <Text size="sm" data-testid="fail" style={{ color: "red" }} >Error uploading file</Text>
-                          <Text size="sm" inline>Drag images or videos here or click to select files</Text>
-                        </>
-                      }
-                      {status == "idle" && } */}
-
                     </Dropzone.Idle>
 
                     <div>
@@ -400,12 +407,11 @@ export default function CreatePitchPage() {
                 <Button variant="outline" onClick={handleEvaluate}>
                   AI Evaluation
                 </Button>
-                <Button disabled={loading} type="submit">{loading ? "Loading..." : "Submit Pitch"} </Button>
+                <Button type="submit">Submit Pitch </Button>
               </div>
             </CardContent>
           </form>
         </Card>
-
 
         {/* Right: AI Feedback */}
         <Card className="lg:col-span-1">

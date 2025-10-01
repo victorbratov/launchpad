@@ -25,23 +25,21 @@ export const checkBusinessAuthentication = async () => {
 }
 
 /**
- * Create pitch creates a new pitch in the database with all of the relevant data
- * @param busAccountID business account associated with the pitch
- * @param title Pitch title 
- * @param elevatorPitch Brief description of the pitch
- * @param detailedPitch Detialed description of the pitch
- * @param supportingMedia Link to S3 bucket folder where supporting media is stored
- * @param targetAmount The funding goal amount
- * @param startDate Start date of the pitch
- * @param endDate End date of the pitch
- * @param pricePerShare Pric per share of the pitch
- * @param bronzeMultiplier Multiplier for bronze shares
- * @param bronzeMax Max amount the user spends to be in the bronze tier
- * @param silverMultiplier multiplier for silver shares
- * @param silverMax Max amount the user spends to be in the silver tier
- * @param goldMultiplier multiplier for gold shares
- * @param goldMax max amount the user spends to be in the gold tier
- * @param dividendPeriod Period for dividend payouts
+ * Create a pitch in the database
+ * @param title Pitch title
+ * @param status Pitch status (pending, open)
+ * @param elevatorPitch Elevator pitch
+ * @param detailedPitch Detailed pitch overview
+ * @param targetAmount Target funding amount
+ * @param startDate Pitch start date
+ * @param endDate Pitch end date
+ * @param bronzeMultiplier Bronze multiplier
+ * @param bronzeMax Bronze tier maximum
+ * @param silverMultiplier silver multiplier
+ * @param silverMax Silver tier maximum
+ * @param goldMultiplier Gold multiplier
+ * @param dividendPayoutPeriod How often dividends will be paid out (monthly, yearly, etc.)
+ * @returns {{success: boolean, message: string}} An object with success indicating the success of the pitch creation, and message holding either the successfully created pitch ID or an error message
  */
 export const createPitch = async (title: string, status: string, elevatorPitch: string, detailedPitch: string, targetAmount: string, startDate: Date, endDate: Date, bronzeMultiplier: string, bronzeMax: number, silverMultiplier: string, silverMax: number, goldMultiplier: string, dividendPayoutPeriod: string) => {
     const { isAuthenticated, userId } = await auth();
@@ -49,7 +47,7 @@ export const createPitch = async (title: string, status: string, elevatorPitch: 
     if (!isAuthenticated) {
         return { success: false, message: 'User not authenticated' };
     }
-    console.log("creating pitch")
+
     const dividendPayoutDate: Date = calculateDividendPayoutDate(dividendPayoutPeriod, endDate);
 
     const [insertedPitch] = await db.insert(BusinessPitchs).values({
@@ -73,6 +71,8 @@ export const createPitch = async (title: string, status: string, elevatorPitch: 
         DividEndPayoutPeriod: dividendPayoutPeriod,
     }).returning();
 
+
+    // update the database with the media url based on pitch ID
     const mediaURL = `${process.env.BUCKET_URL}${insertedPitch.BusPitchID}`
     await db.update(BusinessPitchs).set({SuportingMedia: mediaURL}).where(eq(BusinessPitchs.BusPitchID, insertedPitch.BusPitchID))
     return {success: true, message: mediaURL}
