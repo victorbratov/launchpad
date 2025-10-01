@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CalendarIcon } from "lucide-react";
-import { format, parse } from "date-fns";
+import { format } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { RAGGauge } from "@/components/rag_gauge";
@@ -17,7 +17,7 @@ import { useRouter } from "next/navigation";
 import { validateDates, validateMaxes, validateMultipliers, setPitchStatus } from "./utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
-import { Dropzone, FileWithPath } from '@mantine/dropzone';
+import { Dropzone } from '@mantine/dropzone';
 import { Group, Text } from '@mantine/core';
 import { IconUpload, IconX, IconPhoto } from '@tabler/icons-react';
 
@@ -44,7 +44,8 @@ export default function CreatePitchPage() {
   const [ragScore, setRagScore] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<string>("Pending");
-  const [mediaFiles, setMediaFiles] = useState<File[]>([])
+  const [mediaFiles, setMediaFiles] = useState<File[]>([]);
+  const [mediaSuccess, setMediaSuccess] = useState<boolean>(false);
 
   useEffect(() => {
     // check if the user is logged in with a business account
@@ -90,7 +91,10 @@ export default function CreatePitchPage() {
       const { success, message } = await createPitch(title, status, elevatorPitch, detailedPitch, goal!, startDate, endDate, bronzeMultiplier, bronzeMax!, silverMultiplier, silverMax!, goldMultiplier, dividendPeriod);
       if (success) {
         for (const file of mediaFiles) {
-          await uploadMedia(file, message);
+          if (!await uploadMedia(file, message)) {
+            alert("Error uploading image");
+            return;
+          }
         }
         router.push("/business-portal");
       } else {
@@ -153,7 +157,9 @@ export default function CreatePitchPage() {
       body: file,
     });
     if (response.ok) {
-      console.log("successful file upload")
+      return true;
+    } else {
+      return false;
     }
   };
 
@@ -173,7 +179,7 @@ export default function CreatePitchPage() {
           <CardHeader>
             <CardTitle>Create New Pitch</CardTitle>
           </CardHeader>
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} data-testid="pitch-form">
             <CardContent className="space-y-6">
               {/* Title */}
               <div className="space-y-2">
@@ -241,7 +247,7 @@ export default function CreatePitchPage() {
                           <Text className="pb-2">Media to upload:</Text>}
                         {mediaFiles.map((file, index) => (
 
-                          <Label key={index}>{file.name}</Label>
+                          <Label data-testid="media" key={index}>{file.name}</Label>
                         ))}
                       </div>
                     </Dropzone.Idle>
@@ -407,7 +413,7 @@ export default function CreatePitchPage() {
                 <Button variant="outline" onClick={handleEvaluate}>
                   AI Evaluation
                 </Button>
-                <Button type="submit">Submit Pitch </Button>
+                <Button type="submit">Submit Pitch</Button>
               </div>
             </CardContent>
           </form>

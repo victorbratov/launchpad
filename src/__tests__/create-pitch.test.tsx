@@ -1,16 +1,27 @@
 import '@testing-library/jest-dom'
-import { render, screen } from '@testing-library/react'
-import CreatePitchPage from '../app/create-pitch/page'
 import { validateDates, validateMultipliers, validateMaxes, setPitchStatus } from '../app/create-pitch/utils'
 import { checkBusinessAuthentication, createPitch } from '@/app/create-pitch/_actions'
 import { db } from '@/db';
 import { auth } from '@clerk/nextjs/server';
 import { BusinessPitchs } from '@/db/schema';
+import CreatePitchPage from '../app/create-pitch/page'
+import { render, fireEvent, screen, waitFor } from '@testing-library/react';
+import { MantineProvider } from '@mantine/core';
+import userEvent from "@testing-library/user-event";
+
+// mock dates so test passing is not day dependents
+beforeAll(() => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date(2025, 8, 30));
+});
+
+afterAll(() => {
+    jest.useRealTimers();
+});
 
 // test create pitch util functions
 describe('Create Pitch util functions', () => {
-    const mockToday = new Date(2025, 8, 30); // month is 0-indexed
-    jest.spyOn(global.Date, 'now').mockImplementation(() => mockToday.getTime());
+
 
     describe('validateDates function', () => {
         it('should return that the dates are valid', () => {
@@ -109,12 +120,48 @@ describe('Create Pitch util functions', () => {
 });
 
 
-// mock the database and auth
+// Mock update call
 jest.mock('@/db', () => ({
     db: {
-        select: jest.fn(),
-        insert: jest.fn(() => ({ values: jest.fn().mockResolvedValue(true) })),
-    },
+        select: jest.fn(() => ({
+            from: jest.fn(() => ({
+                where: jest.fn(() => []),
+            })),
+        })),
+        insert: jest.fn().mockReturnValue({
+            values: jest.fn().mockReturnValue({
+                returning: jest.fn().mockResolvedValue([{
+                    BusAccountID: "123",
+                    DetailedPitch: "detailed pitch",
+                    DividEndPayoutPeriod: "quarterly",
+                    ElevatorPitch: "elevator pitch",
+                    InvProfShare: 0,
+                    InvestmentEnd: new Date("2025-09-30T17:55:21.304Z"),
+                    InvestmentStart: new Date("2025-09-30T17:55:21.304Z"),
+                    ProductTitle: "Product title",
+                    TargetInvAmount: "5000",
+                    bronseInvMax: 200,
+                    bronseTierMulti: "1.0",
+                    dividEndPayout: new Date("2026-01-30T18:55:21.304Z"),
+                    goldTierMax: 5000,
+                    goldTierMulti: "1.5",
+                    pricePerShare: "0",
+                    silverInvMax: 500,
+                    silverTierMulti: "1.2",
+                    statusOfPitch: "active"
+                }])
+            })
+        }),
+        update: jest.fn().mockReturnValue({
+            set: jest.fn().mockReturnValue({
+                where: jest.fn().mockReturnValue({
+                    returning: jest.fn().mockResolvedValue([
+                        { BusPitchID: 123 }
+                    ])
+                })
+            })
+        }),
+    }
 }));
 
 jest.mock('@clerk/nextjs/server', () => ({
@@ -164,7 +211,6 @@ describe('create pitch in db', () => {
         InvestmentEnd: new Date("2025-09-30T17:55:21.304Z"),
         InvestmentStart: new Date("2025-09-30T17:55:21.304Z"),
         ProductTitle: "Product title",
-        SuportingMedia: "",
         TargetInvAmount: "5000",
         bronseInvMax: 200,
         bronseTierMulti: "1.0",
@@ -200,9 +246,6 @@ describe('create pitch in db', () => {
     it('successfully mocks create pitch', async () => {
         (auth as unknown as jest.Mock).mockResolvedValue({ isAuthenticated: true, userId: "123" });
 
-        const mockValues = jest.fn().mockResolvedValue(true);
-        (db.insert as jest.Mock).mockReturnValueOnce({ values: mockValues });
-
         const result = await createPitch(
             params.ProductTitle,
             params.statusOfPitch,
@@ -219,7 +262,7 @@ describe('create pitch in db', () => {
             params.DividEndPeriod
         );
         expect(db.insert).toHaveBeenCalledWith(BusinessPitchs);
-        expect(mockValues).toHaveBeenCalledWith(expect.objectContaining({
+        expect(db.insert(BusinessPitchs).values).toHaveBeenCalledWith(expect.objectContaining({
             BusAccountID: "123",
             DetailedPitch: "detailed pitch",
             DividEndPayoutPeriod: "quarterly",
@@ -228,7 +271,6 @@ describe('create pitch in db', () => {
             InvestmentEnd: new Date("2025-09-30T17:55:21.304Z"),
             InvestmentStart: new Date("2025-09-30T17:55:21.304Z"),
             ProductTitle: "Product title",
-            SuportingMedia: "",
             TargetInvAmount: "5000",
             bronseInvMax: 200,
             bronseTierMulti: "1.0",
@@ -240,5 +282,35 @@ describe('create pitch in db', () => {
             silverTierMulti: "1.2",
             statusOfPitch: "active"
         }));
+    });
+});
+
+
+// mock navigation
+jest.mock('next/navigation', () => ({
+    useRouter: () => ({
+        push: jest.fn(),
+        replace: jest.fn(),
+        back: jest.fn(),
+        refresh: jest.fn(),
+    }),
+}));
+// tests for succssful and failed file upload
+describe("upload media component", () => {
+    test("drop adds files", async () => {
+        render(<MantineProvider><CreatePitchPage /></MantineProvider>);
+        const dropzone = screen.getByTestId("dropzone");
+        const file = new File(["file contents"], "img.png", { type: "image/png" });
+        const data = {
+            dataTransfer: {
+                files: [file],
+                items: [{ kind: "file", type: file.type, getAsFile: () => file }],
+                types: ["Files"],
+            },
+        };
+
+        fireEvent.drop(dropzone, data);
+
+        expect(await screen.findByText("img.png")).toBeInTheDocument();
     });
 });
