@@ -49,16 +49,15 @@ export const createPitch = async (title: string, status: string, elevatorPitch: 
     if (!isAuthenticated) {
         return { success: false, message: 'User not authenticated' };
     }
-
+    console.log("creating pitch")
     const dividendPayoutDate: Date = calculateDividendPayoutDate(dividendPayoutPeriod, endDate);
 
-    await db.insert(BusinessPitchs).values({
+    const [insertedPitch] = await db.insert(BusinessPitchs).values({
         BusAccountID: userId,
         statusOfPitch: status,
         ProductTitle: title,
         ElevatorPitch: elevatorPitch,
         DetailedPitch: detailedPitch,
-        SuportingMedia: "", // to be added later when media upload is implemented
         TargetInvAmount: targetAmount,
         InvestmentStart: startDate,
         InvestmentEnd: endDate,
@@ -72,14 +71,18 @@ export const createPitch = async (title: string, status: string, elevatorPitch: 
         goldTierMax: parseInt(targetAmount),
         dividEndPayout: dividendPayoutDate, // this needs to be calculated based on the dividend period
         DividEndPayoutPeriod: dividendPayoutPeriod,
-    });
+    }).returning();
+
+    const mediaURL = `${process.env.BUCKET_URL}${insertedPitch.BusPitchID}`
+    await db.update(BusinessPitchs).set({SuportingMedia: mediaURL}).where(eq(BusinessPitchs.BusPitchID, insertedPitch.BusPitchID))
+    return {success: true, message: mediaURL}
 }
 
 /**
  * Calcualte the dividend payout date based on the funding end date and the dividend period
- * @param period 
- * @param start 
- * @returns 
+ * @param period Lenght of the period
+ * @param end End date of the pitch
+ * @returns The payout date
  */
 function calculateDividendPayoutDate(period: string, end: Date) {
     const payoutDate = new Date(end)

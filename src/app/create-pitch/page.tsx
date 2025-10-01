@@ -16,6 +16,10 @@ import { createPitch, checkBusinessAuthentication } from "./_actions";
 import { useRouter } from "next/navigation";
 import { validateDates, validateMaxes, validateMultipliers, setPitchStatus } from "./utils";
 
+import { Dropzone, FileWithPath } from '@mantine/dropzone';
+import { Group, Text } from '@mantine/core';
+import { IconUpload, IconX, IconPhoto } from '@tabler/icons-react';
+
 /**
  * Create pitch page where the user will create their pitch
  * @returns Create pitch page
@@ -39,6 +43,8 @@ export default function CreatePitchPage() {
   const [ragScore, setRagScore] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<string>("");
+  const [mediaStatus, setMediaStatus] = useState("idle"); // To track upload status
+  const [mediaFiles, setMediaFiles] = useState<File[]>([])
 
   useEffect(() => {
     // check if the user is logged in with a business account
@@ -82,7 +88,7 @@ export default function CreatePitchPage() {
       return
     }
     setStatus(setPitchStatus(startDate))
-    
+
     // validate tier max and multipliers
     if (!validateMultipliers(bronzeMultiplier, silverMultiplier, goldMultiplier)) {
       alert("Multiplier value must be lowest for bronze and highest for gold")
@@ -93,15 +99,46 @@ export default function CreatePitchPage() {
       return
     }
 
+    console.log("pitch createion page")
     try {
       // non-null assertion, as the input is required by the form so it will always have a value
-      await createPitch(title, status, elevatorPitch, detailedPitch, goal!, startDate, endDate, bronzeMultiplier, bronzeMax!, silverMultiplier, silverMax!, goldMultiplier, dividendPeriod);
-      router.push("/business-portal"); 
+      const { success, message } = await createPitch(title, status, elevatorPitch, detailedPitch, goal!, startDate, endDate, bronzeMultiplier, bronzeMax!, silverMultiplier, silverMax!, goldMultiplier, dividendPeriod);
+      if (success) {
+        mediaFiles.forEach((file) => uploadMedia(file, message))
+      }
+      //router.push("/business-portal");
     } catch (err) {
       alert("Error: Unable to create pitch");
       setLoading(false)
     } finally {
       setLoading(false);
+    }
+  };
+
+  /**
+   * Handle files being dropped
+   * @param files 
+   */
+  const handleDrop = (files: File[]) => {
+    setMediaFiles((prev) => [...prev, ...files]);
+  };
+
+  /**
+ * Function to upload an image or video to the S3 bucket
+ * @param file File to be uploaded
+ * @param url The url to upload the media to
+ */
+  const uploadMedia = async (file: File, url: string) => {
+    // upload file to S3 bucket
+    const response = await fetch(`${url}/${file.name}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': file.type,
+      },
+      body: file,
+    });
+    if (response.ok) {
+      console.log("successful file upload")
     }
   };
 
@@ -148,6 +185,67 @@ export default function CreatePitchPage() {
                 />
               </div>
 
+              {/* Supporting media */}
+              <div className="space-y-2">
+                <Label>Supporting Media</Label>
+                <Dropzone
+                  onDrop={handleDrop}
+                  onReject={(files) => setStatus("failed")}
+                  maxSize={100 * 1024 ** 2} // 100mb currently but can be changed
+                  accept={{
+                    'image/*': [], // All images
+                    'video/*': [], // all videos
+                  }}
+                  styles={{ root: { borderWidth: 1.5, borderRadius: 7, borderStyle: 'solid', padding: '2rem', backgroundColor: "#ffffffff", color: "#6e6e6eff" } }}
+                  data-testid="dropzone"
+                >
+                  <Group justify="center" gap="xl" mih={220} style={{ pointerEvents: 'none' }}>
+                    <Dropzone.Accept>
+                      <IconUpload size={52} color="green" stroke={1.5} />
+                    </Dropzone.Accept>
+                    <Dropzone.Reject>
+                      <IconX size={52} color="red" stroke={1.5} />
+                    </Dropzone.Reject>
+                    <Dropzone.Idle>
+                      {mediaFiles.length == 0 &&
+                        <div className="text-center space-y-2" >
+                          <Text size="sm" inline>Drag images or videos here or click to select files</Text>
+                          <IconPhoto className="mx-auto w-1/2" size={52} color="#6e6e6eff" stroke={1.5} />
+                        </div>
+                      }
+                      <div className="text-center space-y-2" >
+                        {mediaFiles.length > 0 &&
+                          <Text className="pb-2">Media to upload:</Text>}
+                        {mediaFiles.map((file, index) => (
+
+                          <Label key={index}>{file.name}</Label>
+                        ))}
+                      </div>
+
+                      {/* {status == "processing" && <Text size="sm" inline>Uploading...</Text>}
+                      {status == "success" &&
+                        <>
+                          <Text size="sm" data-testid="success" style={{ color: "green" }} inline>Upload successful!</Text>
+                          <Text size="sm" inline>Drag images or videos here or click to select files</Text>
+                        </>
+                      }
+                      {status == "failed" &&
+                        <>
+                          <Text size="sm" data-testid="fail" style={{ color: "red" }} >Error uploading file</Text>
+                          <Text size="sm" inline>Drag images or videos here or click to select files</Text>
+                        </>
+                      }
+                      {status == "idle" && } */}
+
+                    </Dropzone.Idle>
+
+                    <div>
+
+                    </div>
+                  </Group>
+                </Dropzone>
+
+              </div>
               {/* Goal */}
               <div className="space-y-2">
                 <Label>Funding Goal (USD)</Label>
@@ -253,7 +351,7 @@ export default function CreatePitchPage() {
                 <Input
                   type="number"
                   placeholder="1.0"
-                   value={bronzeMultiplier}
+                  value={bronzeMultiplier}
                   onChange={(e) => setBronzeMultiplier(e.target.value)}
                   required
                 />
