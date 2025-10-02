@@ -2,7 +2,7 @@ import { InvestorAccounts } from "@/db/schema";
 import { db } from "../../../db";
 //import { BusinessAccount } from "../../schema";
 
-import {createBusinessPitch} from "../BusinessPitchsFunctions"
+import {createBusinessPitch, getTotalMoneyInvested, showAllBusinessPitches} from "../BusinessPitchsFunctions"
 
 
 async function main() {
@@ -33,7 +33,11 @@ async function main() {
 
     // console.log(newPitch)
 
+    // const groupOfPitches = await showAllBusinessPitches();
+    // console.log(groupOfPitches);
 
+    const testGetMoneyTotal = await getTotalMoneyInvested();
+    console.log(testGetMoneyTotal);
 
 
 

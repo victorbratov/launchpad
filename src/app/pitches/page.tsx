@@ -1,16 +1,78 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState,useEffect,useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { PitchCard } from "../../components/pitch_preview_card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { mockPitches } from "../../../mock_data/pitches";
 
+ //setting a data type for the pitches fetched from database
+  type Pitch = {
+    BusPitchID: number;
+    BusAccountID: string;
+    statusOfPitch: string;
+    ProductTitle: string;
+    ElevatorPitch: string;
+    DetailedPitch: string;
+    SuportingMedia: string | null;
+    TargetInvAmount: string;
+    InvestmentStart: string;
+    InvestmentEnd: string;
+    InvProfShare: number;
+    pricePerShare: string;
+    bronseTierMulti: string;
+    bronseInvMax: number;
+    silverTierMulti: string;
+    silverInvMax: number;
+    goldTierMulti: string;
+    goldTierMax: number;
+    dividEndPayout: string;
+    DividEndPayoutPeriod: string;
+    availableShares: number;
+  };
+
+  type Investment = {
+    busPitchID: number;
+    totalAmount: number;
+  };
+
+//mock pitches data types, DELETE AFTER DATABASE INTEGRATION
 const allTags = Array.from(new Set(mockPitches.flatMap((p) => p.tags)));
 
 export default function PitchSearchPage() {
+
+  // SEARCH BAR at the top right
   const [search, setSearch] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
+
+
+  //database  data
+  const [pitches, setPitches] = useState<Pitch[]>([]); // pitches is an array of data from the database
+  const [investments, setInvestments] = useState<Investment[]>([]); // data from investment ledger
+
+
+  //where _actions get is used
+  //where the data is put into the arrays above 
+  useEffect(() => {
+    fetch("/api/pitches")
+      .then((res) => res.json())
+      .then((data) => {
+
+        setPitches(data.pitches);
+        setInvestments(data.investments); // Set investment data
+
+
+      })
+      .catch((err) => {
+        console.error("Fetch error:", err);
+      });
+  }, []);
+
+
+
+
+  
 
   // Filter pitches by name + tags
   const filteredPitches = useMemo(() => {
@@ -32,20 +94,42 @@ export default function PitchSearchPage() {
     );
   };
 
+
+
+  //calls the tiles grid for pitches
   return (
     <div className="flex gap-6 p-6">
       {/* Pitch Grid */}
       <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredPitches.length ? (
-          filteredPitches.map((pitch) => (
-            <PitchCard key={pitch.pitchID} pitch={pitch} />
-          ))
+        {pitches.length ? (
+          pitches.map((pitch) => {
+            
+            
+            return (
+              <PitchCard key={pitch.BusPitchID} 
+              pitch={{
+                pitchID: pitch.BusPitchID.toString(),
+                pitchName: pitch.ProductTitle,
+                pitchStatus: pitch.statusOfPitch,
+                currentAmount: investments.find(inv => inv.busPitchID === pitch.BusPitchID)?.totalAmount || 0,
+                pitchGoal: Number(pitch.TargetInvAmount),
+                pitchImageUrl: "pitch.SuportingMedia" ,
+                tags: ["tech", "ai"],
+                pitcherID: pitch.BusAccountID, 
+                pitchStart: pitch.InvestmentStart, 
+                pitchEnd: pitch.InvestmentEnd,     
+              }} />
+            );
+          })
         ) : (
           <p className="text-center text-muted-foreground">
             No results found.
           </p>
         )}
       </div>
+
+
+    
 
       {/* Sidebar Filters */}
       <div className="w-72 space-y-6">
