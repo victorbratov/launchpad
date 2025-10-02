@@ -32,15 +32,35 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { User, Wallet, LineChart as ChartIcon, Coins, BarChart3 } from "lucide-react";
-import {
-  investorInfo,
-  investments,
-  dividends,
-} from "../../../mock_data/investor_data";
+import { getInvestorInfo, getDividends, getInvestments } from "./_actions";
+import { useEffect, useState } from "react";
+import { Dividend, Investment, InvestorInfo } from "../../../types/investor_data";
 
 export default function InvestorPortalPage() {
+
+  const [investorInfo, setInvestorInfo] = useState<InvestorInfo | null>(null);
+  const [investments, setInvestments] = useState<Array<Investment>>([]);
+  const [dividends, setDividends] = useState<Array<Dividend>>([]);
+
+  useEffect(() => {
+    async function loadData() {
+      const info = await getInvestorInfo();
+      const invs = await getInvestments();
+      const divs = await getDividends();
+      setInvestorInfo(info);
+      setInvestments(invs);
+      setDividends(divs);
+    }
+    loadData();
+  }, []);
+
+  if (!investorInfo) {
+    return <div className="p-6">No investor profile found.</div>;
+  }
+
+  // --- Calculations ---
   const totalInvested = investments.reduce((sum, inv) => sum + inv.investmentCost, 0);
-  const totalShares = investments.reduce((sum, inv) => sum + inv.shareAmount, 0);
+  const totalShares = investments.reduce((sum, inv) => sum + inv.shareAmount!, 0);
   const totalDividends = dividends.reduce((sum, d) => sum + d.dividendAmount, 0);
   const roiPercent = ((totalDividends / totalInvested) * 100).toFixed(2);
 

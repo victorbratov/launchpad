@@ -4,7 +4,7 @@
 
 > **default**(`__namedParameters`): `Promise`\<`Element`\>
 
-Defined in: [src/app/onboarding/layout.tsx:4](https://github.com/victorbratov/launchpad/blob/2fb5c03d3b8a4ead86d4ea12df9db7edc90ac88e/src/app/onboarding/layout.tsx#L4)
+Defined in: [src/app/onboarding/layout.tsx:4](https://github.com/victorbratov/launchpad/blob/76a3946e066bd4867b4d8959b0de6dc2965f2137/src/app/onboarding/layout.tsx#L4)
 
 ## Parameters
 

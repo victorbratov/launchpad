@@ -9,6 +9,7 @@
 - [app/create-pitch/page](app.create-pitch.page.md)
 - [app/create-pitch/utils](app.create-pitch.utils.md)
 - [app/font](app.font.md)
+- [app/investor-portal/\_actions](app.investor-portal._actions.md)
 - [app/investor-portal/page](app.investor-portal.page.md)
 - [app/layout](app.layout.md)
 - [app/onboarding/\_actions](app.onboarding._actions.md)
