@@ -17,6 +17,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 // Mock Data
 const businessInfo = {
@@ -28,7 +29,7 @@ const businessInfo = {
 
 const pitches = [
   {
-    pitchID: "p1",
+    pitchID: "1",
     pitchName: "SunDrop: Solar Irrigation",
     pitchGoal: 10000,
     currentAmount: 7400,
@@ -40,7 +41,7 @@ const pitches = [
       "Our project empowers farmers in rural Kenya with affordable solar-powered irrigation systems to increase yields and fight climate vulnerability.",
   },
   {
-    pitchID: "p2",
+    pitchID: "2",
     pitchName: "EcoThreads: Recycled Fashion",
     pitchGoal: 15000,
     currentAmount: 15000,
@@ -73,7 +74,7 @@ export default function BusinessPortalPage() {
       {/* Business Overview */}
       <Card>
         <CardHeader>
-          <CardTitle>Business Overview</CardTitle>
+          <CardTitle>Businesss Overview</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex justify-between flex-wrap">
@@ -163,9 +164,11 @@ export default function BusinessPortalPage() {
                           </div>
                         </div>
                         <DialogFooter className="flex gap-3 justify-end">
+                           <Link href={`/business-portal/${pitch.pitchID}`}>
                           <Button variant="outline">
                             Edit Pitch
                           </Button>
+                          </Link>
                           <Button className="bg-green-600 hover:bg-green-700">
                             Report Profit
                           </Button>
