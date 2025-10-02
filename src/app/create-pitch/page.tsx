@@ -88,7 +88,7 @@ export default function CreatePitchPage() {
     }
     try {
       // non-null assertion, as the input is required by the form so it will always have a value
-      const { success, message } = await createPitch(title, status, elevatorPitch, detailedPitch, goal!, startDate, endDate, bronzeMultiplier, bronzeMax!, silverMultiplier, silverMax!, goldMultiplier, dividendPeriod);
+      const { success, message } = await createPitch({title, status, elevatorPitch, detailedPitch, targetAmount: goal!, startDate, endDate, bronzeMultiplier, bronzeMax: bronzeMax!, silverMultiplier, silverMax: silverMax!, goldMultiplier, dividendPayoutPeriod: dividendPeriod});
       if (success) {
         for (const file of mediaFiles) {
           if (!await uploadMedia(file, message)) {

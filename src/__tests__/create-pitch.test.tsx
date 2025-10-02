@@ -1,13 +1,12 @@
 import '@testing-library/jest-dom'
-import { validateDates, validateMultipliers, validateMaxes, setPitchStatus } from '../app/create-pitch/utils'
-import { checkBusinessAuthentication, createPitch } from '@/app/create-pitch/_actions'
+import { validateDates, validateMultipliers, validateMaxes, setPitchStatus} from '../app/create-pitch/utils'
+import { checkBusinessAuthentication, createPitch, Pitch } from '@/app/create-pitch/_actions'
 import { db } from '@/db';
 import { auth } from '@clerk/nextjs/server';
 import { BusinessPitchs } from '@/db/schema';
 import CreatePitchPage from '../app/create-pitch/page'
 import { render, fireEvent, screen, waitFor } from '@testing-library/react';
 import { MantineProvider } from '@mantine/core';
-import userEvent from "@testing-library/user-event";
 
 // mock dates so test passing is not day dependents
 beforeAll(() => {
@@ -190,6 +189,7 @@ describe('check business account authentication', () => {
 
     it('returns false if user exists but does not have a business account', async () => {
         (auth as unknown as jest.Mock).mockResolvedValue({ isAuthenticated: true, userId: "12345" });
+        jest.spyOn(window, 'alert').mockImplementation(() => {});
         // get mock user data from the db
         (db.select as jest.Mock).mockReturnValueOnce({
             from: jest.fn().mockReturnValueOnce({
@@ -202,65 +202,60 @@ describe('check business account authentication', () => {
 });
 
 describe('create pitch in db', () => {
-    const params = {
-        BusAccountID: "123",
-        DetailedPitch: "detailed pitch",
-        DividEndPeriod: "quarterly",
-        ElevatorPitch: "elevator pitch",
-        InvProfShare: 0,
-        InvestmentEnd: new Date("2025-09-30T17:55:21.304Z"),
-        InvestmentStart: new Date("2025-09-30T17:55:21.304Z"),
-        ProductTitle: "Product title",
-        TargetInvAmount: "5000",
-        bronseInvMax: 200,
-        bronseTierMulti: "1.0",
-        dividEndPayout: new Date("2025-09-30T17:55:21.304Z"),
-        goldTierMax: 5000,
-        goldTierMulti: "1.5",
-        pricePerShare: "0",
-        silverInvMax: 500,
-        silverTierMulti: "1.2",
-        statusOfPitch: "active"
+    const params: Pitch = {
+        detailedPitch: "detailed pitch",
+        dividendPayoutPeriod: "quarterly",
+        elevatorPitch: "elevator pitch",
+        endDate: new Date("2025-09-30T17:55:21.304Z"),
+        startDate: new Date("2025-09-30T17:55:21.304Z"),
+        title: "Product title",
+        targetAmount: "5000",
+        bronzeMax: 200,
+        bronzeMultiplier: "1.0",
+        goldMultiplier: "1.5",
+        silverMax: 500,
+        silverMultiplier: "1.2",
+        status: "active"
     }
 
     it('returns error if user is not authenticated', async () => {
         (auth as unknown as jest.Mock).mockResolvedValue({ isAuthenticated: false, userId: null });
-        const result = await createPitch(
-            params.ProductTitle,
-            params.statusOfPitch,
-            params.ElevatorPitch,
-            params.DetailedPitch,
-            params.TargetInvAmount,
-            params.InvestmentStart,
-            params.InvestmentEnd,
-            params.bronseTierMulti,
-            params.bronseInvMax,
-            params.silverTierMulti,
-            params.silverInvMax,
-            params.goldTierMulti,
-            params.DividEndPeriod
-        );
+        const result = await createPitch({
+            title: params.title,
+            status: params.status,
+            elevatorPitch: params.elevatorPitch,
+            detailedPitch: params.detailedPitch,
+            targetAmount: params.targetAmount,
+            startDate: params.startDate,
+            endDate: params.endDate,
+            bronzeMultiplier: params.bronzeMultiplier,
+            bronzeMax: params.bronzeMax,
+            silverMultiplier: params.silverMultiplier,
+            silverMax: params.silverMax,
+            goldMultiplier: params.goldMultiplier,
+            dividendPayoutPeriod: params.dividendPayoutPeriod
+        });
         expect(result).toEqual({ success: false, message: 'User not authenticated' });
     });
 
     it('successfully mocks create pitch', async () => {
         (auth as unknown as jest.Mock).mockResolvedValue({ isAuthenticated: true, userId: "123" });
 
-        const result = await createPitch(
-            params.ProductTitle,
-            params.statusOfPitch,
-            params.ElevatorPitch,
-            params.DetailedPitch,
-            params.TargetInvAmount,
-            params.InvestmentStart,
-            params.InvestmentEnd,
-            params.bronseTierMulti,
-            params.bronseInvMax,
-            params.silverTierMulti,
-            params.silverInvMax,
-            params.goldTierMulti,
-            params.DividEndPeriod
-        );
+        const result = await createPitch({
+            title: params.title,
+            status: params.status,
+            elevatorPitch: params.elevatorPitch,
+            detailedPitch: params.detailedPitch,
+            targetAmount: params.targetAmount,
+            startDate: params.startDate,
+            endDate: params.endDate,
+            bronzeMultiplier: params.bronzeMultiplier,
+            bronzeMax: params.bronzeMax,
+            silverMultiplier: params.silverMultiplier,
+            silverMax: params.silverMax,
+            goldMultiplier: params.goldMultiplier,
+            dividendPayoutPeriod: params.dividendPayoutPeriod
+        });
         expect(db.insert).toHaveBeenCalledWith(BusinessPitchs);
         expect(db.insert(BusinessPitchs).values).toHaveBeenCalledWith(expect.objectContaining({
             BusAccountID: "123",
