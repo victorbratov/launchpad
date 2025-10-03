@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Card, CardContent, CardHeader, CardTitle,
 } from "@/components/ui/card";
@@ -17,13 +17,15 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { get } from "http";
+import { getBusinessAccountInfo } from "./_actions";
+import { checkBusinessAuthentication } from "@/lib/globalActions";
 
 // Mock Data
-const businessInfo = {
-  businessID: "biz123",
-  ownerName: "John Smith",
-  email: "founder@sunDrop.agri",
-  walletAmount: 8200,
+interface businessInfo {
+ name: string;
+ email: string;
+ wallet: string;
 };
 
 const pitches = [
@@ -67,7 +69,26 @@ interface Pitch {
 
 export default function BusinessPortalPage() {
   const [selectedPitch, setSelectedPitch] = useState<Pitch | null>(null);
+  const [busAccountInfo, setBusinessAccountInfo] = useState<businessInfo | null>(null);
+  useEffect(() => {
+    // fetch business account info
+    async function loadData() {
+      try {
+        const busInfo: businessInfo = await getBusinessAccountInfo();
+        setBusinessAccountInfo(busInfo);
+      } catch (error) {
 
+      }
+    }
+    // check authentication, and if authenticated, load business data
+    checkBusinessAuthentication().then((isBusiness) => {
+      if (!isBusiness) {
+        window.location.href = '/';
+      } else {
+        loadData();
+      }
+    });
+  }, []);
   return (
     <div className="p-6 space-y-6">
       {/* Business Overview */}
@@ -78,12 +99,12 @@ export default function BusinessPortalPage() {
         <CardContent>
           <div className="flex justify-between flex-wrap">
             <div>
-              <p><strong>Owner:</strong> {businessInfo.ownerName}</p>
-              <p><strong>Email:</strong> {businessInfo.email}</p>
+              <p><strong>Owner:</strong> {busAccountInfo ? busAccountInfo.name : "Loading.."}</p>
+              <p><strong>Email:</strong> {busAccountInfo ? busAccountInfo.email : "Loading..."}</p>
             </div>
             <div className="text-right">
               <p><strong>Wallet Balance:</strong></p>
-              <p className="text-2xl font-bold">${businessInfo.walletAmount}</p>
+              <p className="text-2xl font-bold">{busAccountInfo ? busAccountInfo.wallet : "Loading..."}</p>
             </div>
           </div>
         </CardContent>
