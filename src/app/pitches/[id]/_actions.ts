@@ -11,6 +11,10 @@ import { Pitches } from "../../../../types/pitch";
 type BusinessPitchRow = InferInsertModel<typeof BusinessPitchs>;
 
 
+//  Gets pitch by the ID inputted 
+//  @param pitchID - The ID of the pitch to retrieve
+//  @returns A Promise that resolves to a Pitches object or null if not found
+
 export async function getPitchById(pitchID: number): Promise<Pitches | null> {
   const result = await db
     .select()
@@ -30,6 +34,12 @@ export async function getPitchById(pitchID: number): Promise<Pitches | null> {
     dividEndPayout: pitch.dividEndPayout.toISOString()
   };
 }
+
+
+//gets total money invested in the pitches on the db
+// returns a single object with busPitchID and totalAmount invested
+//@param busPitchID - The ID of the pitch to retrieve total investment for
+
 
 export async function getTotalMoneyInvestedInPitch(busPitchID: number): Promise<{busPitchID: number, totalAmount: number} | null> {
   const result = await db

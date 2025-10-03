@@ -4,7 +4,7 @@
 
 > **createPitch**(`title`, `status`, `elevatorPitch`, `detailedPitch`, `targetAmount`, `startDate`, `endDate`, `bronzeMultiplier`, `bronzeMax`, `silverMultiplier`, `silverMax`, `goldMultiplier`, `dividendPayoutPeriod`): `Promise`\<`undefined` \| \{ `message`: `string`; `success`: `boolean`; \}\>
 
-Defined in: [src/app/create-pitch/\_actions.ts:46](https://github.com/victorbratov/launchpad/blob/76a3946e066bd4867b4d8959b0de6dc2965f2137/src/app/create-pitch/_actions.ts#L46)
+Defined in: [src/app/create-pitch/\_actions.ts:46](https://github.com/victorbratov/launchpad/blob/ba912ff5e4884ef55d41a8ab239f2bb8e81f8ecb/src/app/create-pitch/_actions.ts#L46)
 
 Create pitch creates a new pitch in the database with all of the relevant data
 

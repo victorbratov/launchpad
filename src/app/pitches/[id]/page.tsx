@@ -169,6 +169,13 @@ export default function PitchDetailsPage() {
         </div>
       </div>
 
+
+      {/* investment card where you can invest in company and see tiers and there pricing 
+
+      Progress is the bar that shows how much money has been invested in the company
+      CardTitle is well the title
+      */}
+
       {/* RIGHT SIDE - Investment Card */}
       <div className="lg:col-span-1">
         <div className="sticky top-19">
@@ -192,7 +199,12 @@ export default function PitchDetailsPage() {
                 </p>
               </div>
 
-              {/* Tiers */}
+              {/* Tiers 
+              just the tiers of the company in text
+              +1 is needed to so no overlap is allowed 
+              
+              
+              */}
               <div>
                 <h3 className="font-semibold mb-2">Investment Tiers</h3>
                 <ul className="text-sm space-y-1 text-muted-foreground">

@@ -23,7 +23,7 @@ export default function PitchSearchPage() {
 
 
 
-  //database  data
+  //database data
   const [pitches, setPitches] = useState<Pitches[]>([]); // pitches is an array of data from the database
   const [investments, setInvestments] = useState<Investment[]>([]); // data from investment ledger
 

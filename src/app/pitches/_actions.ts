@@ -8,8 +8,12 @@ import { Dividend, Investment, InvestorInfo } from "../../../types/investor_data
 import { Pitches } from "../../../types/pitch";
 
 
-type NewBusinessPitch = InferInsertModel<typeof BusinessPitchs>;
-type BusinessPitchRow = InferSelectModel<typeof BusinessPitchs>;
+
+
+
+// gets the pitches from the da and returns them in an array of Pitches objects
+// data types of investmentStart to dividEndPayout are converted from Date to string to match Pitches type
+//returns an array of Pitches objects
 
 export async function getAllBusinessPitches(): Promise<Pitches[]> {
   const pitches = await db
@@ -25,6 +29,9 @@ export async function getAllBusinessPitches(): Promise<Pitches[]> {
   }));
 }
 
+
+//gets total money invested in all the pitches on the db
+// returns an array of objects with busPitchID and totalAmount invested
 
 export async function getTotalMoneyInvested(): Promise<{busPitchID: number, totalAmount: number}[]> {
   const result = await db
