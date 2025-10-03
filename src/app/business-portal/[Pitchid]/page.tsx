@@ -41,7 +41,7 @@ export default function PitchDetailsPage() {
 
   const [pitchName, setPitchName] = useState("");
   const [elevatorPitch, setElevatorPitch] = useState("");
-  
+
   const [detailedPitch, setDetailedPitch] = useState("");
 
   //finds public bucket key- May need to change to private for security
