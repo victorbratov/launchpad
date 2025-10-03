@@ -4,6 +4,9 @@
 
 ## Modules
 
+- [app/business-portal/\[Pitchid\]/\_actions](app.business-portal.[Pitchid]._actions.md)
+- [app/business-portal/\[Pitchid\]/page](app.business-portal.[Pitchid].page.md)
+- [app/business-portal/\[Pitchid\]/s3Service](app.business-portal.[Pitchid].s3Service.md)
 - [app/business-portal/page](app.business-portal.page.md)
 - [app/create-pitch/\_actions](app.create-pitch._actions.md)
 - [app/create-pitch/page](app.create-pitch.page.md)

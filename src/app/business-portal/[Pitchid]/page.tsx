@@ -1,5 +1,5 @@
+
 "use client";
-      {/* TO TEST CREATE A PITCH WITH ID 1 OR 2 IN DB!!! */}
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
@@ -7,40 +7,82 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { MediaCarousel } from "@/components/media_carousel";
-import { getPitch, updatePitch } from "../_actions"; // server functions
+import { getPitch, updatePitch} from "./_actions"; 
+import { fetchMedia } from "./s3Service";
+import Image from 'next/image';
+import { useUser } from "@clerk/nextjs";
 
+
+type Pitch = {
+  ProductTitle?: string;
+  ElevatorPitch?: string;
+  DetailedPitch?: string;
+  BusAccountID?: string;
+  SuportingMedia?: string | null;
+  InvProfShare?: number;
+  DividEndPayoutPeriod?: string;
+  TargetInvAmount?: string;
+  currentAmount?: number;
+};
+
+/**
+ * Page component for displaying and editing the details of a pitch
+ * @returns Edit Pitch Page
+ */
 export default function PitchDetailsPage() {
-  const { Pitchid: pitchIdParam } = useParams(); // [pitchId] folder
-  console.log("useParams output:", pitchIdParam);
-
+  const { Pitchid: pitchIdParam } = useParams();
   const pitchId = Number(pitchIdParam);
-  console.log("Converted pitchId:", pitchId);
+  const { user } = useUser();
+  const userId = user?.id;
 
-  const [pitch, setPitch] = useState<any>(null);
+  const [pitch, setPitch] = useState<Pitch | null>(null);
   const [loading, setLoading] = useState(true);
-  const [input, setInput] = useState<string>(""); // investment input
+  const [media, setMediaFiles] = useState<string[]>([]);
 
-  // Editable fields
   const [pitchName, setPitchName] = useState("");
   const [elevatorPitch, setElevatorPitch] = useState("");
+  
   const [detailedPitch, setDetailedPitch] = useState("");
+
+  //finds public bucket key- May need to change to private for security
+  const BUCKET_URL = process.env.NEXT_PUBLIC_BUCKET_URL;
 
 
   useEffect(() => {
-    async function fetchPitch() {
+
+    async function fetchPitchAndMedia() {
       if (!pitchId) return;
 
       try {
+        //Fetch DB pitch data
         const data = await getPitch(pitchId);
-        console.log("getPitch returned:", data);
-
-        if (data) {
-          setPitch(data);
-          setPitchName(data.ProductTitle);
-          setElevatorPitch(data.ElevatorPitch);
-          setDetailedPitch(data.DetailedPitch);
+        if (!data) {
+          console.warn(`No pitch found for ID ${pitchId}`);
+          setLoading(false);
+          return;
         }
+        console.log("Pitch owner ID:", data.BusAccountID);
+        console.log("Current user ID:", userId);
+ 
+      
+
+        //Make variables out of read data
+        setPitch(data);
+        setPitchName(data.ProductTitle || "");
+        setElevatorPitch(data.ElevatorPitch || "");
+        setDetailedPitch(data.DetailedPitch || "");
+
+        const dbMedia = data.SuportingMedia ? data.SuportingMedia.split(",").filter(Boolean) : [];
+        setMediaFiles(dbMedia);
+
+        //Fetch S3 media data
+        try {
+          const s3Media = await fetchMedia(String(pitchId));
+          setMediaFiles(Array.from(new Set([...dbMedia, ...s3Media.filter(Boolean)])));
+        } catch (err) {
+          console.error("Error fetching S3 media:", err);
+        }
+
       } catch (err) {
         console.error("Error fetching pitch:", err);
       } finally {
@@ -48,89 +90,140 @@ export default function PitchDetailsPage() {
       }
     }
 
-    fetchPitch();
+    fetchPitchAndMedia();
   }, [pitchId]);
 
   if (loading) return <p>Loading...</p>;
   if (!pitch) return <p>Pitch not found</p>;
 
-  const bronzeMax = Number(pitch.bronseInvMax) || 0;
-const silverMax = Number(pitch.silverInvMax) || 0;
-const goldMax = Number(pitch.goldTierMax) || 0;
-  const targetAmount = Number(pitch.TargetInvAmount);
-  const currentAmount = pitch.currentAmount || 0; // TODO: calculate from investments table
+  const targetAmount = Number(pitch.TargetInvAmount) || 0;
+  const currentAmount = pitch.currentAmount || 0;
   const remaining = targetAmount - currentAmount;
-
-  const amount = parseFloat(input) || 0;
-
-  function calculateShares(amount: number) {
-    if (amount <= 0) return { tier: null, shares: 0 };
-    if (amount <= pitch.bronzeMax) return { tier: "Bronze", shares: amount * pitch.bronseTierMulti };
-    if (amount <= pitch.silverTierMax) return { tier: "Silver", shares: amount * pitch.silverTierMulti };
-    if (amount <= pitch.goldTierMax) return { tier: "Gold", shares: amount * pitch.goldTierMulti };
-    return { tier: null, shares: 0 };
+  
+  /**
+   * Uploads a new media file to S3 and updates DB with its key
+   *
+   * @param file - The file
+   * @returns confirmation if file has successfully been uploaded
+   */
+  const handleUpload = async (file: File) => {
+      const allowedTypes = ["image/", "video/"];
+  if (!allowedTypes.some(type => file.type.startsWith(type))) {
+    alert("Only image and video files are allowed!");
+    return;
   }
 
-  const { tier, shares } = calculateShares(amount);
+    const key = `${pitchId}/${file.name}`;
+    try {
+      const response = await fetch(`${BUCKET_URL}${key}`, {
+        method: "PUT",
+        headers: { "Content-Type": file.type },
+        body: file,
+      });
 
+      if (!response.ok) throw new Error(`Upload failed with status ${response.status}`);
+
+      const newMedia = [...media, key];
+      setMediaFiles(newMedia);
+
+      try {
+        await updatePitch(pitchId, { SuportingMedia: newMedia.join(",") });
+      } catch (err) {
+        console.error("Error updating DB after upload:", err);
+      }
+    } catch (err) {
+      console.error("Upload error:", err);
+      alert("Upload failed, check console for details.");
+    }
+  };
+
+/**
+   * Saves edited pitch fields back into the database.
+   *
+   * @returns Uploads new field values to database
+   */
   const handleSave = async () => {
-    console.log("Saving pitch:", pitchId, { pitchName, elevatorPitch, detailedPitch });
-    await updatePitch(pitchId, { ProductTitle: pitchName, ElevatorPitch: elevatorPitch, DetailedPitch: detailedPitch });
-    alert("Pitch updated!");
+    try {
+      await updatePitch(pitchId, {
+        ProductTitle: pitchName,
+        ElevatorPitch: elevatorPitch,
+        DetailedPitch: detailedPitch,
+      });
+      alert("Pitch updated!");
+    } catch (err) {
+      console.error("Error saving pitch:", err);
+      alert("Save failed, check console for details.");
+    }
   };
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 p-6">
-      {/* LEFT SIDE */}
       <div className="lg:col-span-2 space-y-6">
-        <div className="flex justify-center">
-          <div className="w-full max-w-3xl">
-            <MediaCarousel media={pitch.SuportingMedia ? [pitch.SuportingMedia] : []} />
+        {/* media Section */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Supporting Media</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-col gap-4">
+              {media
+  .filter((item): item is string => !!item && !!BUCKET_URL)
+  .map((item, idx) => {
+    //Filters out non-media. Not necessary but is last filter against end user issues
+    const extMatch = item.match(/\.(jpg|jpeg|png|gif|webp|mp4|mov)$/i);
+    if (!extMatch) return null;
+
+    if (item.toLowerCase().endsWith(".mp4")) {
+      return <video key={idx} src={`${BUCKET_URL}${item}`} width={400} height={300} controls />;
+    } else {
+      return <Image key={idx} src={`${BUCKET_URL}${item}`} alt={`Media ${idx + 1}`} width={400} height={300} />;
+    }
+  })}
+
+            </div>
+
+            <div>
+              <input
+                type="file"
+                accept="image/*,video/*"
+                onChange={(e) => e.target.files && handleUpload(e.target.files[0])}
+                className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 
+                  file:rounded-md file:border-0 file:text-sm file:font-semibold 
+                  file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+              />
+            </div>
+
+            <div className="space-y-2">
+
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* edit pitch text fields */}
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-2xl font-semibold mb-2">Title</h2>
+            <Input value={pitchName} onChange={(e) => setPitchName(e.target.value)} className="text-3xl font-bold w-full" placeholder="Pitch Name" />
           </div>
-        </div>
 
-    <h2 className="text-2xl font-semibold">Title</h2>
+          <div>
+            <h3 className="text-2xl font-semibold mb-2">Elevator Pitch</h3>
+            <textarea value={elevatorPitch} onChange={(e) => setElevatorPitch(e.target.value)} className="w-full text-lg p-2 border rounded-md resize-none" rows={3} placeholder="Elevator Pitch" />
+          </div>
 
-          <Input
-    value={pitchName}
-    onChange={(e) => setPitchName(e.target.value)}
-    className="text-3xl font-bold w-full"
-    placeholder="Pitch Name"
-  />
+          <div>
+            <h2 className="text-2xl font-semibold mb-2">Detailed Pitch</h2>
+            <textarea value={detailedPitch} onChange={(e) => setDetailedPitch(e.target.value)} className="w-full p-3 border rounded-md resize-none h-72" placeholder="Detailed Pitch" />
+          </div>
 
-  {/* Editable elevator pitch */}
-      <h3 className="text-2xl font-semibold">Elevator Pitch</h3>
-  <textarea
-    value={elevatorPitch}
-    onChange={(e) => setElevatorPitch(e.target.value)}
-    className="w-full text-lg text-muted-foreground p-2 border rounded-md resize-none"
-    rows={3}
-    placeholder="Elevator Pitch"
-  />
-
-  {/* Detailed pitch section */}
-  <div className="space-y-2">
-    <h2 className="text-2xl font-semibold">Detailed Pitch</h2>
-    <textarea
-      value={detailedPitch}
-      onChange={(e) => setDetailedPitch(e.target.value)}
-      className="w-full p-3 border rounded-md resize-none h-72 text-muted-foreground"
-      placeholder="Detailed Pitch"
-    />
-  </div>
-<div className="space-y-2">
-          <h2 className="text-2xl font-semibold">Investment Terms</h2>
-          <p>
-            <strong>Profit Share:</strong> {pitch.InvProfShare}% of
-            revenue
-          </p>
-          <p>
-            <strong>Dividend Period:</strong> {pitch.DividEndPayoutPeriod}
-          </p>
+          <div className="space-y-1">
+            <h2 className="text-2xl font-semibold">Investment Terms</h2>
+            <p><strong>Profit Share:</strong> {pitch.InvProfShare}% of revenue</p>
+            <p><strong>Dividend Period:</strong> {pitch.DividEndPayoutPeriod}</p>
+          </div>
         </div>
       </div>
 
-      {/* RIGHT SIDE */}
       <div className="lg:col-span-1">
         <div className="sticky top-19 space-y-4">
           <Card>
@@ -141,19 +234,13 @@ const goldMax = Number(pitch.goldTierMax) || 0;
               <Progress value={(currentAmount / targetAmount) * 100} />
               <p>${currentAmount.toLocaleString()} raised of ${targetAmount.toLocaleString()} goal</p>
               <p>${remaining.toLocaleString()} remaining</p>
-
-              <div className="space-y-2">
-                <h3 className="font-semibold mb-2">Investment Tiers</h3>
-                <ul className="text-sm space-y-1 text-muted-foreground">
-                <li><strong>Bronze:</strong> up to ${bronzeMax}, {Number(pitch.bronzeTierMulti) || 1}x shares</li>
-                <li><strong>Silver:</strong> ${bronzeMax + 1} - ${silverMax}, {Number(pitch.silverTierMulti) || 1}x shares</li>
-                <li><strong>Gold:</strong> ${silverMax + 1} - ${goldMax}, {Number(pitch.goldTierMulti) || 1}x shares</li>
-              </ul>
-
-              </div>
-              <Button onClick={handleSave} className="w-full mt-2">Save Changes</Button>
             </CardContent>
           </Card>
+          <div className="pt-2">
+    <Button onClick={handleSave} className="w-full">
+      Save Changes
+    </Button>
+  </div>
         </div>
       </div>
     </div>
