@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,12 @@ import { Progress } from "@/components/ui/progress";
 import { MediaCarousel } from "@/components/media_carousel";
 import Link from "next/link";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useParams } from "next/navigation";
+import { Investment, Pitches } from "../../../../types/pitch";
+import { getPitchById } from "./_actions";
+import { parse } from "path";
+import { getTotalMoneyInvestedInPitch } from "./_actions";
+
 
 const mockPitch = {
   pitchID: "p1",
@@ -45,25 +51,81 @@ By funding SunDrop, you invest not only in a growing market—projected to reach
   goldMax: 10000,
 };
 
-function calculateShares(amount: number, pitch: typeof mockPitch) {
+
+const defaultPitch: Pitches = {
+  BusPitchID: 0,
+  BusAccountID: "0",
+  statusOfPitch: "Loading",
+  ProductTitle: "Loading...",
+  ElevatorPitch: "Loading pitch details...",
+  DetailedPitch: "Loading detailed pitch information...",
+  SuportingMedia: "https://placehold.co/800x400?text=Loading",
+  TargetInvAmount: "0",
+  InvestmentStart: new Date().toISOString(),
+  InvestmentEnd: new Date().toISOString(),
+  InvProfShare: 0,
+  pricePerShare: "1",
+  bronseTierMulti: "1",
+  bronseInvMax: 999,
+  silverTierMulti: "1.2",
+  silverInvMax: 4999,
+  goldTierMulti: "1.5",
+  goldTierMax: 10000,
+  dividEndPayout: new Date().toISOString(),
+  DividEndPayoutPeriod: "quarterly"
+};
+
+function calculateShares(amount: number, pitch: Pitches) {
   if (amount <= 0) return { tier: null, shares: 0 };
-  if (amount <= pitch.bronzeMax) {
-    return { tier: "Bronze", shares: amount * pitch.bronzeTierMult };
+  if (amount <= pitch.bronseInvMax) {
+    return { tier: "Bronze", shares: amount * parseInt(pitch.bronseTierMulti) };
   }
-  if (amount <= pitch.silverMax) {
-    return { tier: "Silver", shares: amount * pitch.silverTierMult };
+  if (amount <= pitch.silverInvMax) {
+    return { tier: "Silver", shares: amount * parseInt(pitch.silverTierMulti) };
   }
-  if (amount <= pitch.goldMax) {
-    return { tier: "Gold", shares: amount * pitch.goldTierMult };
+  if (amount <= pitch.goldTierMax) {
+    return { tier: "Gold", shares: amount * parseInt(pitch.goldTierMulti) };
   }
   return { tier: null, shares: 0 };
 }
 
 export default function PitchDetailsPage() {
-  const pitch = mockPitch;
+
+  
+  
+  // getting the Id from the url
+  const params = useParams();
+  const pitchID = params.id as string;
+
+  // setting state varaible for the pitch info
+  const [busPitchInfo, setBusPitchInfo] = useState<Pitches | null>(null);
+  const [investmentInfo, setInvestmentInfo] = useState<Investment | null>(null);
+
+  //where the data is put into the arrays above
+  useEffect(() => {
+    async function loadData() {
+      try {
+      const busPitchInfo = await getPitchById(parseInt(pitchID));
+      const investmentInfo = await getTotalMoneyInvestedInPitch(parseInt(pitchID));
+
+
+      setBusPitchInfo(busPitchInfo);
+      setInvestmentInfo(investmentInfo);
+
+      } catch (error) {
+        console.error("Error fetching pitch data:", error);
+      }
+    }
+    if (pitchID) {
+      loadData();
+    }
+  }, []);
+
   const [input, setInput] = useState<string>(""); // raw input as string
   const amount = parseFloat(input) || 0;
-  const remaining = pitch.pitchGoal - pitch.currentAmount;
+
+
+  const remaining = parseInt((busPitchInfo?.TargetInvAmount || 0).toString()) - (investmentInfo?.totalAmount || 0);
 
   // Add pitchVersions and selectedVersion state
   const pitchVersions = [
@@ -76,33 +138,33 @@ export default function PitchDetailsPage() {
     pitchVersions.find((v) => v.current)?.id || pitchVersions[0].id
   );
 
-  const { tier, shares } = calculateShares(amount, pitch);
+  const { tier, shares } = calculateShares(amount, busPitchInfo || defaultPitch);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 p-6">
       <div className="lg:col-span-2 space-y-6">
         <div className="flex justify-center">
           <div className="w-full max-w-3xl">
-            <MediaCarousel media={pitch.media} />
+            <MediaCarousel media={(mockPitch.media)} />
           </div>
         </div>
 
-        <h1 className="text-3xl font-bold">{pitch.pitchName}</h1>
-        <p className="text-lg text-muted-foreground">{pitch.elevatorPitch}</p>
+        <h1 className="text-3xl font-bold">{(busPitchInfo?.ProductTitle || defaultPitch.ProductTitle)}</h1>
+        <p className="text-lg text-muted-foreground">{(busPitchInfo?.ElevatorPitch || defaultPitch.ElevatorPitch)}</p>
 
         <div className="space-y-2">
           <h2 className="text-2xl font-semibold">Detiled Pitch</h2>
-          <p className="text-muted-foreground">{pitch.detailedPitch}</p>
+          <p className="text-muted-foreground">{(busPitchInfo?.DetailedPitch || defaultPitch.DetailedPitch)}</p>
         </div>
 
         <div className="space-y-2">
           <h2 className="text-2xl font-semibold">Investment Terms</h2>
           <p>
-            <strong>Profit Share:</strong> {pitch.profitSharePercentage}% of
+            <strong>Profit Share:</strong> {busPitchInfo?.InvProfShare || defaultPitch.InvProfShare}% of
             revenue
           </p>
           <p>
-            <strong>Dividend Period:</strong> {pitch.dividendPeriod}
+            <strong>Dividend Period:</strong> {busPitchInfo?.DividEndPayoutPeriod || defaultPitch.DividEndPayoutPeriod}
           </p>
         </div>
       </div>
@@ -112,18 +174,18 @@ export default function PitchDetailsPage() {
         <div className="sticky top-19">
           <Card>
             <CardHeader>
-              <CardTitle>Invest in {pitch.pitchName}</CardTitle>
+              <CardTitle>Invest in {busPitchInfo?.ProductTitle || defaultPitch.ProductTitle}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Funding progress */}
               <div className="space-y-2">
                 <Progress
-                  value={(pitch.currentAmount / pitch.pitchGoal) * 100}
+                  value={(investmentInfo?.totalAmount || 0) / parseInt((busPitchInfo?.TargetInvAmount || 1).toString()) * 100}
                   className="w-full"
                 />
                 <p>
-                  ${pitch.currentAmount.toLocaleString()} raised of $
-                  {pitch.pitchGoal.toLocaleString()} goal
+                  ${investmentInfo?.totalAmount.toLocaleString()} raised of $
+                  {busPitchInfo?.TargetInvAmount.toLocaleString()} goal
                 </p>
                 <p className="text-sm text-muted-foreground">
                   ${remaining.toLocaleString()} remaining
@@ -135,16 +197,16 @@ export default function PitchDetailsPage() {
                 <h3 className="font-semibold mb-2">Investment Tiers</h3>
                 <ul className="text-sm space-y-1 text-muted-foreground">
                   <li>
-                    <strong>Bronze:</strong> up to ${pitch.bronzeMax},{" "}
-                    {pitch.bronzeTierMult}x shares
+                    <strong>Bronze:</strong> up to ${busPitchInfo?.bronseInvMax},{" "}
+                    {busPitchInfo?.bronseTierMulti}x shares
                   </li>
                   <li>
-                    <strong>Silver:</strong> ${pitch.bronzeMax + 1} - $
-                    {pitch.silverMax}, {pitch.silverTierMult}x shares
+                    <strong>Silver:</strong> ${(busPitchInfo?.silverInvMax || 0) + 1} - $
+                    {busPitchInfo?.silverInvMax}, {busPitchInfo?.silverTierMulti}x shares
                   </li>
                   <li>
-                    <strong>Gold:</strong> ${pitch.silverMax + 1} - $
-                    {pitch.goldMax}, {pitch.goldTierMult}x shares
+                    <strong>Gold:</strong> ${(busPitchInfo?.goldTierMax || 0)  + 1} - $
+                    {busPitchInfo?.goldTierMax}, {busPitchInfo?.goldTierMulti}x shares
                   </li>
                 </ul>
               </div>

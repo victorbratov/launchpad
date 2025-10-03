@@ -22,3 +22,15 @@ export async function createBusinessPitch(
   return inserted;
 }
 
+
+export async function getTotalMoneyInvested(): Promise<{busPitchID: number, totalAmount: number}[]> {
+  const result = await db
+    .select({
+      busPitchID: InvestmentLedger.BusPitchID,
+      totalAmount: sql<number>`SUM(${InvestmentLedger.AmountInvested})`.as('totalAmount')
+    })
+    .from(InvestmentLedger)
+    .groupBy(InvestmentLedger.BusPitchID);
+
+  return result;
+}
