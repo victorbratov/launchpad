@@ -8,13 +8,18 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CalendarIcon } from "lucide-react";
-import { format, parse } from "date-fns";
+import { format } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { RAGGauge } from "@/components/rag_gauge";
 import { createPitch, checkBusinessAuthentication } from "./_actions";
 import { useRouter } from "next/navigation";
 import { validateDates, validateMaxes, validateMultipliers, setPitchStatus } from "./utils";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+
+import { Dropzone } from '@mantine/dropzone';
+import { Group, Text } from '@mantine/core';
+import { IconUpload, IconX, IconPhoto } from '@tabler/icons-react';
 
 /**
  * Create pitch page where the user will create their pitch
@@ -38,7 +43,9 @@ export default function CreatePitchPage() {
   const [feedback, setFeedback] = useState<string | null>(null);
   const [ragScore, setRagScore] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState<string>("");
+  const [status, setStatus] = useState<string>("Pending");
+  const [mediaFiles, setMediaFiles] = useState<File[]>([]);
+  const [mediaSuccess, setMediaSuccess] = useState<boolean>(false);
 
   useEffect(() => {
     // check if the user is logged in with a business account
@@ -75,28 +82,25 @@ export default function CreatePitchPage() {
     e.preventDefault();
     setLoading(true);
 
-    // validate dates
-    const { success: success, message: message } = validateDates(startDate, endDate)
-    if (!success) {
-      alert(message)
-      return
+    if (!validateInput()) {
+      setLoading(false);
+      return // exit early if invalid input
     }
-    setStatus(setPitchStatus(startDate))
-    
-    // validate tier max and multipliers
-    if (!validateMultipliers(bronzeMultiplier, silverMultiplier, goldMultiplier)) {
-      alert("Multiplier value must be lowest for bronze and highest for gold")
-      return
-    }
-    if (!validateMaxes(bronzeMax!, silverMax!, parseInt(goal!))) {
-      alert("Error with maximum tier values")
-      return
-    }
-
     try {
       // non-null assertion, as the input is required by the form so it will always have a value
-      await createPitch(title, status, elevatorPitch, detailedPitch, goal!, startDate, endDate, bronzeMultiplier, bronzeMax!, silverMultiplier, silverMax!, goldMultiplier, dividendPeriod);
-      router.push("/business-portal"); 
+      const { success, message } = await createPitch({title, status, elevatorPitch, detailedPitch, targetAmount: goal!, startDate, endDate, bronzeMultiplier, bronzeMax: bronzeMax!, silverMultiplier, silverMax: silverMax!, goldMultiplier, dividendPayoutPeriod: dividendPeriod});
+      if (success) {
+        for (const file of mediaFiles) {
+          if (!await uploadMedia(file, message)) {
+            alert("Error uploading image");
+            return;
+          }
+        }
+        router.push("/business-portal");
+      } else {
+        setLoading(false);
+      }
+
     } catch (err) {
       alert("Error: Unable to create pitch");
       setLoading(false)
@@ -105,15 +109,77 @@ export default function CreatePitchPage() {
     }
   };
 
+  /**
+   * Calls all input validation functions
+   * @returns Whether the input is valid or not
+   */
+  function validateInput() {
+    // validate dates
+    const { success: success, message: message } = validateDates(startDate, endDate)
+    if (!success) {
+      alert(message)
+      return false
+    }
+    setStatus(setPitchStatus(startDate))
+
+    // validate tier max and multipliers
+    if (!validateMultipliers(bronzeMultiplier, silverMultiplier, goldMultiplier)) {
+      alert("Multiplier value must be lowest for bronze and highest for gold")
+      return false
+    }
+    if (!validateMaxes(bronzeMax!, silverMax!, parseInt(goal!))) {
+      alert("Error with maximum tier values")
+      return false
+    }
+    return true
+  }
+
+  /**
+   * Handle files being dropped and stores them
+   * @param files files that were dropped
+   */
+  const handleDrop = (files: File[]) => {
+    setMediaFiles((prev) => [...prev, ...files]);
+  };
+
+  /**
+ * Function to upload an image or video to the S3 bucket
+ * @param file File to be uploaded
+ * @param url The url to upload the media to
+ */
+  const uploadMedia = async (file: File, url: string) => {
+    // upload file to S3 bucket
+    const response = await fetch(`${url}/${file.name}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': file.type,
+      },
+      body: file,
+    });
+    if (response.ok) {
+      return true;
+    } else {
+      return false;
+    }
+  };
+
   return (
     <div className="p-6 max-w-6xl mx-auto">
+      <Dialog open={loading}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Creating pitch</DialogTitle>
+          </DialogHeader>
+          <Text className="text-center">Your pitch is being created. Please wait ....</Text>
+        </DialogContent>
+      </Dialog>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left: Pitch Form */}
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>Create New Pitch</CardTitle>
           </CardHeader>
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} data-testid="pitch-form">
             <CardContent className="space-y-6">
               {/* Title */}
               <div className="space-y-2">
@@ -148,6 +214,51 @@ export default function CreatePitchPage() {
                 />
               </div>
 
+              {/* Supporting media */}
+              <div className="space-y-2">
+                <Label>Supporting Media</Label>
+                <Dropzone
+                  onDrop={handleDrop}
+                  onReject={(files) => setStatus("failed")}
+                  maxSize={100 * 1024 ** 2} // 100mb currently but can be changed
+                  accept={{
+                    'image/*': [], // All images
+                    'video/*': [], // all videos
+                  }}
+                  styles={{ root: { borderWidth: 1.5, borderRadius: 7, borderStyle: 'solid', padding: '2rem', backgroundColor: "#ffffffff", color: "#6e6e6eff" } }}
+                  data-testid="dropzone"
+                >
+                  <Group justify="center" gap="xl" mih={220} style={{ pointerEvents: 'none' }}>
+                    <Dropzone.Accept>
+                      <IconUpload size={52} color="green" stroke={1.5} />
+                    </Dropzone.Accept>
+                    <Dropzone.Reject>
+                      <IconX size={52} color="red" stroke={1.5} />
+                    </Dropzone.Reject>
+                    <Dropzone.Idle>
+                      {mediaFiles.length == 0 &&
+                        <div className="text-center space-y-2" >
+                          <Text size="sm" inline>Drag images or videos here or click to select files</Text>
+                          <IconPhoto className="mx-auto w-1/2" size={52} color="#6e6e6eff" stroke={1.5} />
+                        </div>
+                      }
+                      <div className="text-center space-y-2" >
+                        {mediaFiles.length > 0 &&
+                          <Text className="pb-2">Media to upload:</Text>}
+                        {mediaFiles.map((file, index) => (
+
+                          <Label data-testid="media" key={index}>{file.name}</Label>
+                        ))}
+                      </div>
+                    </Dropzone.Idle>
+
+                    <div>
+
+                    </div>
+                  </Group>
+                </Dropzone>
+
+              </div>
               {/* Goal */}
               <div className="space-y-2">
                 <Label>Funding Goal (USD)</Label>
@@ -253,7 +364,7 @@ export default function CreatePitchPage() {
                 <Input
                   type="number"
                   placeholder="1.0"
-                   value={bronzeMultiplier}
+                  value={bronzeMultiplier}
                   onChange={(e) => setBronzeMultiplier(e.target.value)}
                   required
                 />
@@ -302,12 +413,11 @@ export default function CreatePitchPage() {
                 <Button variant="outline" onClick={handleEvaluate}>
                   AI Evaluation
                 </Button>
-                <Button disabled={loading} type="submit">{loading ? "Loading..." : "Submit Pitch"} </Button>
+                <Button type="submit">Submit Pitch</Button>
               </div>
             </CardContent>
           </form>
         </Card>
-
 
         {/* Right: AI Feedback */}
         <Card className="lg:col-span-1">
