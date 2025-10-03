@@ -1,3 +1,4 @@
+// types/pitch.ts
 export type Pitch = {
   pitcherID: string;
   pitchID: string;
@@ -10,3 +11,28 @@ export type Pitch = {
   pitchImageUrl: string;
   tags: string[];
 };
+
+
+//setting a data type for the pitches fetched from database
+  export type Pitches = {
+    BusPitchID: number;
+    BusAccountID: string;
+    statusOfPitch: string;
+    ProductTitle: string;
+    ElevatorPitch: string;
+    DetailedPitch: string;
+    SuportingMedia: string | null;
+    TargetInvAmount: string;
+    InvestmentStart: string;
+    InvestmentEnd: string;
+    InvProfShare: number;
+    pricePerShare: string;
+    bronseTierMulti: string;
+    bronseInvMax: number;
+    silverTierMulti: string;
+    silverInvMax: number;
+    goldTierMulti: string;
+    goldTierMax: number;
+    dividEndPayout: string;
+    DividEndPayoutPeriod: string;
+  };

@@ -28,8 +28,14 @@ export async function getPitch(pitchId: number) {
     throw new Error("You do not own this pitch");
   }
 
-  return pitch || null;
+   return {
+    ...pitch,
+    InvestmentStart: pitch.InvestmentStart?.toISOString() ?? null,
+    InvestmentEnd: pitch.InvestmentEnd?.toISOString() ?? null,
+    dividEndPayout: pitch.dividEndPayout?.toISOString() ?? null,
+  };
 }
+
 
 /** 
  * @param PitchId The unique ID of the pitch to update.

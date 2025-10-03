@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { getUserPitches } from "./_actions";
 import {
   Card, CardContent, CardHeader, CardTitle,
 } from "@/components/ui/card";
@@ -18,8 +19,13 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import type { Pitches } from "../../../types/pitch";
 
-// Mock Data
+
+
+/**
+ * The Business Portal page, allowing users who have Business accounts to view and manage all of their created pitches
+ */
 const businessInfo = {
   businessID: "biz123",
   ownerName: "John Smith",
@@ -27,48 +33,25 @@ const businessInfo = {
   walletAmount: 8200,
 };
 
-const pitches = [
-  {
-    pitchID: "1",
-    pitchName: "SunDrop: Solar Irrigation",
-    pitchGoal: 10000,
-    currentAmount: 7400,
-    investors: 23,
-    profitSharePercentage: 10,
-    dividendPeriod: "Quarterly",
-    pitchEnd: "2024-08-01",
-    detailedPitch:
-      "Our project empowers farmers in rural Kenya with affordable solar-powered irrigation systems to increase yields and fight climate vulnerability.",
-  },
-  {
-    pitchID: "2",
-    pitchName: "EcoThreads: Recycled Fashion",
-    pitchGoal: 15000,
-    currentAmount: 15000,
-    investors: 40,
-    profitSharePercentage: 8,
-    dividendPeriod: "Yearly",
-    pitchEnd: "2024-07-15",
-    detailedPitch:
-      "EcoThreads creates sustainable fashion items entirely from recycled plastics and organic cotton, focusing on reducing fast fashion’s footprint.",
-  },
-];
-
-interface Pitch {
-  pitchID: string;
-  pitchName: string;
-  pitchGoal: number;
-  currentAmount: number;
-  investors: number;
-  profitSharePercentage: number;
-  dividendPeriod: string;
-  pitchEnd: string;
-  detailedPitch: string;
-}
-
+/**
+ * Main Business Portal Page Component
+ * Shows an overview of the business + all created pitches
+ */
 export default function BusinessPortalPage() {
-  const [selectedPitch, setSelectedPitch] = useState<Pitch | null>(null);
+const [pitches, setPitches] = useState<Pitches[]>([]);
+  const [selectedPitch, setSelectedPitch] = useState<Pitches | null>(null);
 
+  useEffect(() => {
+    async function fetchPitches() {
+      try {
+        const data = await getUserPitches();
+        setPitches(data);
+      } catch (error) {
+        console.error("Failed to load pitches:", error);
+      }
+    }
+    fetchPitches();
+  }, []);
   return (
     <div className="p-6 space-y-6">
       {/* Business Overview */}
@@ -109,29 +92,29 @@ export default function BusinessPortalPage() {
             </TableHeader>
             <TableBody>
               {pitches.map((pitch) => (
-                <Dialog key={pitch.pitchID}>
+                <Dialog key={pitch.BusPitchID}>
                   <DialogTrigger asChild>
                     <TableRow
                       className="cursor-pointer hover:bg-muted/50"
                       onClick={() => setSelectedPitch(pitch)}
                     >
                       <TableCell className="font-medium">
-                        {pitch.pitchName}
+                        {pitch.ProductTitle}
                       </TableCell>
                       <TableCell>
                         <div className="space-y-1">
                           <Progress
-                            value={(pitch.currentAmount / pitch.pitchGoal) * 100}
+                            value={(0 / Number(pitch.TargetInvAmount || 1)) * 100} // Convert string → number
                           />
                           <span className="text-xs text-muted-foreground">
-                            ${pitch.currentAmount} / ${pitch.pitchGoal}
+                            $2implement / ${pitch.TargetInvAmount}
                           </span>
                         </div>
                       </TableCell>
-                      <TableCell>{pitch.investors}</TableCell>
-                      <TableCell>{pitch.profitSharePercentage}%</TableCell>
-                      <TableCell>{pitch.dividendPeriod}</TableCell>
-                      <TableCell>{pitch.pitchEnd}</TableCell>
+                      <TableCell>2implement investors</TableCell>
+                      <TableCell>{pitch.InvProfShare}%</TableCell>
+                      <TableCell>{pitch.DividEndPayoutPeriod}</TableCell>
+                      <TableCell>2implement pitch end</TableCell>
                     </TableRow>
                   </DialogTrigger>
 
@@ -140,31 +123,31 @@ export default function BusinessPortalPage() {
                     {selectedPitch && (
                       <>
                         <DialogHeader>
-                          <DialogTitle>{selectedPitch.pitchName}</DialogTitle>
+                          <DialogTitle>{selectedPitch.ProductTitle}</DialogTitle>
                         </DialogHeader>
                         <div className="space-y-4">
                           <p className="text-sm text-muted-foreground">
-                            {selectedPitch.detailedPitch}
+                            {selectedPitch.DetailedPitch}
                           </p>
                           <div>
-                            <p><strong>Goal:</strong> ${selectedPitch.pitchGoal}</p>
+                            <p><strong>Goal:</strong> ${selectedPitch.TargetInvAmount}</p>
                             <p>
-                              <strong>Raised:</strong> ${selectedPitch.currentAmount}
+                              <strong>Raised:</strong> $2implement
                             </p>
-                            <p><strong>Investors:</strong> {selectedPitch.investors}</p>
+                            <p><strong>Investors:</strong> 2implement</p>
                             <p>
                               <strong>Profit Share:</strong>{" "}
-                              {selectedPitch.profitSharePercentage}%
+                              {selectedPitch.InvProfShare}%
                             </p>
                             <p>
                               <strong>Dividend Period:</strong>{" "}
-                              {selectedPitch.dividendPeriod}
+                              {selectedPitch.DividEndPayoutPeriod}
                             </p>
-                            <p><strong>Funding End:</strong> {selectedPitch.pitchEnd}</p>
+                            <p><strong>Funding End:</strong> 2implement</p>
                           </div>
                         </div>
                         <DialogFooter className="flex gap-3 justify-end">
-                           <Link href={`/business-portal/${pitch.pitchID}`}>
+                           <Link href={`/business-portal/${pitch.BusPitchID}`}>
                           <Button variant="outline">
                             Edit Pitch
                           </Button>
