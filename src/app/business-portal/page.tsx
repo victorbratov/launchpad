@@ -25,6 +25,7 @@ import { checkBusinessAuthentication } from "@/lib/globalActions";
 import { Input } from "@/components/ui/input";
 import WithdrawDialog from "@/components/withdrawal_dialog";
 import DepositDialog from "@/components/deposit_dialog";
+import { validateWithdrawalAmount } from "@/lib/utils";
 
 /**
  * Basic business account information
@@ -116,7 +117,8 @@ export default function BusinessPortalPage() {
   async function withdrawFunds(amount: number | null) {
     setWithdrawing(true);
 
-    if (validateWithdrawalAmount(amount)) {
+    setErrorMessage(validateWithdrawalAmount(amount, parseFloat(busAccountInfo?.wallet ?? "0")));
+    if (errorMessage === null) {
       try {
         await withdrawBalance(amount ?? parseFloat(busAccountInfo?.wallet ?? "0"));
         setOpen(false);
@@ -130,28 +132,6 @@ export default function BusinessPortalPage() {
     } else {
       setWithdrawing(false);
     }
-  }
-
-  /**
-   * Validate the withdrawal amount entered by the user
-   * @param amount The amount to validate
-   * @returns {boolean} True if the amount is valid, false otherwise
-   */
-  function validateWithdrawalAmount(amount: number | null) {
-    setErrorMessage(null);
-    if (parseFloat(busAccountInfo?.wallet ?? "0") === 0) {
-      setErrorMessage("No funds available to withdraw.");
-      return false;
-    }
-    if (amount === null || amount <= 0) {
-      setErrorMessage("Please enter a valid amount to withdraw.");
-      return false;
-    }
-    if (amount > parseFloat(busAccountInfo?.wallet ?? "0")) {
-      setErrorMessage("Withdrawal amount exceeds available balance.");
-      return false;
-    }
-    return true;
   }
 
   /**
