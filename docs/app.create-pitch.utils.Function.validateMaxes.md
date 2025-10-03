@@ -4,7 +4,7 @@
 
 > **validateMaxes**(`bronze`, `silver`, `gold`): `boolean`
 
-Defined in: [src/app/create-pitch/utils.ts:37](https://github.com/victorbratov/launchpad/blob/76a3946e066bd4867b4d8959b0de6dc2965f2137/src/app/create-pitch/utils.ts#L37)
+Defined in: [src/app/create-pitch/utils.ts:37](https://github.com/victorbratov/launchpad/blob/d14315d3bd6634bc1c0e4507f8ad0551e9221cbc/src/app/create-pitch/utils.ts#L37)
 
 Validates the maximums for each tier, that they are in the correct order
 

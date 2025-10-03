@@ -4,7 +4,7 @@
 
 > **PopoverTrigger**(`__namedParameters`): `Element`
 
-Defined in: [src/components/ui/popover.tsx:14](https://github.com/victorbratov/launchpad/blob/76a3946e066bd4867b4d8959b0de6dc2965f2137/src/components/ui/popover.tsx#L14)
+Defined in: [src/components/ui/popover.tsx:14](https://github.com/victorbratov/launchpad/blob/d14315d3bd6634bc1c0e4507f8ad0551e9221cbc/src/components/ui/popover.tsx#L14)
 
 ## Parameters
 

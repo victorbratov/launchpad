@@ -4,7 +4,7 @@
 
 > **getDividends**(): `Promise`\<`Dividend`[]\>
 
-Defined in: [src/app/investor-portal/\_actions.ts:79](https://github.com/victorbratov/launchpad/blob/76a3946e066bd4867b4d8959b0de6dc2965f2137/src/app/investor-portal/_actions.ts#L79)
+Defined in: [src/app/investor-portal/\_actions.ts:79](https://github.com/victorbratov/launchpad/blob/d14315d3bd6634bc1c0e4507f8ad0551e9221cbc/src/app/investor-portal/_actions.ts#L79)
 
 Fetch all dividends paid to the currently authenticated user.
 

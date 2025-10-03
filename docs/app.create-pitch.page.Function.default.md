@@ -4,7 +4,7 @@
 
 > **default**(): `Element`
 
-Defined in: [src/app/create-pitch/page.tsx:23](https://github.com/victorbratov/launchpad/blob/76a3946e066bd4867b4d8959b0de6dc2965f2137/src/app/create-pitch/page.tsx#L23)
+Defined in: [src/app/create-pitch/page.tsx:29](https://github.com/victorbratov/launchpad/blob/d14315d3bd6634bc1c0e4507f8ad0551e9221cbc/src/app/create-pitch/page.tsx#L29)
 
 Create pitch page where the user will create their pitch
 

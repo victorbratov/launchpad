@@ -4,6 +4,7 @@
 
 ## Modules
 
+- [app/business-portal/\_actions](app.business-portal._actions.md)
 - [app/business-portal/page](app.business-portal.page.md)
 - [app/create-pitch/\_actions](app.create-pitch._actions.md)
 - [app/create-pitch/page](app.create-pitch.page.md)
@@ -16,8 +17,10 @@
 - [app/onboarding/layout](app.onboarding.layout.md)
 - [app/onboarding/page](app.onboarding.page.md)
 - [app/page](app.page.md)
+- [app/pitches/\_actions](app.pitches._actions.md)
 - [app/pitches/\[id\]/page](app.pitches.[id].page.md)
 - [app/pitches/page](app.pitches.page.md)
+- [components/deposit\_dialog](components.deposit_dialog.md)
 - [components/media\_carousel](components.media_carousel.md)
 - [components/Navbar](components.Navbar.md)
 - [components/pitch\_preview\_card](components.pitch_preview_card.md)
@@ -38,9 +41,11 @@
 - [components/ui/radio-group](components.ui.radio-group.md)
 - [components/ui/select](components.ui.select.md)
 - [components/ui/separator](components.ui.separator.md)
+- [components/ui/shadcn-io/spinner](components.ui.shadcn-io.spinner.md)
 - [components/ui/table](components.ui.table.md)
 - [components/ui/tabs](components.ui.tabs.md)
 - [components/ui/textarea](components.ui.textarea.md)
+- [components/withdrawal\_dialog](components.withdrawal_dialog.md)
 - [db](db.md)
 - [db/Functions/BusinessAccountFunctions](db.Functions.BusinessAccountFunctions.md)
 - [db/Functions/BusinessPitchsFunctions](db.Functions.BusinessPitchsFunctions.md)
@@ -50,5 +55,6 @@
 - [db/nonDBfiles/listTables](db.nonDBfiles.listTables.md)
 - [db/nonDBfiles/testConnect](db.nonDBfiles.testConnect.md)
 - [db/schema](db.schema.md)
+- [lib/globalActions](lib.globalActions.md)
 - [lib/utils](lib.utils.md)
 - [middleware](middleware.md)
