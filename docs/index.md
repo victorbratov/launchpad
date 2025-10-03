@@ -16,6 +16,8 @@
 - [app/onboarding/layout](app.onboarding.layout.md)
 - [app/onboarding/page](app.onboarding.page.md)
 - [app/page](app.page.md)
+- [app/pitches/\_actions](app.pitches._actions.md)
+- [app/pitches/\[id\]/\_actions](app.pitches.[id]._actions.md)
 - [app/pitches/\[id\]/page](app.pitches.[id].page.md)
 - [app/pitches/page](app.pitches.page.md)
 - [components/media\_carousel](components.media_carousel.md)
