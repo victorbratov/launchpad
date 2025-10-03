@@ -38,6 +38,7 @@ import { Dividend, Investment, InvestorInfo } from "../../../types/investor_data
 import WithdrawDialog from "@/components/withdrawal_dialog";
 import DepositDialog from "@/components/deposit_dialog";
 import { withdrawBalance, depositBalance } from "./_actions";
+import { validateWithdrawalAmount } from "@/lib/utils"; 
 
 /**
  * Investor Portal Page, showing an overview of the investor account, their investments and dividends
@@ -95,27 +96,7 @@ export default function InvestorPortalPage() {
       return { date: d.dividendDate, roi: parseFloat(roi.toFixed(2)) };
     });
 
-  /**
- * Validate the withdrawal amount entered by the user
- * @param amount The amount to validate
- * @returns {boolean} True if the amount is valid, false otherwise
- */
-  function validateWithdrawalAmount(amount: number | null) {
-    setErrorMessage(null);
-    if (investorInfo?.walletAmount === 0) {
-      setErrorMessage("No funds available to withdraw.");
-      return false;
-    }
-    if (amount === null || amount <= 0) {
-      setErrorMessage("Please enter a valid amount to withdraw.");
-      return false;
-    }
-    if (amount > (investorInfo?.walletAmount ?? 0)) {
-      setErrorMessage("Withdrawal amount exceeds available balance.");
-      return false;
-    }
-    return true;
-  }
+
   /**
    * Handle the withdrawal of funds from the business account
    * @param amount The amount to withdraw
@@ -123,7 +104,9 @@ export default function InvestorPortalPage() {
   async function withdrawFunds(amount: number | null) {
     setWithdrawing(true);
 
-    if (validateWithdrawalAmount(amount)) {
+    setErrorMessage(validateWithdrawalAmount(amount, investorInfo?.walletAmount ?? 0));
+
+    if (errorMessage === null) {
       try {
         await withdrawBalance(amount ?? investorInfo?.walletAmount ?? 0);
         setOpen(false);
