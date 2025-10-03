@@ -20,13 +20,10 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { get } from "http";
-import { getBusinessAccountInfo } from "./_actions";
+import { getBusinessAccountInfo, depositBalance, withdrawBalance } from "./_actions";
 import { checkBusinessAuthentication } from "@/lib/globalActions";
-import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Spinner } from '@/components/ui/shadcn-io/spinner';
-import { withdrawBalance } from "./_actions";
-import { set } from "date-fns";
 
 /**
  * Basic business account information
@@ -83,6 +80,9 @@ export default function BusinessPortalPage() {
   const [withdrawing, setWithdrawing] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [open, setOpen] = useState<boolean>(false);
+  const [openDeposit, setOpenDeposit] = useState<boolean>(false);
+  const [depositing, setDepositing] = useState<boolean>(false);
+  const [depositAmount, setDepositAmount] = useState<number>(0);
 
   useEffect(() => {
     // fetch business account info
@@ -110,7 +110,7 @@ export default function BusinessPortalPage() {
    */
   async function withdrawFunds(amount: number | null) {
     setWithdrawing(true);
-    console.log(amount);
+
     if (validateWithdrawalAmount(amount)) {
       try {
         await withdrawBalance(amount ?? parseFloat(busAccountInfo?.wallet ?? "0"));
@@ -146,6 +146,20 @@ export default function BusinessPortalPage() {
     }
     return true;
   }
+
+  async function depositFunds(amount: number | null) {
+    setDepositing(true);
+
+    try {
+      await depositBalance(amount ?? parseFloat(busAccountInfo?.wallet ?? "0"));
+      setOpenDeposit(false);
+      // refresh the page to show updated balance
+      window.location.reload();
+    } catch (error) {
+      setErrorMessage("Error withdrawing funds. Please try again later.");
+    }
+  }
+
   return (
     <div className="p-6 space-y-6">
       {/* Business Overview */}
@@ -154,14 +168,16 @@ export default function BusinessPortalPage() {
           <CardTitle>Business Overview</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex justify-between flex-wrap items-center">
-            <div className="text-left space-y-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 justify-between flex-wrap items-center">
+            <div className="space-y-2">
               <p><strong>Business:</strong> {busAccountInfo ? busAccountInfo.name : "Loading.."}</p>
               <p><strong>Email:</strong> {busAccountInfo ? busAccountInfo.email : "Loading..."}</p>
             </div>
-            <div className="text-right space-x-2 space-y-2">
-              <p><strong>Wallet Balance:</strong></p>
+            <div className="sm:text-right space-x-2 space-y-2">
+              <p className="pt-2 sm:pt-0"><strong>Wallet Balance:</strong></p>
               <p className="text-2xl font-bold">{busAccountInfo ? busAccountInfo.wallet : "Loading..."}</p>
+
+              {/* Withdraw button */}
               {/** Only show withdraw option if there is money in the account */}
               {parseFloat(busAccountInfo?.wallet ?? "") != 0 &&
                 <Dialog open={open} onOpenChange={(isOpen) => {
@@ -198,7 +214,39 @@ export default function BusinessPortalPage() {
                   </DialogContent>
                 </Dialog>}
 
-              {/* <Button>Deposit</Button> */}
+              {/* Deposit button */}
+              <Dialog open={openDeposit} onOpenChange={(isOpen) => {
+                setOpenDeposit(isOpen)
+                if (isOpen) {
+                  setDepositing(false)
+                }
+              }}>
+                <DialogTrigger asChild>
+                  <Button>Deposit</Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>{depositing ? "Depositing Funds" : "Choose an amount to deposit"}</DialogTitle>
+                    <DialogDescription>{depositing ? "Please wait while we deposit your funds ..." : "Please choose an amount to deposit. This will be transferred from your linked bank account."}</DialogDescription>
+                  </DialogHeader>
+                  {!depositing ? (<><p><strong>Current Plaform Balance: ${busAccountInfo?.wallet}</strong></p>
+                    <Input
+                      type="number"
+                      placeholder={"0"}
+                      value={depositAmount === 0 ? "" : depositAmount}
+                      onChange={(e) => setDepositAmount(parseFloat(e.target.value))}
+                    />
+                    <p className="text-red-600">{errorMessage}</p>
+                    <Button onClick={() => depositFunds(depositAmount)} className="bg-green-600 hover:bg-green-700">
+                      Deposit Funds
+                    </Button>
+                  </>) : (
+                    <div className="flex justify-center items-center h-24">
+                      <Spinner />
+                    </div>
+                  )}
+                </DialogContent>
+              </Dialog>
             </div>
           </div>
 
