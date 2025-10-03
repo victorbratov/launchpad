@@ -12,7 +12,8 @@ import { format } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { RAGGauge } from "@/components/rag_gauge";
-import { createPitch, checkBusinessAuthentication } from "./_actions";
+import { createPitch } from "./_actions";
+import { checkBusinessAuthentication } from "@/lib/globalActions";
 import { useRouter } from "next/navigation";
 import { validateDates, validateMaxes, validateMultipliers, setPitchStatus } from "./utils";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
