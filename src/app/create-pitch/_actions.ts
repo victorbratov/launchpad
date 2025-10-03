@@ -2,11 +2,27 @@
 
 import { db } from '@/db';
 import { BusinessPitchs, BusinessAccount } from '@/db/schema';
-import { auth, clerkClient, currentUser } from '@clerk/nextjs/server';
-import { stat } from 'fs';
-import { redirect } from 'next/navigation';
+import { auth } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
-import { Goal } from 'lucide-react';
+
+/**
+ * Represents a business pitch
+ */
+export interface Pitch {
+    title: string,
+    status: string, 
+    elevatorPitch: string, 
+    detailedPitch: string, 
+    targetAmount: string, 
+    startDate: Date, 
+    endDate: Date, 
+    bronzeMultiplier: string, 
+    bronzeMax: number, 
+    silverMultiplier: string, 
+    silverMax: number, 
+    goldMultiplier: string, 
+    dividendPayoutPeriod: string
+}
 
 /**
  * Function to check the user is authenticated and has a business account
@@ -25,68 +41,59 @@ export const checkBusinessAuthentication = async () => {
 }
 
 /**
- * Create pitch creates a new pitch in the database with all of the relevant data
- * @param busAccountID business account associated with the pitch
- * @param title Pitch title 
- * @param elevatorPitch Brief description of the pitch
- * @param detailedPitch Detialed description of the pitch
- * @param supportingMedia Link to S3 bucket folder where supporting media is stored
- * @param targetAmount The funding goal amount
- * @param startDate Start date of the pitch
- * @param endDate End date of the pitch
- * @param pricePerShare Pric per share of the pitch
- * @param bronzeMultiplier Multiplier for bronze shares
- * @param bronzeMax Max amount the user spends to be in the bronze tier
- * @param silverMultiplier multiplier for silver shares
- * @param silverMax Max amount the user spends to be in the silver tier
- * @param goldMultiplier multiplier for gold shares
- * @param goldMax max amount the user spends to be in the gold tier
- * @param dividendPeriod Period for dividend payouts
+ * Create a pitch in the database
+ * @param Pitch Pitch object containing all information necessary to create the pitch
+ * @returns {{success: boolean, message: string}} An object with success indicating the success of the pitch creation, and message holding either the successfully created pitch ID or an error message
  */
-export const createPitch = async (title: string, status: string, elevatorPitch: string, detailedPitch: string, targetAmount: string, startDate: Date, endDate: Date, bronzeMultiplier: string, bronzeMax: number, silverMultiplier: string, silverMax: number, goldMultiplier: string, dividendPayoutPeriod: string) => {
+export const createPitch = async (pitch: Pitch) => {
     const { isAuthenticated, userId } = await auth();
 
     if (!isAuthenticated) {
         return { success: false, message: 'User not authenticated' };
     }
 
-    const dividendPayoutDate: Date = calculateDividendPayoutDate(dividendPayoutPeriod, endDate);
+    const dividendPayoutDate: Date = calculateDividendPayoutDate(pitch.dividendPayoutPeriod, pitch.endDate);
 
-    await db.insert(BusinessPitchs).values({
+    const [insertedPitch] = await db.insert(BusinessPitchs).values({
         BusAccountID: userId,
-        statusOfPitch: status,
-        ProductTitle: title,
-        ElevatorPitch: elevatorPitch,
-        DetailedPitch: detailedPitch,
-        SuportingMedia: "", // to be added later when media upload is implemented
-        TargetInvAmount: targetAmount,
-        InvestmentStart: startDate,
-        InvestmentEnd: endDate,
+        statusOfPitch: pitch.status,
+        ProductTitle: pitch.title,
+        ElevatorPitch: pitch.elevatorPitch,
+        DetailedPitch: pitch.detailedPitch,
+        TargetInvAmount: pitch.targetAmount,
+        InvestmentStart: pitch.startDate,
+        InvestmentEnd: pitch.endDate,
         InvProfShare: 0, // to be added later if profit share is implemented
         pricePerShare: "0", // think this is calculated, not needed as an input?
-        bronseTierMulti: bronzeMultiplier,
-        bronseInvMax: bronzeMax,
-        silverTierMulti: silverMultiplier,
-        silverInvMax: silverMax,
-        goldTierMulti: goldMultiplier,
-        goldTierMax: parseInt(targetAmount),
+        bronseTierMulti: pitch.bronzeMultiplier,
+        bronseInvMax: pitch.bronzeMax,
+        silverTierMulti: pitch.silverMultiplier,
+        silverInvMax: pitch.silverMax,
+        goldTierMulti: pitch.goldMultiplier,
+        goldTierMax: parseInt(pitch.targetAmount),
         dividEndPayout: dividendPayoutDate, // this needs to be calculated based on the dividend period
-        DividEndPayoutPeriod: dividendPayoutPeriod,
-    });
+        DividEndPayoutPeriod: pitch.dividendPayoutPeriod,
+    }).returning();
+
+
+    // update the database with the media url based on pitch ID
+    const mediaURL = `${process.env.BUCKET_URL}${insertedPitch.BusPitchID}`
+    await db.update(BusinessPitchs).set({ SuportingMedia: mediaURL }).where(eq(BusinessPitchs.BusPitchID, insertedPitch.BusPitchID))
+    return { success: true, message: mediaURL }
 }
 
 /**
  * Calcualte the dividend payout date based on the funding end date and the dividend period
- * @param period 
- * @param start 
- * @returns 
+ * @param period Lenght of the period
+ * @param end End date of the pitch
+ * @returns The payout date
  */
 function calculateDividendPayoutDate(period: string, end: Date) {
     const payoutDate = new Date(end)
     if (period == "quarterly") {
-        payoutDate.setFullYear(payoutDate.getFullYear(), payoutDate.getMonth()+4)
+        payoutDate.setFullYear(payoutDate.getFullYear(), payoutDate.getMonth() + 4)
     } else if (period == "yearly") {
-        payoutDate.setFullYear(payoutDate.getFullYear()+1)
+        payoutDate.setFullYear(payoutDate.getFullYear() + 1)
     }
     return payoutDate
 }

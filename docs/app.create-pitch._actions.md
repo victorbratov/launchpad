@@ -2,6 +2,10 @@
 
 ***
 
+## Interfaces
+
+- [Pitch](app.create-pitch._actions.Interface.Pitch.md)
+
 ## Functions
 
 - [checkBusinessAuthentication](app.create-pitch._actions.Function.checkBusinessAuthentication.md)
