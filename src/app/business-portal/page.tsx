@@ -15,17 +15,26 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogFooter,
+  DialogDescription,
+  DialogClose
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { get } from "http";
 import { getBusinessAccountInfo } from "./_actions";
 import { checkBusinessAuthentication } from "@/lib/globalActions";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Spinner } from '@/components/ui/shadcn-io/spinner';
+import { withdrawBalance } from "./_actions";
+import { set } from "date-fns";
 
-// Mock Data
+/**
+ * Basic business account information
+ */
 interface businessInfo {
- name: string;
- email: string;
- wallet: string;
+  name: string; /** The name of the business owner */
+  email: string; /** The email of the business */
+  wallet: string; /** The amount of money in the business account wallet */
 };
 
 const pitches = [
@@ -70,6 +79,11 @@ interface Pitch {
 export default function BusinessPortalPage() {
   const [selectedPitch, setSelectedPitch] = useState<Pitch | null>(null);
   const [busAccountInfo, setBusinessAccountInfo] = useState<businessInfo | null>(null);
+  const [withdrawalAmount, setWithdrawalAmount] = useState<number>(0);
+  const [withdrawing, setWithdrawing] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [open, setOpen] = useState<boolean>(false);
+
   useEffect(() => {
     // fetch business account info
     async function loadData() {
@@ -89,6 +103,49 @@ export default function BusinessPortalPage() {
       }
     });
   }, []);
+
+  /**
+   * Handle the withdrawal of funds from the business account
+   * @param amount The amount to withdraw
+   */
+  async function withdrawFunds(amount: number | null) {
+    setWithdrawing(true);
+    console.log(amount);
+    if (validateWithdrawalAmount(amount)) {
+      try {
+        await withdrawBalance(amount ?? parseFloat(busAccountInfo?.wallet ?? "0"));
+        setOpen(false);
+        // refresh the page to show updated balance
+        window.location.reload();
+      } catch (error) {
+        setErrorMessage("Error withdrawing funds. Please try again later.");
+      }
+    } else {
+      setWithdrawing(false);
+    }
+  }
+
+  /**
+   * Validate the withdrawal amount entered by the user
+   * @param amount The amount to validate
+   * @returns {boolean} True if the amount is valid, false otherwise
+   */
+  function validateWithdrawalAmount(amount: number | null) {
+    setErrorMessage(null);
+    if (parseFloat(busAccountInfo?.wallet ?? "0") === 0) {
+      setErrorMessage("No funds available to withdraw.");
+      return false;
+    }
+    if (amount === null || amount <= 0) {
+      setErrorMessage("Please enter a valid amount to withdraw.");
+      return false;
+    }
+    if (amount > parseFloat(busAccountInfo?.wallet ?? "0")) {
+      setErrorMessage("Withdrawal amount exceeds available balance.");
+      return false;
+    }
+    return true;
+  }
   return (
     <div className="p-6 space-y-6">
       {/* Business Overview */}
@@ -97,16 +154,54 @@ export default function BusinessPortalPage() {
           <CardTitle>Business Overview</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex justify-between flex-wrap">
-            <div>
-              <p><strong>Owner:</strong> {busAccountInfo ? busAccountInfo.name : "Loading.."}</p>
+          <div className="flex justify-between flex-wrap items-center">
+            <div className="text-left space-y-2">
+              <p><strong>Business:</strong> {busAccountInfo ? busAccountInfo.name : "Loading.."}</p>
               <p><strong>Email:</strong> {busAccountInfo ? busAccountInfo.email : "Loading..."}</p>
             </div>
-            <div className="text-right">
+            <div className="text-right space-x-2 space-y-2">
               <p><strong>Wallet Balance:</strong></p>
               <p className="text-2xl font-bold">{busAccountInfo ? busAccountInfo.wallet : "Loading..."}</p>
+              {/** Only show withdraw option if there is money in the account */}
+              {parseFloat(busAccountInfo?.wallet ?? "") != 0 &&
+                <Dialog open={open} onOpenChange={(isOpen) => {
+                  setOpen(isOpen)
+                  if (isOpen) {
+                    setWithdrawing(false)
+                  }
+                }}>
+                  <DialogTrigger asChild>
+                    <Button>Withdraw</Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>{withdrawing ? "Withdrawing Funds" : "Choose an amount to withdraw"}</DialogTitle>
+                      <DialogDescription>{withdrawing ? "Please wait while we withdraw your funds ..." : "Please choose an amount to withdraw. This will be transferred to your linked bank account."}</DialogDescription>
+                    </DialogHeader>
+                    {!withdrawing ? (<><p><strong>Balance: ${busAccountInfo?.wallet}</strong></p>
+                      <Input
+                        type="number"
+                        placeholder={busAccountInfo?.wallet}
+                        value={withdrawalAmount === 0 ? "" : withdrawalAmount}
+                        onChange={(e) => setWithdrawalAmount(parseFloat(e.target.value))}
+                        max={busAccountInfo?.wallet}
+                      />
+                      <p className="text-red-600">{errorMessage}</p>
+                      <Button onClick={() => withdrawFunds(withdrawalAmount)} className="bg-green-600 hover:bg-green-700">
+                        Withdraw Funds
+                      </Button>
+                    </>) : (
+                      <div className="flex justify-center items-center h-24">
+                        <Spinner />
+                      </div>
+                    )}
+                  </DialogContent>
+                </Dialog>}
+
+              {/* <Button>Deposit</Button> */}
             </div>
           </div>
+
         </CardContent>
       </Card>
 
@@ -200,6 +295,6 @@ export default function BusinessPortalPage() {
           </Table>
         </CardContent>
       </Card>
-    </div>
+    </div >
   );
 }
