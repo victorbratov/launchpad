@@ -71,7 +71,7 @@ export const BusinessPitchs = pgTable("BusinessPitchs", {
   dividEndPayout: timestamp("dividEndPayout").notNull(),
   DividEndPayoutPeriod: text("DividEndPayoutPeriod").notNull(),
   
-  Tags: text("tags").array(), // array of strings
+  Tags: text("tags").array(), // array of strings**
 
 
 });

@@ -72,7 +72,8 @@ const defaultPitch: Pitches = {
   goldTierMulti: "1.5",
   goldTierMax: 10000,
   dividEndPayout: new Date().toISOString(),
-  DividEndPayoutPeriod: "quarterly"
+  DividEndPayoutPeriod: "quarterly",
+  Tags: [],
 };
 
 function calculateShares(amount: number, pitch: Pitches) {
