@@ -34,6 +34,7 @@ export type Pitch = {
     goldTierMax: number;
     dividEndPayout: string;
     DividEndPayoutPeriod: string;
+    Tags: string[] | null;
   };
 
   export type Investment = {

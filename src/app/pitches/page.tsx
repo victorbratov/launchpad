@@ -90,7 +90,7 @@ export default function PitchSearchPage() {
                 currentAmount: investments.find(inv => inv.busPitchID === pitch.BusPitchID)?.totalAmount || 0,
                 pitchGoal: Number(pitch.TargetInvAmount),
                 pitchImageUrl: "pitch.SuportingMedia" ,
-                tags: ["tech", "ai"],
+                tags: pitch.Tags || [], // Uses real Tags from database
                 pitcherID: pitch.BusAccountID, 
                 pitchStart: pitch.InvestmentStart, 
                 pitchEnd: pitch.InvestmentEnd,     
