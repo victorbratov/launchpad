@@ -52,7 +52,7 @@ export default function PitchDetailsPage() {
         setMessage(result.message);
         setInput("");
         window.location.reload();
-      } catch (err: any) { // eslint-disable-line no-explicit-any
+      } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
         setMessage(err.message || "Error investing");
       }
     });
