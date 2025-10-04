@@ -9,3 +9,5 @@ Defined in: [src/app/investor-portal/page.tsx:39](https://github.com/victorbrato
 ## Returns
 
 `Element`
+
+The investor portal page

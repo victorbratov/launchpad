@@ -9,3 +9,5 @@ Defined in: [src/app/business-portal/page.tsx:68](https://github.com/victorbrato
 ## Returns
 
 `Element`
+
+The business portal page
