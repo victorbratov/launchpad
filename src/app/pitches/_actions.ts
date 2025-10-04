@@ -7,6 +7,7 @@ import { eq, InferInsertModel, InferSelectModel, exists, sql } from "drizzle-orm
 import { Dividend, Investment, InvestorInfo } from "../../../types/investor_data";
 import { Pitches } from "../../../types/pitch";
 import { XMLParser } from "fast-xml-parser";
+import { NativeScrollArea } from "@mantine/core";
 
 // gets the pitches from the da and returns them in an array of Pitches objects
 // data types of investmentStart to dividEndPayout are converted from Date to string to match Pitches type
@@ -23,7 +24,7 @@ export async function getAllBusinessPitches(): Promise<Pitches[]> {
       InvestmentStart: pitch.InvestmentStart.toISOString(),
       InvestmentEnd: pitch.InvestmentEnd.toISOString(),
       dividEndPayout: pitch.dividEndPayout.toISOString(),
-      FeaturedImage: pitch.SuportingMedia ? await fetchFeaturedMedia(pitch.BusPitchID.toString()) : "",
+      FeaturedImage: pitch.SuportingMedia ? await fetchFeaturedMedia(pitch.BusPitchID.toString()) : null,
     }))
   );
 }
@@ -43,28 +44,6 @@ export async function getTotalMoneyInvested(): Promise<{busPitchID: number, tota
   return result;
 }
 
-/**
- * fetch list of images and videos from s3 bucket for a given ID
- * @param {string} pitchID - The ID of the pitch to fetch media for
- * @returns {Promise<string[]>} A promise that resolves to an array of media keys
- */
-export async function fetchAllMedia(pitchID: string) {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BUCKET_URL}?list-type=2&prefix=${pitchID}/`);
-    const data = await res.text();
-
-    const parses = new DOMParser();
-    const xml = parses.parseFromString(data, "application/xml");
-    const items = xml.getElementsByTagName("Key");
-
-    const mediaKeys: string[] = [];
-    for (let i = 1; i < items.length; i++) {
-        const key = items[i].textContent;
-        if (key) {
-            mediaKeys.push(key);
-        }
-    }
-    return mediaKeys;
-}
 
 export async function fetchFeaturedMedia(pitchID: string) {
     const res = await fetch(`${process.env.NEXT_PUBLIC_BUCKET_URL}?list-type=2&prefix=${pitchID}/`);

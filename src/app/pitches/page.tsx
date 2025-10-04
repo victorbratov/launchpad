@@ -78,7 +78,7 @@ export default function PitchSearchPage() {
                       pitchStatus: CurrentPitch.statusOfPitch,
                       currentAmount: investments.find(inv => inv.busPitchID === CurrentPitch.BusPitchID)?.totalAmount || 0,
                       pitchGoal: Number(CurrentPitch.TargetInvAmount),
-                      pitchImageUrl: CurrentPitch.FeaturedImage ? CurrentPitch.FeaturedImage : "",
+                      pitchImageUrl: CurrentPitch.FeaturedImage ? CurrentPitch.FeaturedImage : null,
                       tags: CurrentPitch.Tags || [],
                       pitcherID: CurrentPitch.BusAccountID,
                       pitchStart: CurrentPitch.InvestmentStart,

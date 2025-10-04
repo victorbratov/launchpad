@@ -24,13 +24,20 @@ export function PitchCard({ pitch }: PitchCardProps) {
 
         {/* Image should stretch across the whole card (ignore CardContent padding) */}
         <div className="relative w-full h-48">
-          <Image
-            src={pitch.pitchImageUrl}
-            alt={pitch.pitchName}
-            fill
-            className="object-contain"
-            unoptimized
-          />
+          {pitch.pitchImageUrl && pitch.pitchImageUrl.endsWith(".mp4") ? (
+            <video
+              src={pitch.pitchImageUrl}
+              controls
+              className="h-48 w-full object-contain bg-black rounded-md"
+            />
+          ) : (
+            <Image
+              src={pitch.pitchImageUrl ?? "/nasa-dCgbRAQmTQA-unsplash.jpg"}
+              alt={pitch.pitchName}
+              fill
+              className="object-contain"
+              unoptimized
+            />)}
         </div>
 
         <CardContent className="space-y-3">

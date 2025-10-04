@@ -7,7 +7,7 @@ export type Pitch = {
   currentAmount: number;
   pitchStart: string;
   pitchEnd: string;
-  pitchImageUrl: string;
+  pitchImageUrl: string | null;
   tags: string[];
 };
 
