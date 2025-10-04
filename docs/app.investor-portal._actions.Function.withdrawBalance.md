@@ -4,7 +4,7 @@
 
 > **withdrawBalance**(`amount`): `Promise`\<`void`\>
 
-Defined in: [src/app/investor-portal/\_actions.ts:106](https://github.com/victorbratov/launchpad/blob/d14315d3bd6634bc1c0e4507f8ad0551e9221cbc/src/app/investor-portal/_actions.ts#L106)
+Defined in: [src/app/investor-portal/\_actions.ts:106](https://github.com/victorbratov/launchpad/blob/d1815ef1a573b42ac1f231f3f3d6617bddce6dbe/src/app/investor-portal/_actions.ts#L106)
 
 Withdraws from the account balance of the current user into their linked bank account
 

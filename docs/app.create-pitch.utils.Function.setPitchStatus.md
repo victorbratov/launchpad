@@ -4,7 +4,7 @@
 
 > **setPitchStatus**(`startDate`): `"Open"` \| `"Pending"`
 
-Defined in: [src/app/create-pitch/utils.ts:45](https://github.com/victorbratov/launchpad/blob/3cec89d9fa4be2794c552b4b2e488c08b6798868/src/app/create-pitch/utils.ts#L45)
+Defined in: [src/app/create-pitch/utils.ts:45](https://github.com/victorbratov/launchpad/blob/d1815ef1a573b42ac1f231f3f3d6617bddce6dbe/src/app/create-pitch/utils.ts#L45)
 
 Set the status of the pitch to pending or open if the start date is today or not
 

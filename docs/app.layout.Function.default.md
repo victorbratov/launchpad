@@ -4,7 +4,7 @@
 
 > **default**(`__namedParameters`): `Element`
 
-Defined in: [src/app/layout.tsx:13](https://github.com/victorbratov/launchpad/blob/3cec89d9fa4be2794c552b4b2e488c08b6798868/src/app/layout.tsx#L13)
+Defined in: [src/app/layout.tsx:13](https://github.com/victorbratov/launchpad/blob/d1815ef1a573b42ac1f231f3f3d6617bddce6dbe/src/app/layout.tsx#L13)
 
 ## Parameters
 

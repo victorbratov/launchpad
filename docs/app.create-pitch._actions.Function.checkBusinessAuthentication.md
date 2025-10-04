@@ -4,7 +4,7 @@
 
 > **checkBusinessAuthentication**(): `Promise`\<`boolean`\>
 
-Defined in: [src/app/create-pitch/\_actions.ts:31](https://github.com/victorbratov/launchpad/blob/3cec89d9fa4be2794c552b4b2e488c08b6798868/src/app/create-pitch/_actions.ts#L31)
+Defined in: [src/app/create-pitch/\_actions.ts:31](https://github.com/victorbratov/launchpad/blob/d1815ef1a573b42ac1f231f3f3d6617bddce6dbe/src/app/create-pitch/_actions.ts#L31)
 
 Function to check the user is authenticated and has a business account
 

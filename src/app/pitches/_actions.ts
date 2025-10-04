@@ -4,10 +4,8 @@ import { auth } from "@clerk/nextjs/server";
 import { db } from "@/db"; // adjust to your drizzle client path
 import { InvestorAccounts, InvestmentLedger, DividendPayouts, BusinessPitchs } from "@/db/schema";
 import { eq, InferInsertModel, InferSelectModel, exists, sql } from "drizzle-orm";
-import { Dividend, Investment, InvestorInfo } from "../../../types/investor_data";
 import { Pitches } from "../../../types/pitch";
 import { XMLParser } from "fast-xml-parser";
-import { NativeScrollArea } from "@mantine/core";
 
 // gets the pitches from the da and returns them in an array of Pitches objects
 // data types of investmentStart to dividEndPayout are converted from Date to string to match Pitches type
@@ -44,7 +42,12 @@ export async function getTotalMoneyInvested(): Promise<{busPitchID: number, tota
   return result;
 }
 
-
+/**
+ * Fetches the featured media for a given pitch from the S3 bucket
+ * The featured media is stored in the folder named featured in the bucket
+ * @param pitchID ID of the pitch to fetch media for
+ * @returns url of the featured media, or empty string if none found
+ */
 export async function fetchFeaturedMedia(pitchID: string) {
     const res = await fetch(`${process.env.NEXT_PUBLIC_BUCKET_URL}?list-type=2&prefix=${pitchID}/`);
     const data = await res.text();

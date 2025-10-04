@@ -4,7 +4,9 @@
 
 > **default**(): `Element`
 
-Defined in: [src/app/business-portal/page.tsx:68](https://github.com/victorbratov/launchpad/blob/3cec89d9fa4be2794c552b4b2e488c08b6798868/src/app/business-portal/page.tsx#L68)
+Defined in: [src/app/business-portal/page.tsx:82](https://github.com/victorbratov/launchpad/blob/d1815ef1a573b42ac1f231f3f3d6617bddce6dbe/src/app/business-portal/page.tsx#L82)
+
+Business Portal Page, showing an overview of the business account and their pitches
 
 ## Returns
 

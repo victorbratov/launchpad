@@ -31,7 +31,8 @@ export async function getPitchById(pitchID: number): Promise<Pitches | null> {
     ...pitch,
     InvestmentStart: pitch.InvestmentStart.toISOString(),
     InvestmentEnd: pitch.InvestmentEnd.toISOString(),
-    dividEndPayout: pitch.dividEndPayout.toISOString()
+    dividEndPayout: pitch.dividEndPayout.toISOString(),
+    FeaturedImage: null, // not needed here
   };
 }
 
