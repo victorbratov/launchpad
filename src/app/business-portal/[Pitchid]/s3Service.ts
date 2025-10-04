@@ -4,7 +4,7 @@
  * @returns mediaKeys
  */
 export async function fetchMedia(pitchID: string) {
-    const BUCKET_URL = "https://launchpad-media-storage.s3.us-east-1.amazonaws.com/";
+    const BUCKET_URL = process.env.BUCKET_URL;
     const res = await fetch(`${BUCKET_URL}?list-type=2&prefix=${pitchID}/`);
     const data = await res.text();
 
