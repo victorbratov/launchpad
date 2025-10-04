@@ -28,7 +28,7 @@ export function PitchCard({ pitch }: PitchCardProps) {
             src={pitch.pitchImageUrl}
             alt={pitch.pitchName}
             fill
-            className="object-cover"
+            className="object-contain"
             unoptimized
           />
         </div>
@@ -36,7 +36,7 @@ export function PitchCard({ pitch }: PitchCardProps) {
         <CardContent className="space-y-3">
           <Progress value={progress} className="w-full" />
           <p className="text-sm">
-            {pitch.currentAmount} / {pitch.pitchGoal} raised
+            {pitch.currentAmount} / {pitch.pitchGoal}
           </p>
           <div className="flex flex-wrap gap-2">
             {pitch.tags.map((tag) => (

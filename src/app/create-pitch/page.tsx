@@ -165,11 +165,10 @@ export default function CreatePitchPage() {
  */
   const uploadMedia = async (file: File, url: string) => {
     // upload file to S3 bucket
-    const response = await fetch(`${url}/${file.name}`, {
+    const response = await fetch(`${url}/${ file === mediaFiles[0] ? 'featured/': ""}${file.name}`, {
       method: 'PUT',
       headers: {
         'Content-Type': file.type,
-        'x-amz-meta-featured': `${file === mediaFiles[0]}` // first image is the feature image,
       },
       body: file,
     });

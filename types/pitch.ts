@@ -20,7 +20,7 @@ export type Pitch = {
     ProductTitle: string;
     ElevatorPitch: string;
     DetailedPitch: string;
-    SuportingMedia: string | null;
+    FeaturedImage: string | null;
     TargetInvAmount: string;
     InvestmentStart: string;
     InvestmentEnd: string;
