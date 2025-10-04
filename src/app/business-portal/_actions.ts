@@ -2,10 +2,11 @@
 "use server";
 
 import { db } from "@/db";
-import { BusinessPitchs } from "@/db/schema";
+import { InvestmentLedger, BusinessPitchs } from "@/db/schema";
 import { auth } from "@clerk/nextjs/server";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import type { Pitches } from "../../../types/pitch";
+
 
 
 /**
@@ -47,4 +48,39 @@ export async function getUserPitches(): Promise<Pitches[]> {
   goldTierMax: p.goldTierMax ?? 0,
   dividEndPayout: p.dividEndPayout?.toISOString() ?? new Date().toISOString(),
   }));
+}
+
+//gets total money invested in the pitches on the db
+// returns a single object with busPitchID and totalAmount invested
+//@param busPitchID - The ID of the pitch to retrieve total investment for
+export async function getTotalMoneyInvestedInPitch(busPitchID: number): Promise<{busPitchID: number, totalAmount: number} | null> {
+  const result = await db
+    .select({
+      busPitchID: InvestmentLedger.BusPitchID,
+      totalAmount: sql<number>`SUM(${InvestmentLedger.AmountInvested})`.as('totalAmount')
+    })
+    .from(InvestmentLedger)
+    .where(eq(InvestmentLedger.BusPitchID, busPitchID))
+    .groupBy(InvestmentLedger.BusPitchID)
+    .limit(1);
+
+  return result.length > 0 ? result[0] : null;
+}
+
+
+//gets total investors in the pitches on the db
+// returns a single object with busPitchID and totalAmount of investors
+//@param busPitchID - The ID of the pitch to retrieve total investment for
+export async function getTotalInvestorsInPitch(busPitchID: number): Promise<{ busPitchID: number; investorCount: number } | null> {
+  const result = await db
+    .select({
+      busPitchID: InvestmentLedger.BusPitchID,
+      investorCount: sql<number>`COUNT(DISTINCT ${InvestmentLedger.InvestorID})`.as("investorCount"),
+    })
+    .from(InvestmentLedger)
+    .where(eq(InvestmentLedger.BusPitchID, busPitchID))
+    .groupBy(InvestmentLedger.BusPitchID)
+    .limit(1);
+
+  return result.length > 0 ? result[0] : null;
 }

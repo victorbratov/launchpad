@@ -12,6 +12,7 @@ import { fetchMedia } from "./s3Service";
 import Image from 'next/image';
 import { useUser } from "@clerk/nextjs";
 import type { Pitches } from "../../../../types/pitch";
+import {getTotalInvestorsInPitch,getTotalMoneyInvestedInPitch} from "../_actions";
 
 
 
@@ -33,6 +34,10 @@ export default function PitchDetailsPage() {
   const [pitchName, setPitchName] = useState("");
   const [elevatorPitch, setElevatorPitch] = useState("");
   const [detailedPitch, setDetailedPitch] = useState("");
+
+  const [raisedAmount, setRaisedAmount] = useState(0);
+  const [investorCount, setInvestorCount] = useState(0);
+
 
   //finds public bucket key- May need to change to private for security
   const BUCKET_URL = process.env.NEXT_PUBLIC_BUCKET_URL;
@@ -58,6 +63,12 @@ export default function PitchDetailsPage() {
 
         //Make variables out of read data
         setPitch(data);
+
+        const raisedData = await getTotalMoneyInvestedInPitch(pitchId);
+        const investorData = await getTotalInvestorsInPitch(pitchId);
+
+        setRaisedAmount(raisedData?.totalAmount || 0);
+        setInvestorCount(investorData?.investorCount || 0);
         setPitchName(data.ProductTitle || "");
         setElevatorPitch(data.ElevatorPitch || "");
         setDetailedPitch(data.DetailedPitch || "");
@@ -156,18 +167,18 @@ export default function PitchDetailsPage() {
           <CardContent className="space-y-4">
             <div className="flex flex-col gap-4">
               {media
-              .filter((item): item is string => !!item && !!BUCKET_URL)
-              .map((item, idx) => {
-                //Filters out non-media. Not necessary but is last filter against end user issues
-                const extMatch = item.match(/\.(jpg|jpeg|png|gif|webp|mp4|mov)$/i);
-                if (!extMatch) return null;
+  .filter((item): item is string => !!item && !!BUCKET_URL)
+  .map((item, idx) => {
+    //Filters out non-media. Not necessary but is last filter against end user issues
+    const extMatch = item.match(/\.(jpg|jpeg|png|gif|webp|mp4|mov)$/i);
+    if (!extMatch) return null;
 
-                if (item.toLowerCase().endsWith(".mp4")) {
-                  return <video key={idx} src={`${BUCKET_URL}${item}`} width={400} height={300} controls />;
-                } else {
-                  return <Image key={idx} src={`${BUCKET_URL}${item}`} alt={`Media ${idx + 1}`} width={400} height={300} />;
-                }
-              })}
+    if (item.toLowerCase().endsWith(".mp4")) {
+      return <video key={idx} src={`${BUCKET_URL}${item}`} width={400} height={300} controls />;
+    } else {
+      return <Image key={idx} src={`${BUCKET_URL}${item}`} alt={`Media ${idx + 1}`} width={400} height={300} />;
+    }
+  })}
 
             </div>
 
@@ -220,9 +231,10 @@ export default function PitchDetailsPage() {
               <CardTitle>Invest in {pitch.ProductTitle}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Progress value={(0 / targetAmount) * 100} />
-              <p>${0} raised of ${targetAmount.toLocaleString()} goal</p>
-              <p>${0} remaining</p>
+            <Progress value={(raisedAmount / targetAmount) * 100} />
+            <p>${raisedAmount.toLocaleString()} raised of ${targetAmount.toLocaleString()} goal</p>
+            <p>${(targetAmount - raisedAmount).toLocaleString()} remaining</p>
+            <p><strong>Investors:</strong> {investorCount}</p>
             </CardContent>
           </Card>
           <div className="pt-2">

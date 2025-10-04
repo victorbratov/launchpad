@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getUserPitches } from "./_actions";
+import { getUserPitches,getTotalMoneyInvestedInPitch,getTotalInvestorsInPitch } from "./_actions";
 import {
   Card, CardContent, CardHeader, CardTitle,
 } from "@/components/ui/card";
@@ -38,20 +38,41 @@ const businessInfo = {
  * Shows an overview of the business + all created pitches
  */
 export default function BusinessPortalPage() {
-const [pitches, setPitches] = useState<Pitches[]>([]);
-  const [selectedPitch, setSelectedPitch] = useState<Pitches | null>(null);
+
+  type FullPitch = Pitches & {
+  raised: number;
+  investorCount: number;
+};
+
+const [pitches, setPitches] = useState<FullPitch[]>([]);
+  const [selectedPitch, setSelectedPitch] = useState<FullPitch | null>(null);
 
   useEffect(() => {
-    async function fetchPitches() {
-      try {
-        const data = await getUserPitches();
-        setPitches(data);
-      } catch (error) {
-        console.error("Failed to load pitches:", error);
-      }
+  async function fetchPitches() {
+    try {
+      const data = await getUserPitches();
+
+      const enriched = await Promise.all(
+        data.map(async (pitch) => {
+          // call your DB helpers
+          const raised = await getTotalMoneyInvestedInPitch(pitch.BusPitchID);
+          const count = await getTotalInvestorsInPitch(pitch.BusPitchID);
+
+          return {
+            ...pitch,
+            raised: raised?.totalAmount || 0,   // add raised
+            investorCount: count?.investorCount || 0, // add investor count
+          };
+        })
+      );
+
+      setPitches(enriched);
+    } catch (error) {
+      console.error("Failed to load pitches:", error);
     }
-    fetchPitches();
-  }, []);
+  }
+  fetchPitches();
+}, []);
   return (
     <div className="p-6 space-y-6">
       {/* Business Overview */}
@@ -104,17 +125,17 @@ const [pitches, setPitches] = useState<Pitches[]>([]);
                       <TableCell>
                         <div className="space-y-1">
                           <Progress
-                            value={(0 / Number(pitch.TargetInvAmount || 1)) * 100} // Convert string → number
-                          />
+  value={(pitch.raised / Number(pitch.TargetInvAmount || 1)) * 100}
+/>
                           <span className="text-xs text-muted-foreground">
-                            $2implement / ${pitch.TargetInvAmount}
+                            ${pitch.raised} / ${pitch.TargetInvAmount}
                           </span>
                         </div>
                       </TableCell>
-                      <TableCell>2implement investors</TableCell>
+                      <TableCell>{pitch.investorCount} investors</TableCell>
                       <TableCell>{pitch.InvProfShare}%</TableCell>
                       <TableCell>{pitch.DividEndPayoutPeriod}</TableCell>
-                      <TableCell>2implement pitch end</TableCell>
+                      <TableCell>{new Date(pitch.InvestmentEnd).toLocaleDateString()}</TableCell>
                     </TableRow>
                   </DialogTrigger>
 
@@ -130,11 +151,15 @@ const [pitches, setPitches] = useState<Pitches[]>([]);
                             {selectedPitch.DetailedPitch}
                           </p>
                           <div>
-                            <p><strong>Goal:</strong> ${selectedPitch.TargetInvAmount}</p>
                             <p>
-                              <strong>Raised:</strong> $2implement
+                              <strong>Goal:</strong> ${selectedPitch.TargetInvAmount}
                             </p>
-                            <p><strong>Investors:</strong> 2implement</p>
+                           <p>
+                            <strong>Raised:</strong> ${selectedPitch.raised}
+                          </p>
+                            <p>
+                              <strong>Investors:</strong> ${selectedPitch.investorCount}
+                            </p>
                             <p>
                               <strong>Profit Share:</strong>{" "}
                               {selectedPitch.InvProfShare}%
@@ -143,7 +168,7 @@ const [pitches, setPitches] = useState<Pitches[]>([]);
                               <strong>Dividend Period:</strong>{" "}
                               {selectedPitch.DividEndPayoutPeriod}
                             </p>
-                            <p><strong>Funding End:</strong> 2implement</p>
+                            <p><strong>Funding End:</strong> {new Date(selectedPitch.InvestmentEnd).toLocaleDateString()}</p>
                           </div>
                         </div>
                         <DialogFooter className="flex gap-3 justify-end">
