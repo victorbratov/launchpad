@@ -12,6 +12,7 @@ import { fetchMedia } from "./s3Service";
 import Image from 'next/image';
 import { useUser } from "@clerk/nextjs";
 import type { Pitches } from "../../../../types/pitch";
+import { useRouter } from "next/navigation";
 import {getTotalInvestorsInPitch,getTotalMoneyInvestedInPitch} from "../_actions";
 
 
@@ -26,10 +27,14 @@ export default function PitchDetailsPage() {
   const pitchId = Number(pitchIdParam);
   const { user } = useUser();
   const userId = user?.id;
+  const router = useRouter();
+
 
   const [pitch, setPitch] = useState<Pitches | null>(null);
   const [loading, setLoading] = useState(true);
   const [media, setMediaFiles] = useState<string[]>([]);
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+
 
   const [pitchName, setPitchName] = useState("");
   const [elevatorPitch, setElevatorPitch] = useState("");
@@ -99,64 +104,58 @@ export default function PitchDetailsPage() {
 
   const targetAmount = Number(pitch.TargetInvAmount) || 0;
 
-  
-  /**
-   * Uploads a new media file to S3 and updates DB with its key
-   *
-   * @param file - The file
-   * @returns confirmation if file has successfully been uploaded
-   */
-  const handleUpload = async (file: File) => {
-      const allowedTypes = ["image/", "video/"];
-  if (!allowedTypes.some(type => file.type.startsWith(type))) {
-    alert("Only image and video files are allowed!");
-    return;
-  }
-
-    const key = `${pitchId}/${file.name}`;
-    try {
-      const response = await fetch(`${BUCKET_URL}${key}`, {
-        method: "PUT",
-        headers: { "Content-Type": file.type },
-        body: file,
-      });
-
-      if (!response.ok) throw new Error(`Upload failed with status ${response.status}`);
-
-      const newMedia = [...media, key];
-      setMediaFiles(newMedia);
-
-      try {
-        await updatePitch(pitchId, { SuportingMedia: newMedia.join(",") });
-      } catch (err) {
-        console.error("Error updating DB after upload:", err);
-      }
-    } catch (err) {
-      console.error("Upload error:", err);
-      alert("Upload failed, check console for details.");
-    }
-  };
-
 /**
    * Saves edited pitch fields back into the database.
    *
    * @returns Uploads new field values to database
    */
-  const handleSave = async () => {
-    try {
-      await updatePitch(pitchId, {
-        ProductTitle: pitchName,
-        ElevatorPitch: elevatorPitch,
-        DetailedPitch: detailedPitch,
-      });
-      alert("Pitch updated!");
-    } catch (err) {
-      console.error("Error saving pitch:", err);
-      alert("Save failed, check console for details.");
-    }
-  };
+const handleSave = async () => {
+  try {
+    await updatePitch(pitchId, {
+      ProductTitle: pitchName,
+      ElevatorPitch: elevatorPitch,
+      DetailedPitch: detailedPitch,
+    });
 
-  return (
+    if (pendingFiles.length > 0) {
+      const uploadedKeys: string[] = [];
+      const allowedTypes = ["image/", "video/"];
+
+      for (const file of pendingFiles) {
+        //Filters non media from upload
+        if (!allowedTypes.some(type => file.type.startsWith(type))) {
+          alert(`"${file.name}" is not an image or video file! Skipping.`);
+          continue;
+        }
+
+        const key = `${pitchId}/${file.name}`;
+        const response = await fetch(`${BUCKET_URL}${key}`, {
+          method: "PUT",
+          headers: { "Content-Type": file.type },
+          body: file,
+        });
+
+        if (!response.ok) throw new Error(`Failed to upload ${file.name}`);
+        uploadedKeys.push(key);
+      }
+
+      //Merge uploaded keys with existing media
+      const newMedia = [...media, ...uploadedKeys];
+      await updatePitch(pitchId, { SuportingMedia: newMedia.join(",") });
+
+      setMediaFiles(newMedia);
+    }
+
+    alert("Pitch and media updated!");
+    router.push("/");
+  } catch (err) {
+    console.error("Error saving pitch:", err);
+    alert("Save failed, check console for details.");
+  }
+};
+
+
+return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 p-6">
       <div className="lg:col-span-2 space-y-6">
         {/* media Section */}
@@ -167,36 +166,86 @@ export default function PitchDetailsPage() {
           <CardContent className="space-y-4">
             <div className="flex flex-col gap-4">
               {media
-  .filter((item): item is string => !!item && !!BUCKET_URL)
-  .map((item, idx) => {
-    //Filters out non-media. Not necessary but is last filter against end user issues
-    const extMatch = item.match(/\.(jpg|jpeg|png|gif|webp|mp4|mov)$/i);
-    if (!extMatch) return null;
+                .filter((item): item is string => !!item && !!BUCKET_URL)
+                .map((item, idx) => {
+                  // Filters out non-media
+                  const extMatch = item.match(/\.(jpg|jpeg|png|gif|webp|mp4|mov)$/i);
+                  if (!extMatch) return null;
 
-    if (item.toLowerCase().endsWith(".mp4")) {
-      return <video key={idx} src={`${BUCKET_URL}${item}`} width={400} height={300} controls />;
-    } else {
-      return <Image key={idx} src={`${BUCKET_URL}${item}`} alt={`Media ${idx + 1}`} width={400} height={300} />;
-    }
-  })}
-
+                  if (item.toLowerCase().endsWith(".mp4")) {
+                    return (
+                      <video
+                        key={idx}
+                        src={`${BUCKET_URL}${item}`}
+                        width={400}
+                        height={300}
+                        controls
+                      />
+                    );
+                  } else {
+                    return (
+                      <Image
+                        key={idx}
+                        src={`${BUCKET_URL}${item}`}
+                        alt={`Media ${idx + 1}`}
+                        width={400}
+                        height={300}
+                      />
+                    );
+                  }
+                })}
             </div>
+                  {/*Do the same but for pending files array */}
+                  {pendingFiles.length > 0 && (
+                    <div className="mt-4">
+                      <h4 className="text-sm font-medium text-muted-foreground mb-2">
+                        Awaiting Upload:
+                      </h4>
+                      <div className="flex flex-wrap gap-3">
+                        {pendingFiles.map((file, idx) => {
+                          const fileURL = URL.createObjectURL(file);
+                          if (file.type.startsWith("video/")) {
+                            return (
+                              <video
+                                key={idx}
+                                src={fileURL}
+                                width={200}
+                                height={150}
+                                controls
+                              />
+                            );
+                          } else {
+                            return (
+                              <Image
+                                key={idx}
+                                src={fileURL}
+                                alt={`Pending ${idx + 1}`}
+                                width={200}
+                                height={150}
+                              />
+                            );
+                          }
+                        })}
+                      </div>
+                    </div>
+                  )}
 
-            <div>
-              <input
-                type="file"
-                accept="image/*,video/*"
-                onChange={(e) => e.target.files && handleUpload(e.target.files[0])}
-                className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 
-                  file:rounded-md file:border-0 file:text-sm file:font-semibold 
-                  file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
-              />
-            </div>
-
-            <div className="space-y-2">
-
-            </div>
-          </CardContent>
+                <div>
+                  <input
+                    type="file"
+                    accept="image/*,video/*"
+                    multiple
+                    onChange={(e) => {
+                      if (e.target.files) {
+                        setPendingFiles([...pendingFiles, ...Array.from(e.target.files)]);
+                      }
+                    }}
+                    className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 
+                      file:rounded-md file:border-0 file:text-sm file:font-semibold 
+                      file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+                  />
+                </div>
+                  </CardContent>
         </Card>
 
         {/* edit pitch text fields */}
