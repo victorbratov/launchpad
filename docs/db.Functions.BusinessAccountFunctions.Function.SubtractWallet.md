@@ -4,7 +4,7 @@
 
 > **SubtractWallet**(`BankID`, `amount`): `Promise`\<`object`[]\>
 
-Defined in: [src/db/Functions/BusinessAccountFunctions.ts:30](https://github.com/victorbratov/launchpad/blob/3cec89d9fa4be2794c552b4b2e488c08b6798868/src/db/Functions/BusinessAccountFunctions.ts#L30)
+Defined in: [src/db/Functions/BusinessAccountFunctions.ts:30](https://github.com/victorbratov/launchpad/blob/d1815ef1a573b42ac1f231f3f3d6617bddce6dbe/src/db/Functions/BusinessAccountFunctions.ts#L30)
 
 ## Parameters
 

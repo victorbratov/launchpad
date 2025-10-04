@@ -4,7 +4,7 @@
 
 > **MediaCarousel**(`__namedParameters`): `Element`
 
-Defined in: [src/components/media\_carousel.tsx:19](https://github.com/victorbratov/launchpad/blob/3cec89d9fa4be2794c552b4b2e488c08b6798868/src/components/media_carousel.tsx#L19)
+Defined in: [src/components/media\_carousel.tsx:19](https://github.com/victorbratov/launchpad/blob/d1815ef1a573b42ac1f231f3f3d6617bddce6dbe/src/components/media_carousel.tsx#L19)
 
 ## Parameters
 

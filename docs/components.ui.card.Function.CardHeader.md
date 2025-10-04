@@ -4,7 +4,7 @@
 
 > **CardHeader**(`__namedParameters`): `Element`
 
-Defined in: [src/components/ui/card.tsx:18](https://github.com/victorbratov/launchpad/blob/3cec89d9fa4be2794c552b4b2e488c08b6798868/src/components/ui/card.tsx#L18)
+Defined in: [src/components/ui/card.tsx:18](https://github.com/victorbratov/launchpad/blob/d1815ef1a573b42ac1f231f3f3d6617bddce6dbe/src/components/ui/card.tsx#L18)
 
 ## Parameters
 
