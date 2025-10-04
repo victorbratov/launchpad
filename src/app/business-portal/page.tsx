@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Card, CardContent, CardHeader, CardTitle,
 } from "@/components/ui/card";
@@ -15,15 +15,25 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogFooter,
+  DialogDescription,
+  DialogClose
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { get } from "http";
+import { getBusinessAccountInfo, depositBalance, withdrawBalance } from "./_actions";
+import { checkBusinessAuthentication } from "@/lib/globalActions";
+import { Input } from "@/components/ui/input";
+import WithdrawDialog from "@/components/withdrawal_dialog";
+import DepositDialog from "@/components/deposit_dialog";
+import { validateWithdrawalAmount } from "@/lib/utils";
 
-// Mock Data
-const businessInfo = {
-  businessID: "biz123",
-  ownerName: "John Smith",
-  email: "founder@sunDrop.agri",
-  walletAmount: 8200,
+/**
+ * Basic business account information
+ */
+interface businessInfo {
+  name: string; /** The name of the business owner */
+  email: string; /** The email of the business */
+  wallet: string; /** The amount of money in the business account wallet */
 };
 
 const pitches = [
@@ -65,8 +75,83 @@ interface Pitch {
   detailedPitch: string;
 }
 
+/**
+ * Business Portal Page, showing an overview of the business account and their pitches
+ * @returns The business portal page
+ */
 export default function BusinessPortalPage() {
   const [selectedPitch, setSelectedPitch] = useState<Pitch | null>(null);
+  const [busAccountInfo, setBusinessAccountInfo] = useState<businessInfo | null>(null);
+  const [withdrawalAmount, setWithdrawalAmount] = useState<number>(0);
+  const [withdrawing, setWithdrawing] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [open, setOpen] = useState<boolean>(false);
+  const [openDeposit, setOpenDeposit] = useState<boolean>(false);
+  const [depositing, setDepositing] = useState<boolean>(false);
+  const [depositAmount, setDepositAmount] = useState<number>(0);
+
+  useEffect(() => {
+    // fetch business account info
+    async function loadData() {
+      try {
+        const busInfo: businessInfo = await getBusinessAccountInfo();
+        setBusinessAccountInfo(busInfo);
+      } catch (error) {
+
+      }
+    }
+    // check authentication, and if authenticated, load business data
+    checkBusinessAuthentication().then((isBusiness) => {
+      if (!isBusiness) {
+        window.location.href = '/';
+      } else {
+        loadData();
+      }
+    });
+  }, []);
+
+  /**
+   * Handle the withdrawal of funds from the business account
+   * @param amount The amount to withdraw
+   */
+  async function withdrawFunds(amount: number | null) {
+    setWithdrawing(true);
+
+    setErrorMessage(validateWithdrawalAmount(amount, parseFloat(busAccountInfo?.wallet ?? "0")));
+    if (errorMessage === null) {
+      try {
+        await withdrawBalance(amount ?? parseFloat(busAccountInfo?.wallet ?? "0"));
+        setOpen(false);
+        // get updated info
+        const busInfo: businessInfo = await getBusinessAccountInfo();
+        setBusinessAccountInfo(busInfo);
+      } catch (error) {
+        setErrorMessage("Error withdrawing funds. Please try again later.");
+        setWithdrawing(false);
+      }
+    } else {
+      setWithdrawing(false);
+    }
+  }
+
+  /**
+   * Deposit funds into the business account from the linked bank account
+   * @param amount The amount to deposit
+   */
+  async function depositFunds(amount: number | null) {
+    setErrorMessage("");
+    setDepositing(true);
+
+    try {
+      await depositBalance(amount ?? parseFloat(busAccountInfo?.wallet ?? "0"));
+      setOpenDeposit(false);
+      const busInfo: businessInfo = await getBusinessAccountInfo();
+      setBusinessAccountInfo(busInfo);
+    } catch (error) {
+      setErrorMessage("Error withdrawing funds. Please try again later.");
+      setDepositing(false);
+    }
+  }
 
   return (
     <div className="p-6 space-y-6">
@@ -76,16 +161,48 @@ export default function BusinessPortalPage() {
           <CardTitle>Business Overview</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex justify-between flex-wrap">
-            <div>
-              <p><strong>Owner:</strong> {businessInfo.ownerName}</p>
-              <p><strong>Email:</strong> {businessInfo.email}</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 justify-between flex-wrap items-center">
+            <div className="space-y-2">
+              <p><strong>Business:</strong> {busAccountInfo ? busAccountInfo.name : "Loading.."}</p>
+              <p><strong>Email:</strong> {busAccountInfo ? busAccountInfo.email : "Loading..."}</p>
             </div>
-            <div className="text-right">
-              <p><strong>Wallet Balance:</strong></p>
-              <p className="text-2xl font-bold">${businessInfo.walletAmount}</p>
+            <div className="sm:text-right space-x-2 space-y-2">
+              <p className="pt-2 sm:pt-0"><strong>Wallet Balance:</strong></p>
+              <p className="text-2xl font-bold">{busAccountInfo ? busAccountInfo.wallet : "Loading..."}</p>
+
+              {/* Withdraw button */}
+              {/** Only show withdraw option if there is money in the account */}
+              {parseFloat(busAccountInfo?.wallet ?? "") != 0 &&
+                <WithdrawDialog
+                  accountInfo={busAccountInfo ? { wallet: parseFloat(busAccountInfo.wallet) } : { wallet: 0 }}
+                  fundsFunction={() => withdrawFunds(withdrawalAmount)}
+                  open={open}
+                  setOpen={setOpen}
+                  withdrawing={withdrawing}
+                  setWithdrawing={setWithdrawing}
+                  withdrawalAmount={withdrawalAmount}
+                  setWithdrawalAmount={setWithdrawalAmount}
+                  errorMessage={errorMessage ?? ""}
+                  setErrorMessage={setErrorMessage}
+                />
+              }
+
+              {/* Deposit button */}
+              <DepositDialog
+                accountInfo={busAccountInfo ? { wallet: parseFloat(busAccountInfo.wallet) } : { wallet: 0 }}
+                depositFunds={() => depositFunds(depositAmount)}
+                open={open}
+                setOpen={setOpen}
+                depositing={depositing}
+                setDepositing={setDepositing}
+                depositAmount={depositAmount}
+                setDepositAmount={setDepositAmount}
+                errorMessage={errorMessage ?? ""}
+                setErrorMessage={setErrorMessage}
+              />
             </div>
           </div>
+
         </CardContent>
       </Card>
 
@@ -179,6 +296,6 @@ export default function BusinessPortalPage() {
           </Table>
         </CardContent>
       </Card>
-    </div>
+    </div >
   );
 }
