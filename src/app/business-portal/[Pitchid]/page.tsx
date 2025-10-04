@@ -104,6 +104,24 @@ export default function PitchDetailsPage() {
 
   const targetAmount = Number(pitch.TargetInvAmount) || 0;
 
+const handleDelete = async (fileKey: string) => {
+  if (!confirm(`Are you sure you want to delete ${fileKey}?`)) return;
+
+  try {
+    // Remove from state
+    const updatedMedia = media.filter((m) => m !== fileKey);
+    setMediaFiles(updatedMedia);
+
+    // Update DB only
+    await updatePitch(pitchId, { SuportingMedia: updatedMedia.join(",") });
+  } catch (err) {
+    console.error(err);
+    alert(`Failed to remove ${fileKey}`);
+  }
+};
+
+
+
 /**
    * Saves edited pitch fields back into the database.
    *
@@ -147,7 +165,7 @@ const handleSave = async () => {
     }
 
     alert("Pitch and media updated!");
-    router.push("/");
+    router.push("/business-portal"); // <- redirect to business portal
   } catch (err) {
     console.error("Error saving pitch:", err);
     alert("Save failed, check console for details.");
@@ -165,70 +183,56 @@ return (
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-col gap-4">
-              {media
-                .filter((item): item is string => !!item && !!BUCKET_URL)
-                .map((item, idx) => {
-                  // Filters out non-media
-                  const extMatch = item.match(/\.(jpg|jpeg|png|gif|webp|mp4|mov)$/i);
-                  if (!extMatch) return null;
+ {media
+    .filter((item): item is string => !!item && !!BUCKET_URL)
+    .map((item, idx) => {
+      const extMatch = item.match(/\.(jpg|jpeg|png|gif|webp|mp4|mov)$/i);
+      if (!extMatch) return null;
 
-                  if (item.toLowerCase().endsWith(".mp4")) {
-                    return (
-                      <video
-                        key={idx}
-                        src={`${BUCKET_URL}${item}`}
-                        width={400}
-                        height={300}
-                        controls
-                      />
-                    );
-                  } else {
-                    return (
-                      <Image
-                        key={idx}
-                        src={`${BUCKET_URL}${item}`}
-                        alt={`Media ${idx + 1}`}
-                        width={400}
-                        height={300}
-                      />
-                    );
-                  }
-                })}
+      return (
+        <div key={idx} className="relative">
+          {item.toLowerCase().endsWith(".mp4") ? (
+            <video src={`${BUCKET_URL}${item}`} width={400} height={300} controls />
+          ) : (
+            <Image src={`${BUCKET_URL}${item}`} alt={`Media ${idx + 1}`} width={400} height={300} />
+          )}
+          <button
+            className="absolute top-2 right-2 bg-red-600 text-white rounded px-4 py-2 text-base font-semibold shadow-lg hover:bg-red-700 transition"
+            onClick={() => handleDelete(item)}
+          >
+            Delete
+          </button>
+        </div>
+      );
+    })}
             </div>
                   {/*Do the same but for pending files array */}
-                  {pendingFiles.length > 0 && (
-                    <div className="mt-4">
-                      <h4 className="text-sm font-medium text-muted-foreground mb-2">
-                        Awaiting Upload:
-                      </h4>
-                      <div className="flex flex-wrap gap-3">
-                        {pendingFiles.map((file, idx) => {
-                          const fileURL = URL.createObjectURL(file);
-                          if (file.type.startsWith("video/")) {
-                            return (
-                              <video
-                                key={idx}
-                                src={fileURL}
-                                width={200}
-                                height={150}
-                                controls
-                              />
-                            );
-                          } else {
-                            return (
-                              <Image
-                                key={idx}
-                                src={fileURL}
-                                alt={`Pending ${idx + 1}`}
-                                width={200}
-                                height={150}
-                              />
-                            );
-                          }
-                        })}
-                      </div>
-                    </div>
-                  )}
+                {pendingFiles.length > 0 && (
+                  <div className="mt-4 flex flex-wrap gap-3">
+                    {pendingFiles.map((file, idx) => {
+                      const fileURL = URL.createObjectURL(file);
+                      const handlePendingDelete = () => {
+                        setPendingFiles((prev) => prev.filter((_, i) => i !== idx));
+                      };
+
+                      return (
+                        <div key={idx} className="relative">
+                          {file.type.startsWith("video/") ? (
+                            <video src={fileURL} width={200} height={150} controls />
+                          ) : (
+                            <Image src={fileURL} alt={`Pending ${idx + 1}`} width={200} height={150} />
+                          )}
+                          <button
+                            className="absolute top-2 right-2 bg-red-600 text-white rounded px-3 py-1 text-sm font-semibold shadow hover:bg-red-700 transition"
+                            onClick={handlePendingDelete} // just removes from pendingFiles
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
 
                 <div>
                   <input
