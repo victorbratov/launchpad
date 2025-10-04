@@ -4,7 +4,7 @@
 
 > **RadioGroupItem**(`__namedParameters`): `Element`
 
-Defined in: [src/components/ui/radio-group.tsx:22](https://github.com/victorbratov/launchpad/blob/ba912ff5e4884ef55d41a8ab239f2bb8e81f8ecb/src/components/ui/radio-group.tsx#L22)
+Defined in: [src/components/ui/radio-group.tsx:22](https://github.com/victorbratov/launchpad/blob/3cec89d9fa4be2794c552b4b2e488c08b6798868/src/components/ui/radio-group.tsx#L22)
 
 ## Parameters
 
