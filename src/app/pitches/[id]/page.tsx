@@ -14,6 +14,7 @@ import { getPitchById, investInPitch } from "./_actions";
 import { parse } from "path";
 import { getTotalMoneyInvestedInPitch } from "./_actions";
 import Error from "next/error";
+import { sizeResolver } from "@mantine/core/lib/core/Box/style-props/resolvers/size-resolver/size-resolver";
 
 
 function calculateShares(amount: number, pitch: Pitches) {
@@ -43,6 +44,7 @@ export default function PitchDetailsPage() {
 
   const [isPending, startTransition] = useTransition();
   const [message, setMessage] = useState<string | null>(null);
+  const [media, setMedia] = useState<string[]>([]);
 
   const handleInvest = async () => {
     if (!busPitchInfo) return;
@@ -65,7 +67,6 @@ export default function PitchDetailsPage() {
         const busPitchInfo = await getPitchById(parseInt(pitchID));
         const investmentInfo = await getTotalMoneyInvestedInPitch(parseInt(pitchID));
 
-
         setBusPitchInfo(busPitchInfo);
         setInvestmentInfo(investmentInfo);
 
@@ -75,6 +76,7 @@ export default function PitchDetailsPage() {
     }
     if (pitchID) {
       loadData();
+      fetchAllMedia(pitchID).then((media) => setMedia(media));
     }
   }, []);
 
@@ -97,12 +99,35 @@ export default function PitchDetailsPage() {
 
   const { tier, shares } = calculateShares(amount, busPitchInfo!);
 
+  /**
+ * fetch list of images and videos from s3 bucket for a given ID
+ * @param {string} pitchID - The ID of the pitch to fetch media for
+ * @returns {Promise<string[]>} A promise that resolves to an array of media keys
+ */
+    async function fetchAllMedia(pitchID: string) {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BUCKET_URL}?list-type=2&prefix=${pitchID}/`);
+      const data = await res.text();
+
+      const parses = new DOMParser();
+      const xml = parses.parseFromString(data, "application/xml");
+      const items = xml.getElementsByTagName("Key");
+    
+      const mediaKeys: string[] = [];
+      for (let i = 0; i < items.length; i++) {
+        const key = items[i].textContent;
+        if (key && !key.endsWith("/")) { // Exclude folder keys
+          mediaKeys.push(process.env.NEXT_PUBLIC_BUCKET_URL + key);
+        }
+      }
+      return mediaKeys;
+    }
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 p-6">
       <div className="lg:col-span-2 space-y-6">
         <div className="flex justify-center">
           <div className="w-full max-w-3xl">
-            <MediaCarousel media={([])} />
+            <MediaCarousel media={media} />
           </div>
         </div>
 

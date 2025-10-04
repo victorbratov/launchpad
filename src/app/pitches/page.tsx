@@ -6,8 +6,7 @@ import { PitchCard } from "../../components/pitch_preview_card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { mockPitches } from "../../../mock_data/pitches";
 import { Pitches, Investment } from "../../../types/pitch";
-import { fetchFeaturedMedia, fetchAllMedia, getAllBusinessPitches, getTotalMoneyInvested } from "./_actions";
-import { get } from "http";
+import { getAllBusinessPitches, getTotalMoneyInvested } from "./_actions";
 
 //mock pitches data types, DELETE AFTER DATABASE INTEGRATION
 const allTags = Array.from(new Set(mockPitches.flatMap((p) => p.tags)));
@@ -17,7 +16,6 @@ export default function PitchSearchPage() {
   // SEARCH BAR at the top right
   const [search, setSearch] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [featuredMedia, setFeaturedMedia] = useState<string>("");
 
   // SIMPLE CONTROL: How many cards to show
   const [maxCards, setMaxCards] = useState<number>(6); // Start with showing only 6 cards
