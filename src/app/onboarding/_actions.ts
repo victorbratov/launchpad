@@ -20,6 +20,12 @@ export const completeOnboarding = async (role: string, name: string, bank_accoun
   }
 
   if (role === 'investor') {
+    // store the businesses bank account in the bank table as this is needed to create the account
+    await db.insert(TheBank).values({
+      BankAccountNumber: bank_account_number,
+      Ballance: '0.00'
+    });
+
     await db.insert(InvestorAccounts).values({
       InvestorID: userId,
       InvEmail: clerkUser?.emailAddresses[0]?.emailAddress || '',
@@ -28,19 +34,19 @@ export const completeOnboarding = async (role: string, name: string, bank_accoun
       InvWallet: '0.00'
     });
   } else if (role === 'business') {
-      // store the businesses bank account in the bank table as this is needed to create the account
-      await db.insert(TheBank).values({
-        BankAccountNumber: bank_account_number,
-        Ballance: '0.00'
-      });
+    // store the businesses bank account in the bank table as this is needed to create the account
+    await db.insert(TheBank).values({
+      BankAccountNumber: bank_account_number,
+      Ballance: '0.00'
+    });
 
-      await db.insert(BusinessAccount).values({
-        BusAccountID: userId,
-        BusEmail: clerkUser?.emailAddresses[0]?.emailAddress || '',
-        BusName: name,
-        BusBankAcc: bank_account_number,
-        BusWallet: '0.00'
-      });
+    await db.insert(BusinessAccount).values({
+      BusAccountID: userId,
+      BusEmail: clerkUser?.emailAddresses[0]?.emailAddress || '',
+      BusName: name,
+      BusBankAcc: bank_account_number,
+      BusWallet: '0.00'
+    });
   }
 
   await client.users.updateUser(userId, {

@@ -2,7 +2,7 @@
 
 ***
 
-Defined in: [src/app/create-pitch/\_actions.ts:11](https://github.com/victorbratov/launchpad/blob/35b0965dd86b05a55a9206d809917613bd599c25/src/app/create-pitch/_actions.ts#L11)
+Defined in: [src/app/create-pitch/\_actions.ts:11](https://github.com/victorbratov/launchpad/blob/3cec89d9fa4be2794c552b4b2e488c08b6798868/src/app/create-pitch/_actions.ts#L11)
 
 Represents a business pitch
 
@@ -12,7 +12,7 @@ Represents a business pitch
 
 > **bronzeMax**: `number`
 
-Defined in: [src/app/create-pitch/\_actions.ts:20](https://github.com/victorbratov/launchpad/blob/35b0965dd86b05a55a9206d809917613bd599c25/src/app/create-pitch/_actions.ts#L20)
+Defined in: [src/app/create-pitch/\_actions.ts:20](https://github.com/victorbratov/launchpad/blob/3cec89d9fa4be2794c552b4b2e488c08b6798868/src/app/create-pitch/_actions.ts#L20)
 
 ***
 
@@ -20,7 +20,7 @@ Defined in: [src/app/create-pitch/\_actions.ts:20](https://github.com/victorbrat
 
 > **bronzeMultiplier**: `string`
 
-Defined in: [src/app/create-pitch/\_actions.ts:19](https://github.com/victorbratov/launchpad/blob/35b0965dd86b05a55a9206d809917613bd599c25/src/app/create-pitch/_actions.ts#L19)
+Defined in: [src/app/create-pitch/\_actions.ts:19](https://github.com/victorbratov/launchpad/blob/3cec89d9fa4be2794c552b4b2e488c08b6798868/src/app/create-pitch/_actions.ts#L19)
 
 ***
 
@@ -28,7 +28,7 @@ Defined in: [src/app/create-pitch/\_actions.ts:19](https://github.com/victorbrat
 
 > **detailedPitch**: `string`
 
-Defined in: [src/app/create-pitch/\_actions.ts:15](https://github.com/victorbratov/launchpad/blob/35b0965dd86b05a55a9206d809917613bd599c25/src/app/create-pitch/_actions.ts#L15)
+Defined in: [src/app/create-pitch/\_actions.ts:15](https://github.com/victorbratov/launchpad/blob/3cec89d9fa4be2794c552b4b2e488c08b6798868/src/app/create-pitch/_actions.ts#L15)
 
 ***
 
@@ -36,7 +36,7 @@ Defined in: [src/app/create-pitch/\_actions.ts:15](https://github.com/victorbrat
 
 > **dividendPayoutPeriod**: `string`
 
-Defined in: [src/app/create-pitch/\_actions.ts:24](https://github.com/victorbratov/launchpad/blob/35b0965dd86b05a55a9206d809917613bd599c25/src/app/create-pitch/_actions.ts#L24)
+Defined in: [src/app/create-pitch/\_actions.ts:24](https://github.com/victorbratov/launchpad/blob/3cec89d9fa4be2794c552b4b2e488c08b6798868/src/app/create-pitch/_actions.ts#L24)
 
 ***
 
@@ -44,7 +44,7 @@ Defined in: [src/app/create-pitch/\_actions.ts:24](https://github.com/victorbrat
 
 > **elevatorPitch**: `string`
 
-Defined in: [src/app/create-pitch/\_actions.ts:14](https://github.com/victorbratov/launchpad/blob/35b0965dd86b05a55a9206d809917613bd599c25/src/app/create-pitch/_actions.ts#L14)
+Defined in: [src/app/create-pitch/\_actions.ts:14](https://github.com/victorbratov/launchpad/blob/3cec89d9fa4be2794c552b4b2e488c08b6798868/src/app/create-pitch/_actions.ts#L14)
 
 ***
 
@@ -52,7 +52,7 @@ Defined in: [src/app/create-pitch/\_actions.ts:14](https://github.com/victorbrat
 
 > **endDate**: `Date`
 
-Defined in: [src/app/create-pitch/\_actions.ts:18](https://github.com/victorbratov/launchpad/blob/35b0965dd86b05a55a9206d809917613bd599c25/src/app/create-pitch/_actions.ts#L18)
+Defined in: [src/app/create-pitch/\_actions.ts:18](https://github.com/victorbratov/launchpad/blob/3cec89d9fa4be2794c552b4b2e488c08b6798868/src/app/create-pitch/_actions.ts#L18)
 
 ***
 
@@ -60,7 +60,7 @@ Defined in: [src/app/create-pitch/\_actions.ts:18](https://github.com/victorbrat
 
 > **goldMultiplier**: `string`
 
-Defined in: [src/app/create-pitch/\_actions.ts:23](https://github.com/victorbratov/launchpad/blob/35b0965dd86b05a55a9206d809917613bd599c25/src/app/create-pitch/_actions.ts#L23)
+Defined in: [src/app/create-pitch/\_actions.ts:23](https://github.com/victorbratov/launchpad/blob/3cec89d9fa4be2794c552b4b2e488c08b6798868/src/app/create-pitch/_actions.ts#L23)
 
 ***
 
@@ -68,7 +68,7 @@ Defined in: [src/app/create-pitch/\_actions.ts:23](https://github.com/victorbrat
 
 > **silverMax**: `number`
 
-Defined in: [src/app/create-pitch/\_actions.ts:22](https://github.com/victorbratov/launchpad/blob/35b0965dd86b05a55a9206d809917613bd599c25/src/app/create-pitch/_actions.ts#L22)
+Defined in: [src/app/create-pitch/\_actions.ts:22](https://github.com/victorbratov/launchpad/blob/3cec89d9fa4be2794c552b4b2e488c08b6798868/src/app/create-pitch/_actions.ts#L22)
 
 ***
 
@@ -76,7 +76,7 @@ Defined in: [src/app/create-pitch/\_actions.ts:22](https://github.com/victorbrat
 
 > **silverMultiplier**: `string`
 
-Defined in: [src/app/create-pitch/\_actions.ts:21](https://github.com/victorbratov/launchpad/blob/35b0965dd86b05a55a9206d809917613bd599c25/src/app/create-pitch/_actions.ts#L21)
+Defined in: [src/app/create-pitch/\_actions.ts:21](https://github.com/victorbratov/launchpad/blob/3cec89d9fa4be2794c552b4b2e488c08b6798868/src/app/create-pitch/_actions.ts#L21)
 
 ***
 
@@ -84,7 +84,7 @@ Defined in: [src/app/create-pitch/\_actions.ts:21](https://github.com/victorbrat
 
 > **startDate**: `Date`
 
-Defined in: [src/app/create-pitch/\_actions.ts:17](https://github.com/victorbratov/launchpad/blob/35b0965dd86b05a55a9206d809917613bd599c25/src/app/create-pitch/_actions.ts#L17)
+Defined in: [src/app/create-pitch/\_actions.ts:17](https://github.com/victorbratov/launchpad/blob/3cec89d9fa4be2794c552b4b2e488c08b6798868/src/app/create-pitch/_actions.ts#L17)
 
 ***
 
@@ -92,7 +92,7 @@ Defined in: [src/app/create-pitch/\_actions.ts:17](https://github.com/victorbrat
 
 > **status**: `string`
 
-Defined in: [src/app/create-pitch/\_actions.ts:13](https://github.com/victorbratov/launchpad/blob/35b0965dd86b05a55a9206d809917613bd599c25/src/app/create-pitch/_actions.ts#L13)
+Defined in: [src/app/create-pitch/\_actions.ts:13](https://github.com/victorbratov/launchpad/blob/3cec89d9fa4be2794c552b4b2e488c08b6798868/src/app/create-pitch/_actions.ts#L13)
 
 ***
 
@@ -100,7 +100,7 @@ Defined in: [src/app/create-pitch/\_actions.ts:13](https://github.com/victorbrat
 
 > **targetAmount**: `string`
 
-Defined in: [src/app/create-pitch/\_actions.ts:16](https://github.com/victorbratov/launchpad/blob/35b0965dd86b05a55a9206d809917613bd599c25/src/app/create-pitch/_actions.ts#L16)
+Defined in: [src/app/create-pitch/\_actions.ts:16](https://github.com/victorbratov/launchpad/blob/3cec89d9fa4be2794c552b4b2e488c08b6798868/src/app/create-pitch/_actions.ts#L16)
 
 ***
 
@@ -108,4 +108,4 @@ Defined in: [src/app/create-pitch/\_actions.ts:16](https://github.com/victorbrat
 
 > **title**: `string`
 
-Defined in: [src/app/create-pitch/\_actions.ts:12](https://github.com/victorbratov/launchpad/blob/35b0965dd86b05a55a9206d809917613bd599c25/src/app/create-pitch/_actions.ts#L12)
+Defined in: [src/app/create-pitch/\_actions.ts:12](https://github.com/victorbratov/launchpad/blob/3cec89d9fa4be2794c552b4b2e488c08b6798868/src/app/create-pitch/_actions.ts#L12)

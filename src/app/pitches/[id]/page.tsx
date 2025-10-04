@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -10,71 +10,11 @@ import Link from "next/link";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useParams } from "next/navigation";
 import { Investment, Pitches } from "../../../../types/pitch";
-import { getPitchById } from "./_actions";
+import { getPitchById, investInPitch } from "./_actions";
 import { parse } from "path";
 import { getTotalMoneyInvestedInPitch } from "./_actions";
+import Error from "next/error";
 
-
-const mockPitch = {
-  pitchID: "p1",
-  pitcherID: "user1",
-  pitchName: "SunDrop: Affordable Solar-Powered Irrigation Systems",
-  pitchStatus: "Active",
-  pitchGoal: 10000,
-  currentAmount: 4200,
-  pitchStart: "2024-01-01",
-  pitchEnd: "2024-03-01",
-  elevatorPitch:
-    "SunDrop provides low-cost solar-powered irrigation systems designed for smallholder farmers in rural communities, helping them increase crop yields, reduce costs, and achieve year-round farming independence.",
-  detailedPitch: `
-Millions of smallholder farmers across Africa and South Asia lack reliable and affordable access to irrigation. Diesel water pumps are expensive to operate, harmful to the environment, and often inaccessible in off-grid regions. As a result, farmers are forced to depend solely on rainfall, leaving them vulnerable to droughts and seasonal food insecurity.
-
-SunDrop’s solar-powered irrigation system offers a sustainable and cost-effective alternative. Our pumps are designed to be affordable, durable, and easy to maintain, enabling farmers to irrigate their crops consistently without relying on fossil fuels. By harnessing the power of the sun, SunDrop drastically reduces agricultural costs and provides farmers with a tool to increase crop yields by up to 40%.
-
-We’ve already piloted our first units with 25 farmers in rural Kenya, receiving overwhelmingly positive feedback. Farmers using SunDrop pumps not only reduced their energy costs but also extended their growing seasons, giving them additional harvest cycles annually. Early impact data suggests an average 35% increase in household income.
-
-This funding campaign will allow us to manufacture and distribute our next batch of 100 pumps while expanding our reach into neighboring regions. Investors will directly support local food security, rural economic empowerment, and climate-friendly agricultural practices.
-
-By funding SunDrop, you invest not only in a growing market—projected to reach over $2.5B globally by 2027—but also in a movement towards sustainable farming and climate resilience.`,
-  profitSharePercentage: 10,
-  dividendPeriod: "quarterly",
-  media: [
-    "https://placehold.co/800x400?text=Farmers+Using+SunDrop",
-    "https://placehold.co/800x400?text=Pump+Prototype",
-    "https://samplelib.com/lib/preview/mp4/sample-5s.mp4", // Pitch video
-  ],
-  bronzeTierMult: 1,
-  silverTierMult: 1.2,
-  goldTierMult: 1.5,
-  bronzeMax: 999,
-  silverMax: 4999,
-  goldMax: 10000,
-};
-
-
-const defaultPitch: Pitches = {
-  BusPitchID: 0,
-  BusAccountID: "0",
-  statusOfPitch: "Loading",
-  ProductTitle: "Loading...",
-  ElevatorPitch: "Loading pitch details...",
-  DetailedPitch: "Loading detailed pitch information...",
-  SuportingMedia: "https://placehold.co/800x400?text=Loading",
-  TargetInvAmount: "0",
-  InvestmentStart: new Date().toISOString(),
-  InvestmentEnd: new Date().toISOString(),
-  InvProfShare: 0,
-  pricePerShare: "1",
-  bronseTierMulti: "1",
-  bronseInvMax: 999,
-  silverTierMulti: "1.2",
-  silverInvMax: 4999,
-  goldTierMulti: "1.5",
-  goldTierMax: 10000,
-  dividEndPayout: new Date().toISOString(),
-  DividEndPayoutPeriod: "quarterly",
-  Tags: [],
-};
 
 function calculateShares(amount: number, pitch: Pitches) {
   if (amount <= 0) return { tier: null, shares: 0 };
@@ -92,26 +32,42 @@ function calculateShares(amount: number, pitch: Pitches) {
 
 export default function PitchDetailsPage() {
 
-  
-  
-  // getting the Id from the url
+
+
   const params = useParams();
   const pitchID = params.id as string;
 
-  // setting state varaible for the pitch info
   const [busPitchInfo, setBusPitchInfo] = useState<Pitches | null>(null);
   const [investmentInfo, setInvestmentInfo] = useState<Investment | null>(null);
+
+
+  const [isPending, startTransition] = useTransition();
+  const [message, setMessage] = useState<string | null>(null);
+
+  const handleInvest = async () => {
+    if (!busPitchInfo) return;
+    startTransition(async () => {
+      try {
+        const result = await investInPitch(parseInt(pitchID), amount);
+        setMessage(result.message);
+        setInput("");
+        window.location.reload();
+      } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+        setMessage(err.message || "Error investing");
+      }
+    });
+  };
 
   //where the data is put into the arrays above
   useEffect(() => {
     async function loadData() {
       try {
-      const busPitchInfo = await getPitchById(parseInt(pitchID));
-      const investmentInfo = await getTotalMoneyInvestedInPitch(parseInt(pitchID));
+        const busPitchInfo = await getPitchById(parseInt(pitchID));
+        const investmentInfo = await getTotalMoneyInvestedInPitch(parseInt(pitchID));
 
 
-      setBusPitchInfo(busPitchInfo);
-      setInvestmentInfo(investmentInfo);
+        setBusPitchInfo(busPitchInfo);
+        setInvestmentInfo(investmentInfo);
 
       } catch (error) {
         console.error("Error fetching pitch data:", error);
@@ -139,33 +95,33 @@ export default function PitchDetailsPage() {
     pitchVersions.find((v) => v.current)?.id || pitchVersions[0].id
   );
 
-  const { tier, shares } = calculateShares(amount, busPitchInfo || defaultPitch);
+  const { tier, shares } = calculateShares(amount, busPitchInfo!);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 p-6">
       <div className="lg:col-span-2 space-y-6">
         <div className="flex justify-center">
           <div className="w-full max-w-3xl">
-            <MediaCarousel media={(mockPitch.media)} />
+            <MediaCarousel media={([])} />
           </div>
         </div>
 
-        <h1 className="text-3xl font-bold">{(busPitchInfo?.ProductTitle || defaultPitch.ProductTitle)}</h1>
-        <p className="text-lg text-muted-foreground">{(busPitchInfo?.ElevatorPitch || defaultPitch.ElevatorPitch)}</p>
+        <h1 className="text-3xl font-bold">{(busPitchInfo?.ProductTitle)}</h1>
+        <p className="text-lg text-muted-foreground">{(busPitchInfo?.ElevatorPitch)}</p>
 
         <div className="space-y-2">
           <h2 className="text-2xl font-semibold">Detiled Pitch</h2>
-          <p className="text-muted-foreground">{(busPitchInfo?.DetailedPitch || defaultPitch.DetailedPitch)}</p>
+          <p className="text-muted-foreground">{(busPitchInfo?.DetailedPitch)}</p>
         </div>
 
         <div className="space-y-2">
           <h2 className="text-2xl font-semibold">Investment Terms</h2>
           <p>
-            <strong>Profit Share:</strong> {busPitchInfo?.InvProfShare || defaultPitch.InvProfShare}% of
+            <strong>Profit Share:</strong> {busPitchInfo?.InvProfShare}% of
             revenue
           </p>
           <p>
-            <strong>Dividend Period:</strong> {busPitchInfo?.DividEndPayoutPeriod || defaultPitch.DividEndPayoutPeriod}
+            <strong>Dividend Period:</strong> {busPitchInfo?.DividEndPayoutPeriod}
           </p>
         </div>
       </div>
@@ -182,7 +138,7 @@ export default function PitchDetailsPage() {
         <div className="sticky top-19">
           <Card>
             <CardHeader>
-              <CardTitle>Invest in {busPitchInfo?.ProductTitle || defaultPitch.ProductTitle}</CardTitle>
+              <CardTitle>Invest in {busPitchInfo?.ProductTitle}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Funding progress */}
@@ -218,7 +174,7 @@ export default function PitchDetailsPage() {
                     {busPitchInfo?.silverInvMax}, {busPitchInfo?.silverTierMulti}x shares
                   </li>
                   <li>
-                    <strong>Gold:</strong> ${(busPitchInfo?.goldTierMax || 0)  + 1} - $
+                    <strong>Gold:</strong> ${(busPitchInfo?.goldTierMax || 0) + 1} - $
                     {busPitchInfo?.goldTierMax}, {busPitchInfo?.goldTierMulti}x shares
                   </li>
                 </ul>
@@ -258,11 +214,14 @@ export default function PitchDetailsPage() {
 
               {/* Invest button */}
               <Button
-                disabled={amount <= 0 || amount > remaining}
+                disabled={amount <= 0 || amount > remaining || isPending}
+                onClick={handleInvest}
                 className="w-full"
               >
-                Invest {amount > 0 ? `$${amount.toLocaleString()}` : ""}
+                {isPending ? "Processing..." : `Invest ${amount > 0 ? `$${amount.toLocaleString()}` : ""}`}
               </Button>
+
+              {message && <p className="text-sm mt-2">{message}</p>}
               {/* Pitch History */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-muted-foreground">
