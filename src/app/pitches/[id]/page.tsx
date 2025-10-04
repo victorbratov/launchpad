@@ -13,6 +13,7 @@ import { Investment, Pitches } from "../../../../types/pitch";
 import { getPitchById, investInPitch } from "./_actions";
 import { parse } from "path";
 import { getTotalMoneyInvestedInPitch } from "./_actions";
+import Error from "next/error";
 
 
 function calculateShares(amount: number, pitch: Pitches) {
@@ -49,10 +50,9 @@ export default function PitchDetailsPage() {
       try {
         const result = await investInPitch(parseInt(pitchID), amount);
         setMessage(result.message);
-        setInput(""); // clear input
-        // Optional: refresh data if using server components
+        setInput("");
         window.location.reload();
-      } catch (err: any) {
+      } catch (err: any) { // eslint-disable-line no-explicit-any
         setMessage(err.message || "Error investing");
       }
     });
