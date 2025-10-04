@@ -4,7 +4,7 @@
 
 > **default**(): `Element`
 
-Defined in: [src/app/pitches/\[id\]/page.tsx:92](https://github.com/victorbratov/launchpad/blob/ba912ff5e4884ef55d41a8ab239f2bb8e81f8ecb/src/app/pitches/[id]/page.tsx#L92)
+Defined in: [src/app/pitches/\[id\]/page.tsx:93](https://github.com/victorbratov/launchpad/blob/35b0965dd86b05a55a9206d809917613bd599c25/src/app/pitches/[id]/page.tsx#L93)
 
 ## Returns
 

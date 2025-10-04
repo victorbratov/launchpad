@@ -4,7 +4,7 @@
 
 > `const` **db**: `NeonHttpDatabase`\<`Record`\<`string`, `never`\>\> & `object`
 
-Defined in: [src/db.ts:12](https://github.com/victorbratov/launchpad/blob/ba912ff5e4884ef55d41a8ab239f2bb8e81f8ecb/src/db.ts#L12)
+Defined in: [src/db.ts:12](https://github.com/victorbratov/launchpad/blob/35b0965dd86b05a55a9206d809917613bd599c25/src/db.ts#L12)
 
 ## Type Declaration
 
