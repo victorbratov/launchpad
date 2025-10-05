@@ -20,7 +20,7 @@ export default function PitchSearchPage() {
   // SEARCH BAR at the top right
   const [search, setSearch] = useState("");
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  
+
   // Mobile filter sidebar state
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false);
@@ -34,11 +34,11 @@ export default function PitchSearchPage() {
 
   //slider state
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 100]);
-  
+
   //button selection states
   const [selectedSort, setSelectedSort] = useState<'after' | 'before'>('after'); // newest and oldest buttons
   const [FilterOn, setFilterOn] = useState<'on' | 'off'>('off');
-  
+
   //date filter state
   const [selectedDate, setSelectedDate] = useState<string>("");
 
@@ -54,57 +54,6 @@ export default function PitchSearchPage() {
     }
     loadData();
   }, []);
-
-  // bubble sort to sort pitches from newest to oldest
-  const sortPitchesNewest = () => {
-    const sortedPitches = [...pitches]; // copy of pitches as not to modify original before sortted
-    
-    for (let x = 0; x < sortedPitches.length; x++) {
-      for (let y = 0; y < sortedPitches.length - x - 1; y++) {
-        const dA = new Date(sortedPitches[y].InvestmentStart);
-        const B = new Date(sortedPitches[y + 1].InvestmentStart);
-
-        if (dA < B) {
-          [sortedPitches[y], sortedPitches[y + 1]] = [sortedPitches[y + 1], sortedPitches[y]];
-        }
-      }
-    }
-    
-    setPitches(sortedPitches); // Update state with sorted array
-  }
-
-  // bubble sort to sort pitches from oldest to newest
-  const sortPitchesOldest = () => {
-    const sortedPitches = [...pitches]; // copy of pitches as not to modify original before sortted
-    
-    // Bubble sort by InvestmentStart date (oldest first)
-    for (let x = 0; x < sortedPitches.length; x++) {
-      for (let y = 0; y < sortedPitches.length - x - 1; y++) {
-        const dateA = new Date(sortedPitches[y].InvestmentStart);
-        const dateB = new Date(sortedPitches[y + 1].InvestmentStart);
-
-        // If current date is newer than next date, swap them (oldest first)
-        if (dateA > dateB) {
-          [sortedPitches[y], sortedPitches[y + 1]] = [sortedPitches[y + 1], sortedPitches[y]];
-        }
-      }
-    }
-    
-    setPitches(sortedPitches); // Update state with sorted array
-  }
-
-  // Filter pitches by name + tags
-  const filteredPitches = useMemo(() => {
-    return mockPitches.filter((pitch) => {
-      const matchesSearch = pitch.pitchName
-        .toLowerCase()
-        .includes(search.toLowerCase());
-      const matchesTags =
-        selectedTags.length === 0 ||
-        selectedTags.some((tag) => pitch.tags.includes(tag));
-      return matchesSearch && matchesTags;
-    });
-  }, [search, selectedTags]);
 
   // Toggle tag checkbox
   const toggleTag = (tag: string) => {
@@ -167,17 +116,17 @@ export default function PitchSearchPage() {
       {/* Advanced Filters Card */}
       <Card className="mt-6">
         <CardHeader>
-          <div className="flex items-center justify-between"> 
+          <div className="flex items-center justify-between">
             <h2 className="font-semibold text-lg">Advanced Filters</h2>
-            <Button 
+            <Button
               size="sm"
               style={{ backgroundColor: FilterOn === 'on' ? 'Green' : 'Black', color: 'white' }}
               onClick={() => {
                 const newFilterState = FilterOn === 'off' ? 'on' : 'off';
                 setFilterOn(newFilterState);
-                if(newFilterState === 'on' && selectedSort === 'before') { 
+                if (newFilterState === 'on' && selectedSort === 'before') {
                 }
-                if(newFilterState === 'on' && selectedSort === 'after') {  
+                if (newFilterState === 'on' && selectedSort === 'after') {
                 }
               }}
             >
@@ -185,17 +134,17 @@ export default function PitchSearchPage() {
             </Button>
           </div>
         </CardHeader>
-        
+
         {/* slider controls */}
         <div className="p-4 space-y-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">Investment Progress</label>
             <div className="flex items-center gap-3">
               <div className="flex-1">
-                <Slider 
-                  value={[priceRange[0]]} 
+                <Slider
+                  value={[priceRange[0]]}
                   onValueChange={(value: number[]) => setPriceRange([value[0], priceRange[1]])}
-                  max={100} 
+                  max={100}
                   step={1}
                   className="w-full"
                 />
@@ -221,22 +170,22 @@ export default function PitchSearchPage() {
 
             {/* After and Before Buttons */}
             <div className="grid grid-cols-2 gap-2">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
-                className="font-semibold" 
+                className="font-semibold"
                 style={{ backgroundColor: selectedSort === 'after' ? 'lightgreen' : 'gray' }}
-                onClick={() => { setSelectedSort('after'); if (FilterOn === 'on') {  } }}
+                onClick={() => { setSelectedSort('after'); if (FilterOn === 'on') { } }}
               >
                 After
               </Button>
 
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 size="sm"
-                className="font-semibold" 
+                className="font-semibold"
                 style={{ backgroundColor: selectedSort === 'before' ? 'lightgreen' : 'gray' }}
-                onClick={() => { setSelectedSort('before'); if (FilterOn === 'on') { }  }}
+                onClick={() => { setSelectedSort('before'); if (FilterOn === 'on') { } }}
               >
                 Before
               </Button>
@@ -247,8 +196,8 @@ export default function PitchSearchPage() {
 
       {/* Clear All Filters */}
       {(search || selectedTags.length > 0 || FilterOn === 'on' || selectedDate) && (
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onClick={() => {
             setSearch("");
             setSelectedTags([]);
@@ -303,7 +252,7 @@ export default function PitchSearchPage() {
           {/* Results Info */}
           <div className="mb-6">
             <p className="text-sm text-muted-foreground">
-              {pitches.length > 0 
+              {pitches.length > 0
                 ? `Showing ${Math.min(pitches.length, maxCards)} of ${pitches.length} pitches`
                 : "Loading pitches..."
               }
@@ -312,7 +261,7 @@ export default function PitchSearchPage() {
 
           {/* Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4 sm:gap-6">
-            {pitches.length ? (  
+            {pitches.length ? (
               pitches.map((CurrentPitch) => {
                 const investmentsIntoPitch = investments.find(inv => inv.busPitchID === CurrentPitch.BusPitchID)?.totalAmount;
                 const InvestmentGoal = Number(CurrentPitch.TargetInvAmount);
@@ -322,46 +271,46 @@ export default function PitchSearchPage() {
                 if (selectedTags.length === 0 || selectedTags.some(selectedTag => CurrentPitch.Tags?.includes(selectedTag))) {
 
                   //non tag filers applied here
-                  
-                  if((FilterOn === 'on' && selectedSort === 'after')){
-                    if(InvestedPercent >= priceRange[0] && CurrentPitch.InvestmentStart >= (selectedDate || '1970-01-01')) {
+
+                  if ((FilterOn === 'on' && selectedSort === 'after')) {
+                    if (InvestedPercent >= priceRange[0] && CurrentPitch.InvestmentStart >= (selectedDate || '1970-01-01')) {
                       return (
                         <PitchCard key={CurrentPitch.BusPitchID}  //creates a card for each pitch 
-                            pitch={{
-                              pitchID: CurrentPitch.BusPitchID.toString(),
-                              pitchName: CurrentPitch.ProductTitle + " " + InvestedPercent.toFixed(2) + '% Funded',
-                              pitchStatus: CurrentPitch.statusOfPitch,
-                              currentAmount: investments.find(inv => inv.busPitchID === CurrentPitch.BusPitchID)?.totalAmount || 0,
-                              pitchGoal: Number(CurrentPitch.TargetInvAmount),
-                              pitchImageUrl: CurrentPitch.FeaturedImage ? CurrentPitch.FeaturedImage : null,
-                              tags: CurrentPitch.Tags || [], 
-                              pitcherID: CurrentPitch.BusAccountID, 
-                              pitchStart: CurrentPitch.InvestmentStart, 
-                              pitchEnd: CurrentPitch.InvestmentEnd,     
-                            }} />
-                        );
+                          pitch={{
+                            pitchID: CurrentPitch.BusPitchID.toString(),
+                            pitchName: CurrentPitch.ProductTitle + " " + InvestedPercent.toFixed(2) + '% Funded',
+                            pitchStatus: CurrentPitch.statusOfPitch,
+                            currentAmount: investments.find(inv => inv.busPitchID === CurrentPitch.BusPitchID)?.totalAmount || 0,
+                            pitchGoal: Number(CurrentPitch.TargetInvAmount),
+                            pitchImageUrl: CurrentPitch.FeaturedImage ? CurrentPitch.FeaturedImage : null,
+                            tags: CurrentPitch.Tags || [],
+                            pitcherID: CurrentPitch.BusAccountID,
+                            pitchStart: CurrentPitch.InvestmentStart,
+                            pitchEnd: CurrentPitch.InvestmentEnd,
+                          }} />
+                      );
                     }
                   }
-                  else if((FilterOn === 'on' && selectedSort === 'before')){
-                    if(InvestedPercent >= priceRange[0] && CurrentPitch.InvestmentStart <= (selectedDate || '2100-01-01')) {
+                  else if ((FilterOn === 'on' && selectedSort === 'before')) {
+                    if (InvestedPercent >= priceRange[0] && CurrentPitch.InvestmentStart <= (selectedDate || '2100-01-01')) {
                       return (
                         <PitchCard key={CurrentPitch.BusPitchID}  //creates a card for each pitch 
-                            pitch={{
-                              pitchID: CurrentPitch.BusPitchID.toString(),
-                              pitchName: CurrentPitch.ProductTitle + " " + InvestedPercent.toFixed(2) + '% Funded',
-                              pitchStatus: CurrentPitch.statusOfPitch,
-                              currentAmount: investments.find(inv => inv.busPitchID === CurrentPitch.BusPitchID)?.totalAmount || 0,
-                              pitchGoal: Number(CurrentPitch.TargetInvAmount),
-                              pitchImageUrl: CurrentPitch.FeaturedImage ? CurrentPitch.FeaturedImage : null ,
-                              tags: CurrentPitch.Tags || [], 
-                              pitcherID: CurrentPitch.BusAccountID, 
-                              pitchStart: CurrentPitch.InvestmentStart, 
-                              pitchEnd: CurrentPitch.InvestmentEnd,     
-                            }} />
-                        );
+                          pitch={{
+                            pitchID: CurrentPitch.BusPitchID.toString(),
+                            pitchName: CurrentPitch.ProductTitle + " " + InvestedPercent.toFixed(2) + '% Funded',
+                            pitchStatus: CurrentPitch.statusOfPitch,
+                            currentAmount: investments.find(inv => inv.busPitchID === CurrentPitch.BusPitchID)?.totalAmount || 0,
+                            pitchGoal: Number(CurrentPitch.TargetInvAmount),
+                            pitchImageUrl: CurrentPitch.FeaturedImage ? CurrentPitch.FeaturedImage : null,
+                            tags: CurrentPitch.Tags || [],
+                            pitcherID: CurrentPitch.BusAccountID,
+                            pitchStart: CurrentPitch.InvestmentStart,
+                            pitchEnd: CurrentPitch.InvestmentEnd,
+                          }} />
+                      );
                     }
-                  } 
-                  else{
+                  }
+                  else {
                     return (
                       <PitchCard key={CurrentPitch.BusPitchID}  //creates a card for each pitch 
                         pitch={{
@@ -398,11 +347,11 @@ export default function PitchSearchPage() {
       {isFilterOpen && (
         <>
           {/* Backdrop */}
-          <div 
+          <div
             className="fixed inset-0 bg-black/50 z-50 lg:hidden"
             onClick={() => setIsFilterOpen(false)}
           />
-          
+
           {/* Modal */}
           <div className="fixed inset-y-0 right-0 w-full max-w-sm bg-white z-50 lg:hidden transform transition-transform duration-300">
             <div className="flex items-center justify-between p-4 border-b">
@@ -415,14 +364,14 @@ export default function PitchSearchPage() {
                 <X size={20} />
               </Button>
             </div>
-            
+
             <div className="p-4 overflow-y-auto max-h-[calc(100vh-80px)]">
               <FilterSidebar />
             </div>
 
             {/* Apply Button */}
             <div className="p-4 border-t bg-white">
-              <Button 
+              <Button
                 onClick={() => setIsFilterOpen(false)}
                 className="w-full"
               >
