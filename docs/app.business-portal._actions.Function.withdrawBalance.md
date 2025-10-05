@@ -4,7 +4,7 @@
 
 > **withdrawBalance**(`amount`): `Promise`\<`void`\>
 
-Defined in: [src/app/business-portal/\_actions.ts:28](https://github.com/victorbratov/launchpad/blob/d14315d3bd6634bc1c0e4507f8ad0551e9221cbc/src/app/business-portal/_actions.ts#L28)
+Defined in: [src/app/business-portal/\_actions.ts:28](https://github.com/victorbratov/launchpad/blob/6dd13cd77753e59ec2a031fc7279545899826925/src/app/business-portal/_actions.ts#L28)
 
 Withdraw from the account balance of the current user into their linked bank account
 

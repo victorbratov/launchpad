@@ -4,7 +4,7 @@
 
 > **DisplayAllBusinessAccs**(): `Promise`\<`void`\>
 
-Defined in: [src/db/Functions/BusinessAccountFunctions.ts:11](https://github.com/victorbratov/launchpad/blob/3cec89d9fa4be2794c552b4b2e488c08b6798868/src/db/Functions/BusinessAccountFunctions.ts#L11)
+Defined in: [src/db/Functions/BusinessAccountFunctions.ts:11](https://github.com/victorbratov/launchpad/blob/6dd13cd77753e59ec2a031fc7279545899826925/src/db/Functions/BusinessAccountFunctions.ts#L11)
 
 ## Returns
 

@@ -43,6 +43,7 @@
 - [components/ui/select](components.ui.select.md)
 - [components/ui/separator](components.ui.separator.md)
 - [components/ui/shadcn-io/spinner](components.ui.shadcn-io.spinner.md)
+- [components/ui/slider](components.ui.slider.md)
 - [components/ui/table](components.ui.table.md)
 - [components/ui/tabs](components.ui.tabs.md)
 - [components/ui/textarea](components.ui.textarea.md)
