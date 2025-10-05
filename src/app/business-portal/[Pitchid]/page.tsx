@@ -78,8 +78,9 @@ export default function PitchDetailsPage() {
         setElevatorPitch(data.ElevatorPitch || "");
         setDetailedPitch(data.DetailedPitch || "");
 
-        const dbMedia = data.SuportingMedia ? data.SuportingMedia.split(",").filter(Boolean) : [];
+        const dbMedia = data.SuportingMedia ? [data.SuportingMedia] : [];
         setMediaFiles(dbMedia);
+
 
         //Fetch S3 media data
         try {
