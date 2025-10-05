@@ -23,7 +23,6 @@ import { Group, Text, SimpleGrid, Box } from '@mantine/core';
 import { IconPhoto } from '@tabler/icons-react';
 import SortableList, { SortableItem } from 'react-easy-sort'
 import arrayMove from 'array-move'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { Trash2 } from 'lucide-react';
 
 /**
