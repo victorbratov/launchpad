@@ -37,8 +37,11 @@ export default function PitchSearchPage() {
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 100]);
   
   //button selection states
-  const [selectedSort, setSelectedSort] = useState<'newest' | 'oldest' >(`newest`); // newest and oldest buttons
+  const [selectedSort, setSelectedSort] = useState<'after' | 'before' >(`after`); // newest and oldest buttons
   const [FilterOn, setFilterOn] = useState<'on' | 'off' >(`off`);
+  
+  //date filter state
+  const [selectedDate, setSelectedDate] = useState<string>("");
 
 
 
@@ -150,8 +153,8 @@ export default function PitchSearchPage() {
 
                 //non tag filers applied here
                 
-                if((FilterOn === `on`)){
-                  if(InvestedPercent >= priceRange[0]){
+                if((FilterOn === `on` && selectedSort === `after`)){
+                  if(InvestedPercent >= priceRange[0] && CurrentPitch.InvestmentStart >= (selectedDate || '1970-01-01')) {
                     return (
                       <PitchCard key={CurrentPitch.BusPitchID}  //creates a card for each pitch 
                           pitch={{
@@ -169,6 +172,26 @@ export default function PitchSearchPage() {
                       );
                   }
                 }
+                else if((FilterOn === `on` && selectedSort === `before`)){
+                  if(InvestedPercent >= priceRange[0] && CurrentPitch.InvestmentStart <= (selectedDate || '2100--01-01')) {
+                    return (
+                      <PitchCard key={CurrentPitch.BusPitchID}  //creates a card for each pitch 
+                          pitch={{
+                            pitchID: CurrentPitch.BusPitchID.toString(),
+                            pitchName: CurrentPitch.ProductTitle + " " + InvestedPercent.toFixed(2) + '% Funded',
+                            pitchStatus: CurrentPitch.statusOfPitch,
+                            currentAmount: investments.find(inv => inv.busPitchID === CurrentPitch.BusPitchID)?.totalAmount || 0,
+                            pitchGoal: Number(CurrentPitch.TargetInvAmount),
+                            pitchImageUrl: "pitch.SuportingMedia" ,
+                            tags: CurrentPitch.Tags || [], 
+                            pitcherID: CurrentPitch.BusAccountID, 
+                            pitchStart: CurrentPitch.InvestmentStart, 
+                            pitchEnd: CurrentPitch.InvestmentEnd,     
+                          }} />
+                      );
+
+                  }
+              } 
                 else{
                   return (
                       <PitchCard key={CurrentPitch.BusPitchID}  //creates a card for each pitch 
@@ -238,7 +261,7 @@ export default function PitchSearchPage() {
           </div>
         </div>
 
-
+        
 
         {/* Filter by other means */}
         <Card>
@@ -253,11 +276,9 @@ export default function PitchSearchPage() {
                   onClick={() => {
                     const newFilterState = FilterOn === 'off' ? 'on' : 'off';
                     setFilterOn(newFilterState);
-                    if(newFilterState === 'on' && selectedSort === 'oldest') { 
-                      sortPitchesOldest(); 
+                    if(newFilterState === 'on' && selectedSort === 'before') { 
                     }
-                    if(newFilterState === 'on' && selectedSort === 'newest') { 
-                      sortPitchesNewest(); 
+                    if(newFilterState === 'on' && selectedSort === 'after') {  
                     }
                   }}
                   
@@ -288,38 +309,44 @@ export default function PitchSearchPage() {
             </div>
           </div>
 
+        <div className ="flex items-center gap-3"> 
+            {/* Date Filter */}
+            <div className="space-y-2 ml-4 ">
+              <h2 className="font-semibold text-sm ml-2">Investments Made</h2>
+              <Input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                placeholder="Enter date"
+              />
+            </div>
 
+            {/* After and Before Buttons */}
+            <div className="flex flex-col gap-2 mr-4"> 
 
-
-          {/* Newest to oldest Buttons */}
-          <div className="flex items-center gap-4 p-4 ">
-
-            <div className="flex-1  ">
               <Button 
                 variant="outline" 
                 className="w-full font-semibold text-lg" 
-                style={{ backgroundColor: selectedSort === 'newest' ? 'lightgreen' : 'gray' }}
-                onClick={() => { setSelectedSort('newest'); if (FilterOn === 'on') { sortPitchesNewest(); } }}
+                style={{ backgroundColor: selectedSort === 'after' ? 'lightgreen' : 'gray' }}
+                onClick={() => { setSelectedSort('after'); if (FilterOn === 'on') {  } }}
               >
-                Newest
+                After
               </Button>
-            </div>
 
-            <div className="flex-1"> 
               <Button 
                 variant="outline" 
                 className="w-full font-semibold text-lg" 
-                style={{ backgroundColor: selectedSort === 'oldest' ? 'lightgreen' : 'gray' }}
-                onClick={() => { setSelectedSort('oldest'); if (FilterOn === 'on') { sortPitchesOldest(); }  }}
-                
+                style={{ backgroundColor: selectedSort === 'before' ? 'lightgreen' : 'gray' }}
+                onClick={() => { setSelectedSort('before'); if (FilterOn === 'on') { }  }}
               >
-                Oldest
+                Before
               </Button>
+
+
             </div>
-
-
           </div>
         </Card>
+
 
 
 
