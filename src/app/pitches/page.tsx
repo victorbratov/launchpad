@@ -5,14 +5,13 @@ import { Input } from "@/components/ui/input";
 import { PitchCard } from "../../components/pitch_preview_card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Badge } from "@/components/ui/badge";
 import { mockPitches } from "../../../mock_data/pitches";
 import { Pitches, Investment } from "../../../types/pitch";
 import { getAllBusinessPitches, getTotalMoneyInvested } from "./_actions";
-import { Filter, X, ChevronDown } from "lucide-react";
+import { Filter, X } from "lucide-react";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Slider } from "@/components/ui/slider";
+
 
 //mock pitches data types, DELETE AFTER DATABASE INTEGRATION
 const allTags = Array.from(new Set(mockPitches.flatMap((p) => p.tags)));
@@ -127,43 +126,43 @@ export default function PitchSearchPage() {
         />
       </div>
 
-     {/* Tag Filters */}
-<div className="space-y-2">
-  <h2 className="font-semibold text-lg">Filter by Tags</h2>
-  <div className="max-h-48 overflow-y-auto space-y-2 border rounded-md p-2">
-    {allTags.map((tag) => (
-      <label
-        key={tag}
-        className="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-2 rounded-md transition-colors"
-      >
-        <Checkbox
-          checked={selectedTags.includes(tag)}
-          onCheckedChange={() => toggleTag(tag)}
-        />
-        {tag}
-      </label>
-    ))}
-  </div>
-</div>
+      {/* Tag Filters */}
+      <div className="space-y-2">
+        <h2 className="font-semibold text-lg">Filter by Tags</h2>
+        <div className="max-h-48 overflow-y-auto space-y-2 border rounded-md p-2">
+          {allTags.map((tag) => (
+            <label
+              key={tag}
+              className="flex items-center gap-2 text-sm cursor-pointer hover:bg-gray-50 p-2 rounded-md transition-colors"
+            >
+              <Checkbox
+                checked={selectedTags.includes(tag)}
+                onCheckedChange={() => toggleTag(tag)}
+              />
+              {tag}
+            </label>
+          ))}
+        </div>
+      </div>
 
-{/* Selected Tags Display */}
-{selectedTags.length > 0 && (
-  <div className="space-y-2">
-    <h3 className="font-medium text-sm">Selected Tags ({selectedTags.length})</h3>
-    <div className="flex flex-wrap gap-2">
-      {selectedTags.map((tag) => (
-        <span
-          key={tag}
-          className="inline-flex items-center gap-1 px-2 py-1 bg-secondary text-secondary-foreground rounded-md text-sm cursor-pointer hover:bg-destructive hover:text-destructive-foreground transition-colors"
-          onClick={() => toggleTag(tag)}
-        >
-          {tag}
-          <X size={12} />
-        </span>
-      ))}
-    </div>
-  </div>
-)}
+      {/* Selected Tags Display */}
+      {selectedTags.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="font-medium text-sm">Selected Tags ({selectedTags.length})</h3>
+          <div className="flex flex-wrap gap-2">
+            {selectedTags.map((tag) => (
+              <span
+                key={tag}
+                className="inline-flex items-center gap-1 px-2 py-1 bg-secondary text-secondary-foreground rounded-md text-sm cursor-pointer hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                onClick={() => toggleTag(tag)}
+              >
+                {tag}
+                <X size={12} />
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Advanced Filters Card */}
       <Card className="mt-6">
@@ -184,131 +183,6 @@ export default function PitchSearchPage() {
             >
               Apply Filters
             </Button>
-  //calls the tiles grid for pitches
-  return (
-    <div className="flex gap-6 p-6">
-      {/* Pitch Grid */}
-      <div className="flex-1 space-y-4">
-        {/* Simple Control Panel */}
-        {/* Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">{/*start of grid*/}
-
-
-          {pitches.length ? (  
-            
-            pitches.map((CurrentPitch) => { //loops through pitches in array
-              
-              const investmentsIntoPitch = investments.find(inv => inv.busPitchID === CurrentPitch.BusPitchID)?.totalAmount
-              const InvestmentGoal = Number(CurrentPitch.TargetInvAmount);
-
-              const InvestedPercent = ((investmentsIntoPitch || 0) / (InvestmentGoal || 1)) * 100;
-
-
-              // Show all pitches if no tags selected, otherwise check for any matching tags
-              if (selectedTags.length === 0 || selectedTags.some(selectedTag => CurrentPitch.Tags?.includes(selectedTag))) {
-
-                //non tag filers applied here
-                
-                if((FilterOn === `on` && selectedSort === `after`)){
-                  if(InvestedPercent >= priceRange[0] && CurrentPitch.InvestmentStart >= (selectedDate || '1970-01-01')) {
-                    return (
-                      <PitchCard key={CurrentPitch.BusPitchID}  //creates a card for each pitch 
-                          pitch={{
-                            pitchID: CurrentPitch.BusPitchID.toString(),
-                            pitchName: CurrentPitch.ProductTitle + " " + InvestedPercent.toFixed(2) + '% Funded',
-                            pitchStatus: CurrentPitch.statusOfPitch,
-                            currentAmount: investments.find(inv => inv.busPitchID === CurrentPitch.BusPitchID)?.totalAmount || 0,
-                            pitchGoal: Number(CurrentPitch.TargetInvAmount),
-                            pitchImageUrl: CurrentPitch.FeaturedImage ? CurrentPitch.FeaturedImage : null,
-                            tags: CurrentPitch.Tags || [], 
-                            pitcherID: CurrentPitch.BusAccountID, 
-                            pitchStart: CurrentPitch.InvestmentStart, 
-                            pitchEnd: CurrentPitch.InvestmentEnd,     
-                          }} />
-                      );
-                  }
-                }
-                else if((FilterOn === `on` && selectedSort === `before`)){
-                  if(InvestedPercent >= priceRange[0] && CurrentPitch.InvestmentStart <= (selectedDate || '2100--01-01')) {
-                    return (
-                      <PitchCard key={CurrentPitch.BusPitchID}  //creates a card for each pitch 
-                          pitch={{
-                            pitchID: CurrentPitch.BusPitchID.toString(),
-                            pitchName: CurrentPitch.ProductTitle + " " + InvestedPercent.toFixed(2) + '% Funded',
-                            pitchStatus: CurrentPitch.statusOfPitch,
-                            currentAmount: investments.find(inv => inv.busPitchID === CurrentPitch.BusPitchID)?.totalAmount || 0,
-                            pitchGoal: Number(CurrentPitch.TargetInvAmount),
-                            pitchImageUrl: CurrentPitch.FeaturedImage ? CurrentPitch.FeaturedImage : null ,
-                            tags: CurrentPitch.Tags || [], 
-                            pitcherID: CurrentPitch.BusAccountID, 
-                            pitchStart: CurrentPitch.InvestmentStart, 
-                            pitchEnd: CurrentPitch.InvestmentEnd,     
-                          }} />
-                      );
-
-                  }
-              } 
-                else{
-                  return (
-                      <PitchCard key={CurrentPitch.BusPitchID}  //creates a card for each pitch 
-                        pitch={{
-                          pitchID: CurrentPitch.BusPitchID.toString(),
-                          pitchName: CurrentPitch.ProductTitle + " " + InvestedPercent.toFixed(2) + '% Funded',
-                          pitchStatus: CurrentPitch.statusOfPitch,
-                          currentAmount: investments.find(inv => inv.busPitchID === CurrentPitch.BusPitchID)?.totalAmount || 0,
-                          pitchGoal: Number(CurrentPitch.TargetInvAmount),
-                          pitchImageUrl: CurrentPitch.FeaturedImage ? CurrentPitch.FeaturedImage : null,
-                          tags: CurrentPitch.Tags || [],
-                          pitcherID: CurrentPitch.BusAccountID,
-                          pitchStart: CurrentPitch.InvestmentStart,
-                          pitchEnd: CurrentPitch.InvestmentEnd,
-                        }} />
-                    );
-                }
-              }
-              else {
-                return null;
-              } // Skip rendering if tag doesn't match
-
-            })
-          ) : (
-            <p className="text-center text-muted-foreground">
-              No results found.
-            </p>
-          )}
-
-
-        </div> {/*end of grid*/}
-      </div>
-
-      {/* Sidebar Filters */}
-      <div className="w-72 space-y-6">
-        {/* Search Pitch by Name */}
-        <div className="space-y-2">
-          <h2 className="font-semibold text-lg">Search by Name</h2>
-          <Input
-            placeholder="Enter pitch name..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-        </div>
-
-        {/* Tag Filters */}
-        <div className="space-y-2">
-          <h2 className="font-semibold text-lg">Filter by Tags</h2>
-          <div className="flex flex-col gap-2">
-            {allTags.map((tag) => (
-              <label
-                key={tag}
-                className="flex items-center gap-2 text-sm cursor-pointer"
-              >
-                <Checkbox
-                  checked={selectedTags.includes(tag)}
-                  onCheckedChange={() => toggleTag(tag)}
-                />
-                {tag}
-              </label>
-            ))}
           </div>
         </CardHeader>
         
@@ -445,7 +319,7 @@ export default function PitchSearchPage() {
                 const InvestedPercent = ((investmentsIntoPitch || 0) / (InvestmentGoal || 1)) * 100;
 
                 // Show all pitches if no tags selected, otherwise check for any matching tags
-                if(selectedTags.length === 0 || selectedTags.some(selectedTag => CurrentPitch.Tags?.includes(selectedTag))){
+                if (selectedTags.length === 0 || selectedTags.some(selectedTag => CurrentPitch.Tags?.includes(selectedTag))) {
 
                   //non tag filers applied here
                   
@@ -459,7 +333,7 @@ export default function PitchSearchPage() {
                               pitchStatus: CurrentPitch.statusOfPitch,
                               currentAmount: investments.find(inv => inv.busPitchID === CurrentPitch.BusPitchID)?.totalAmount || 0,
                               pitchGoal: Number(CurrentPitch.TargetInvAmount),
-                              pitchImageUrl: "pitch.SuportingMedia" ,
+                              pitchImageUrl: CurrentPitch.FeaturedImage ? CurrentPitch.FeaturedImage : null,
                               tags: CurrentPitch.Tags || [], 
                               pitcherID: CurrentPitch.BusAccountID, 
                               pitchStart: CurrentPitch.InvestmentStart, 
@@ -478,7 +352,7 @@ export default function PitchSearchPage() {
                               pitchStatus: CurrentPitch.statusOfPitch,
                               currentAmount: investments.find(inv => inv.busPitchID === CurrentPitch.BusPitchID)?.totalAmount || 0,
                               pitchGoal: Number(CurrentPitch.TargetInvAmount),
-                              pitchImageUrl: "pitch.SuportingMedia" ,
+                              pitchImageUrl: CurrentPitch.FeaturedImage ? CurrentPitch.FeaturedImage : null ,
                               tags: CurrentPitch.Tags || [], 
                               pitcherID: CurrentPitch.BusAccountID, 
                               pitchStart: CurrentPitch.InvestmentStart, 
@@ -486,26 +360,26 @@ export default function PitchSearchPage() {
                             }} />
                         );
                     }
-                } 
+                  } 
                   else{
                     return (
-                        <PitchCard key={CurrentPitch.BusPitchID}  //creates a card for each pitch 
-                            pitch={{
-                              pitchID: CurrentPitch.BusPitchID.toString(),
-                              pitchName: CurrentPitch.ProductTitle + " " + InvestedPercent.toFixed(2) + '% Funded',
-                              pitchStatus: CurrentPitch.statusOfPitch,
-                              currentAmount: investments.find(inv => inv.busPitchID === CurrentPitch.BusPitchID)?.totalAmount || 0,
-                              pitchGoal: Number(CurrentPitch.TargetInvAmount),
-                              pitchImageUrl: "pitch.SuportingMedia" ,
-                              tags: CurrentPitch.Tags || [], 
-                              pitcherID: CurrentPitch.BusAccountID, 
-                              pitchStart: CurrentPitch.InvestmentStart, 
-                              pitchEnd: CurrentPitch.InvestmentEnd,     
-                            }} />
-                        );
+                      <PitchCard key={CurrentPitch.BusPitchID}  //creates a card for each pitch 
+                        pitch={{
+                          pitchID: CurrentPitch.BusPitchID.toString(),
+                          pitchName: CurrentPitch.ProductTitle + " " + InvestedPercent.toFixed(2) + '% Funded',
+                          pitchStatus: CurrentPitch.statusOfPitch,
+                          currentAmount: investments.find(inv => inv.busPitchID === CurrentPitch.BusPitchID)?.totalAmount || 0,
+                          pitchGoal: Number(CurrentPitch.TargetInvAmount),
+                          pitchImageUrl: CurrentPitch.FeaturedImage ? CurrentPitch.FeaturedImage : null,
+                          tags: CurrentPitch.Tags || [],
+                          pitcherID: CurrentPitch.BusAccountID,
+                          pitchStart: CurrentPitch.InvestmentStart,
+                          pitchEnd: CurrentPitch.InvestmentEnd,
+                        }} />
+                    );
                   }
                 }
-                else{
+                else {
                   return null;
                 } // Skip rendering if tag doesn't match
               })
