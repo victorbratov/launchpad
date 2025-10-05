@@ -2,89 +2,17 @@
 
 ***
 
-> **createPitch**(`title`, `status`, `elevatorPitch`, `detailedPitch`, `targetAmount`, `startDate`, `endDate`, `bronzeMultiplier`, `bronzeMax`, `silverMultiplier`, `silverMax`, `goldMultiplier`, `dividendPayoutPeriod`): `Promise`\<\{ `message`: `string`; `success`: `boolean`; \}\>
+> **createPitch**(`pitch`): `Promise`\<\{ `message`: `string`; `success`: `boolean`; \}\>
 
-Defined in: src/app/create-pitch/\_actions.ts:41
+Defined in: [src/app/create-pitch/\_actions.ts:48](https://github.com/victorbratov/launchpad/blob/d1815ef1a573b42ac1f231f3f3d6617bddce6dbe/src/app/create-pitch/_actions.ts#L48)
 
 Create a pitch in the database
 
 ## Parameters
 
-### title
+### pitch
 
-`string`
-
-Pitch title
-
-### status
-
-`string`
-
-Pitch status (pending, open)
-
-### elevatorPitch
-
-`string`
-
-Elevator pitch
-
-### detailedPitch
-
-`string`
-
-Detailed pitch overview
-
-### targetAmount
-
-`string`
-
-Target funding amount
-
-### startDate
-
-`Date`
-
-Pitch start date
-
-### endDate
-
-`Date`
-
-Pitch end date
-
-### bronzeMultiplier
-
-`string`
-
-Bronze multiplier
-
-### bronzeMax
-
-`number`
-
-Bronze tier maximum
-
-### silverMultiplier
-
-`string`
-
-silver multiplier
-
-### silverMax
-
-`number`
-
-Silver tier maximum
-
-### goldMultiplier
-
-`string`
-
-Gold multiplier
-
-### dividendPayoutPeriod
-
-`string`
+[`Pitch`](app.create-pitch._actions.Interface.Pitch.md)
 
 How often dividends will be paid out (monthly, yearly, etc.)
 

@@ -8,7 +8,7 @@ export type Pitch = {
   currentAmount: number;
   pitchStart: string;
   pitchEnd: string;
-  pitchImageUrl: string;
+  pitchImageUrl: string | null;
   tags: string[];
 };
 
@@ -22,6 +22,7 @@ export type Pitch = {
     ElevatorPitch: string;
     DetailedPitch: string;
     SuportingMedia: string | null;
+    FeaturedImage: string | null;
     TargetInvAmount: string;
     InvestmentStart: string;
     InvestmentEnd: string;
@@ -35,4 +36,10 @@ export type Pitch = {
     goldTierMax: number;
     dividEndPayout: string;
     DividEndPayoutPeriod: string;
+    Tags: string[] | null;
+  };
+
+  export type Investment = {
+    busPitchID: number;
+    totalAmount: number;
   };

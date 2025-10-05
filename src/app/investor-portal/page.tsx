@@ -32,15 +32,50 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { User, Wallet, LineChart as ChartIcon, Coins, BarChart3 } from "lucide-react";
-import {
-  investorInfo,
-  investments,
-  dividends,
-} from "../../../mock_data/investor_data";
+import { getInvestorInfo, getDividends, getInvestments } from "./_actions";
+import { useEffect, useState } from "react";
+import { Dividend, Investment, InvestorInfo } from "../../../types/investor_data";
+import WithdrawDialog from "@/components/withdrawal_dialog";
+import DepositDialog from "@/components/deposit_dialog";
+import { withdrawBalance, depositBalance } from "./_actions";
+import { validateWithdrawalAmount } from "@/lib/utils"; 
 
+/**
+ * Investor Portal Page, showing an overview of the investor account, their investments and dividends
+ * @returns The investor portal page
+ */
 export default function InvestorPortalPage() {
+
+  const [investorInfo, setInvestorInfo] = useState<InvestorInfo | null>(null);
+  const [investments, setInvestments] = useState<Array<Investment>>([]);
+  const [dividends, setDividends] = useState<Array<Dividend>>([]);
+  const [withdrawalAmount, setWithdrawalAmount] = useState<number>(0);
+  const [withdrawing, setWithdrawing] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [open, setOpen] = useState<boolean>(false);
+  const [depositing, setDepositing] = useState<boolean>(false);
+  const [depositAmount, setDepositAmount] = useState<number>(0);
+  const [openDeposit, setOpenDeposit] = useState<boolean>(false);
+
+  useEffect(() => {
+    async function loadData() {
+      const info = await getInvestorInfo();
+      const invs = await getInvestments();
+      const divs = await getDividends();
+      setInvestorInfo(info);
+      setInvestments(invs);
+      setDividends(divs);
+    }
+    loadData();
+  }, []);
+
+  if (!investorInfo) {
+    return <div className="p-6">No investor profile found.</div>;
+  }
+
+  // --- Calculations ---
   const totalInvested = investments.reduce((sum, inv) => sum + inv.investmentCost, 0);
-  const totalShares = investments.reduce((sum, inv) => sum + inv.shareAmount, 0);
+  const totalShares = investments.reduce((sum, inv) => sum + inv.shareAmount!, 0);
   const totalDividends = dividends.reduce((sum, d) => sum + d.dividendAmount, 0);
   const roiPercent = ((totalDividends / totalInvested) * 100).toFixed(2);
 
@@ -60,6 +95,51 @@ export default function InvestorPortalPage() {
       const roi = (runningDividends / totalInvested) * 100;
       return { date: d.dividendDate, roi: parseFloat(roi.toFixed(2)) };
     });
+
+
+  /**
+   * Handle the withdrawal of funds from the business account
+   * @param amount The amount to withdraw
+   */
+  async function withdrawFunds(amount: number | null) {
+    setWithdrawing(true);
+
+    setErrorMessage(validateWithdrawalAmount(amount, investorInfo?.walletAmount ?? 0));
+
+    if (errorMessage === null) {
+      try {
+        await withdrawBalance(amount ?? investorInfo?.walletAmount ?? 0);
+        setOpen(false);
+        // get updated info
+        const info = await getInvestorInfo();
+        setInvestorInfo(info);
+      } catch (error) {
+        setErrorMessage("Error withdrawing funds. Please try again later.");
+        setWithdrawing(false);
+      } 
+    } else {
+      setWithdrawing(false);
+    }
+  }
+
+  /**
+   * Handle the deposit of funds into the business account
+   * @param amount The amount to deposit
+   */
+  async function depositFunds(amount: number | null) {
+      setDepositing(true);
+  
+      try {
+        await depositBalance(amount ?? investorInfo?.walletAmount ?? 0);
+        setOpenDeposit(false);
+        // get updated info
+        const info = await getInvestorInfo();
+        setInvestorInfo(info);
+      } catch (error) {
+        setErrorMessage("Error withdrawing funds. Please try again later.");
+        setDepositing(false);
+      }
+    }
 
   return (
     <div className="p-6">
@@ -90,12 +170,39 @@ export default function InvestorPortalPage() {
           {/* Quick Stats Grid */}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <Card>
-              <CardContent className="flex items-center justify-between py-6">
+              <CardContent className="grid grid-rows-2 grid-flow-col flex items-center justify-between py-6">
                 <div>
                   <p className="text-sm text-muted-foreground">Wallet Balance</p>
                   <p className="text-xl font-semibold">${investorInfo.walletAmount}</p>
                 </div>
-                <Wallet className="w-6 h-6 text-primary" />
+                {/* <Wallet className="w-6 h-6 text-primary" /> */}
+                {/* {investorInfo?.walletAmount != 0 && */}
+                <div className="flex flex-col space-y-2">
+                <WithdrawDialog
+                  accountInfo={investorInfo ? { wallet: investorInfo.walletAmount } : { wallet: 0 }}
+                  fundsFunction={() => withdrawFunds(withdrawalAmount)}
+                  open={open}
+                  setOpen={setOpen}
+                  withdrawing={withdrawing}
+                  setWithdrawing={setWithdrawing}
+                  withdrawalAmount={withdrawalAmount}
+                  setWithdrawalAmount={setWithdrawalAmount}
+                  errorMessage={errorMessage ?? ""}
+                  setErrorMessage={setErrorMessage}
+                />
+                <DepositDialog
+                  accountInfo={investorInfo ? { wallet: investorInfo.walletAmount } : { wallet: 0 }}
+                  depositFunds={() => depositFunds(depositAmount)}
+                  open={openDeposit}
+                  setOpen={setOpenDeposit}
+                  depositing={depositing}
+                  setDepositing={setDepositing}
+                  depositAmount={depositAmount}
+                  setDepositAmount={setDepositAmount}
+                  errorMessage={errorMessage ?? ""}
+                  setErrorMessage={setErrorMessage}
+                />
+                </div>
               </CardContent>
             </Card>
 

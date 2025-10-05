@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -8,62 +8,83 @@ import { Progress } from "@/components/ui/progress";
 import { MediaCarousel } from "@/components/media_carousel";
 import Link from "next/link";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useParams } from "next/navigation";
+import { Investment, Pitches } from "../../../../types/pitch";
+import { getPitchById, investInPitch } from "./_actions";
+import { parse } from "path";
+import { getTotalMoneyInvestedInPitch } from "./_actions";
+import Error from "next/error";
+import { sizeResolver } from "@mantine/core/lib/core/Box/style-props/resolvers/size-resolver/size-resolver";
 
-const mockPitch = {
-  pitchID: "p1",
-  pitcherID: "user1",
-  pitchName: "SunDrop: Affordable Solar-Powered Irrigation Systems",
-  pitchStatus: "Active",
-  pitchGoal: 10000,
-  currentAmount: 4200,
-  pitchStart: "2024-01-01",
-  pitchEnd: "2024-03-01",
-  elevatorPitch:
-    "SunDrop provides low-cost solar-powered irrigation systems designed for smallholder farmers in rural communities, helping them increase crop yields, reduce costs, and achieve year-round farming independence.",
-  detailedPitch: `
-Millions of smallholder farmers across Africa and South Asia lack reliable and affordable access to irrigation. Diesel water pumps are expensive to operate, harmful to the environment, and often inaccessible in off-grid regions. As a result, farmers are forced to depend solely on rainfall, leaving them vulnerable to droughts and seasonal food insecurity.
 
-SunDrop’s solar-powered irrigation system offers a sustainable and cost-effective alternative. Our pumps are designed to be affordable, durable, and easy to maintain, enabling farmers to irrigate their crops consistently without relying on fossil fuels. By harnessing the power of the sun, SunDrop drastically reduces agricultural costs and provides farmers with a tool to increase crop yields by up to 40%.
-
-We’ve already piloted our first units with 25 farmers in rural Kenya, receiving overwhelmingly positive feedback. Farmers using SunDrop pumps not only reduced their energy costs but also extended their growing seasons, giving them additional harvest cycles annually. Early impact data suggests an average 35% increase in household income.
-
-This funding campaign will allow us to manufacture and distribute our next batch of 100 pumps while expanding our reach into neighboring regions. Investors will directly support local food security, rural economic empowerment, and climate-friendly agricultural practices.
-
-By funding SunDrop, you invest not only in a growing market—projected to reach over $2.5B globally by 2027—but also in a movement towards sustainable farming and climate resilience.`,
-  profitSharePercentage: 10,
-  dividendPeriod: "quarterly",
-  media: [
-    "https://placehold.co/800x400?text=Farmers+Using+SunDrop",
-    "https://placehold.co/800x400?text=Pump+Prototype",
-    "https://samplelib.com/lib/preview/mp4/sample-5s.mp4", // Pitch video
-  ],
-  bronzeTierMult: 1,
-  silverTierMult: 1.2,
-  goldTierMult: 1.5,
-  bronzeMax: 999,
-  silverMax: 4999,
-  goldMax: 10000,
-};
-
-function calculateShares(amount: number, pitch: typeof mockPitch) {
+function calculateShares(amount: number, pitch: Pitches) {
   if (amount <= 0) return { tier: null, shares: 0 };
-  if (amount <= pitch.bronzeMax) {
-    return { tier: "Bronze", shares: amount * pitch.bronzeTierMult };
+  if (amount <= pitch.bronseInvMax) {
+    return { tier: "Bronze", shares: amount * parseInt(pitch.bronseTierMulti) };
   }
-  if (amount <= pitch.silverMax) {
-    return { tier: "Silver", shares: amount * pitch.silverTierMult };
+  if (amount <= pitch.silverInvMax) {
+    return { tier: "Silver", shares: amount * parseInt(pitch.silverTierMulti) };
   }
-  if (amount <= pitch.goldMax) {
-    return { tier: "Gold", shares: amount * pitch.goldTierMult };
+  if (amount <= pitch.goldTierMax) {
+    return { tier: "Gold", shares: amount * parseInt(pitch.goldTierMulti) };
   }
   return { tier: null, shares: 0 };
 }
 
 export default function PitchDetailsPage() {
-  const pitch = mockPitch;
+
+
+
+  const params = useParams();
+  const pitchID = params.id as string;
+
+  const [busPitchInfo, setBusPitchInfo] = useState<Pitches | null>(null);
+  const [investmentInfo, setInvestmentInfo] = useState<Investment | null>(null);
+
+
+  const [isPending, startTransition] = useTransition();
+  const [message, setMessage] = useState<string | null>(null);
+  const [media, setMedia] = useState<string[]>([]);
+
+  const handleInvest = async () => {
+    if (!busPitchInfo) return;
+    startTransition(async () => {
+      try {
+        const result = await investInPitch(parseInt(pitchID), amount);
+        setMessage(result.message);
+        setInput("");
+        window.location.reload();
+      } catch (err: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
+        setMessage(err.message || "Error investing");
+      }
+    });
+  };
+
+  //where the data is put into the arrays above
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const busPitchInfo = await getPitchById(parseInt(pitchID));
+        const investmentInfo = await getTotalMoneyInvestedInPitch(parseInt(pitchID));
+
+        setBusPitchInfo(busPitchInfo);
+        setInvestmentInfo(investmentInfo);
+
+      } catch (error) {
+        console.error("Error fetching pitch data:", error);
+      }
+    }
+    if (pitchID) {
+      loadData();
+      fetchAllMedia(pitchID).then((media) => setMedia(media));
+    }
+  }, []);
+
   const [input, setInput] = useState<string>(""); // raw input as string
   const amount = parseFloat(input) || 0;
-  const remaining = pitch.pitchGoal - pitch.currentAmount;
+
+
+  const remaining = parseInt((busPitchInfo?.TargetInvAmount || 0).toString()) - (investmentInfo?.totalAmount || 0);
 
   // Add pitchVersions and selectedVersion state
   const pitchVersions = [
@@ -76,75 +97,110 @@ export default function PitchDetailsPage() {
     pitchVersions.find((v) => v.current)?.id || pitchVersions[0].id
   );
 
-  const { tier, shares } = calculateShares(amount, pitch);
+  const { tier, shares } = calculateShares(amount, busPitchInfo!);
+
+  /**
+ * fetch list of images and videos from s3 bucket for a given ID
+ * @param {string} pitchID - The ID of the pitch to fetch media for
+ * @returns {Promise<string[]>} A promise that resolves to an array of media keys
+ */
+    async function fetchAllMedia(pitchID: string) {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BUCKET_URL}?list-type=2&prefix=${pitchID}/`);
+      const data = await res.text();
+
+      const parses = new DOMParser();
+      const xml = parses.parseFromString(data, "application/xml");
+      const items = xml.getElementsByTagName("Key");
+    
+      const mediaKeys: string[] = [];
+      for (let i = 0; i < items.length; i++) {
+        const key = items[i].textContent;
+        if (key && !key.endsWith("/")) { // Exclude folder keys
+          mediaKeys.push(process.env.NEXT_PUBLIC_BUCKET_URL + key);
+        }
+      }
+      return mediaKeys;
+    }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 p-6">
       <div className="lg:col-span-2 space-y-6">
         <div className="flex justify-center">
           <div className="w-full max-w-3xl">
-            <MediaCarousel media={pitch.media} />
+            <MediaCarousel media={media} />
           </div>
         </div>
 
-        <h1 className="text-3xl font-bold">{pitch.pitchName}</h1>
-        <p className="text-lg text-muted-foreground">{pitch.elevatorPitch}</p>
+        <h1 className="text-3xl font-bold">{(busPitchInfo?.ProductTitle)}</h1>
+        <p className="text-lg text-muted-foreground">{(busPitchInfo?.ElevatorPitch)}</p>
 
         <div className="space-y-2">
           <h2 className="text-2xl font-semibold">Detiled Pitch</h2>
-          <p className="text-muted-foreground">{pitch.detailedPitch}</p>
+          <p className="text-muted-foreground">{(busPitchInfo?.DetailedPitch)}</p>
         </div>
 
         <div className="space-y-2">
           <h2 className="text-2xl font-semibold">Investment Terms</h2>
           <p>
-            <strong>Profit Share:</strong> {pitch.profitSharePercentage}% of
+            <strong>Profit Share:</strong> {busPitchInfo?.InvProfShare}% of
             revenue
           </p>
           <p>
-            <strong>Dividend Period:</strong> {pitch.dividendPeriod}
+            <strong>Dividend Period:</strong> {busPitchInfo?.DividEndPayoutPeriod}
           </p>
         </div>
       </div>
+
+
+      {/* investment card where you can invest in company and see tiers and there pricing 
+
+      Progress is the bar that shows how much money has been invested in the company
+      CardTitle is well the title
+      */}
 
       {/* RIGHT SIDE - Investment Card */}
       <div className="lg:col-span-1">
         <div className="sticky top-19">
           <Card>
             <CardHeader>
-              <CardTitle>Invest in {pitch.pitchName}</CardTitle>
+              <CardTitle>Invest in {busPitchInfo?.ProductTitle}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Funding progress */}
               <div className="space-y-2">
                 <Progress
-                  value={(pitch.currentAmount / pitch.pitchGoal) * 100}
+                  value={(investmentInfo?.totalAmount || 0) / parseInt((busPitchInfo?.TargetInvAmount || 1).toString()) * 100}
                   className="w-full"
                 />
                 <p>
-                  ${pitch.currentAmount.toLocaleString()} raised of $
-                  {pitch.pitchGoal.toLocaleString()} goal
+                  ${investmentInfo?.totalAmount.toLocaleString()} raised of $
+                  {busPitchInfo?.TargetInvAmount.toLocaleString()} goal
                 </p>
                 <p className="text-sm text-muted-foreground">
                   ${remaining.toLocaleString()} remaining
                 </p>
               </div>
 
-              {/* Tiers */}
+              {/* Tiers 
+              just the tiers of the company in text
+              +1 is needed to so no overlap is allowed 
+              
+              
+              */}
               <div>
                 <h3 className="font-semibold mb-2">Investment Tiers</h3>
                 <ul className="text-sm space-y-1 text-muted-foreground">
                   <li>
-                    <strong>Bronze:</strong> up to ${pitch.bronzeMax},{" "}
-                    {pitch.bronzeTierMult}x shares
+                    <strong>Bronze:</strong> up to ${busPitchInfo?.bronseInvMax},{" "}
+                    {busPitchInfo?.bronseTierMulti}x shares
                   </li>
                   <li>
-                    <strong>Silver:</strong> ${pitch.bronzeMax + 1} - $
-                    {pitch.silverMax}, {pitch.silverTierMult}x shares
+                    <strong>Silver:</strong> ${(busPitchInfo?.silverInvMax || 0) + 1} - $
+                    {busPitchInfo?.silverInvMax}, {busPitchInfo?.silverTierMulti}x shares
                   </li>
                   <li>
-                    <strong>Gold:</strong> ${pitch.silverMax + 1} - $
-                    {pitch.goldMax}, {pitch.goldTierMult}x shares
+                    <strong>Gold:</strong> ${(busPitchInfo?.goldTierMax || 0) + 1} - $
+                    {busPitchInfo?.goldTierMax}, {busPitchInfo?.goldTierMulti}x shares
                   </li>
                 </ul>
               </div>
@@ -183,11 +239,14 @@ export default function PitchDetailsPage() {
 
               {/* Invest button */}
               <Button
-                disabled={amount <= 0 || amount > remaining}
+                disabled={amount <= 0 || amount > remaining || isPending}
+                onClick={handleInvest}
                 className="w-full"
               >
-                Invest {amount > 0 ? `$${amount.toLocaleString()}` : ""}
+                {isPending ? "Processing..." : `Invest ${amount > 0 ? `$${amount.toLocaleString()}` : ""}`}
               </Button>
+
+              {message && <p className="text-sm mt-2">{message}</p>}
               {/* Pitch History */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-muted-foreground">
