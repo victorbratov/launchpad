@@ -4,7 +4,7 @@
 
 > **default**(): `Element`
 
-Defined in: [src/app/investor-portal/page.tsx:47](https://github.com/victorbratov/launchpad/blob/6dd13cd77753e59ec2a031fc7279545899826925/src/app/investor-portal/page.tsx#L47)
+Defined in: [src/app/investor-portal/page.tsx:47](https://github.com/victorbratov/launchpad/blob/d1815ef1a573b42ac1f231f3f3d6617bddce6dbe/src/app/investor-portal/page.tsx#L47)
 
 Investor Portal Page, showing an overview of the investor account, their investments and dividends
 

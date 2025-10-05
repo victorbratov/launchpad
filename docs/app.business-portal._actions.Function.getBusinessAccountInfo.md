@@ -4,7 +4,7 @@
 
 > **getBusinessAccountInfo**(): `Promise`\<\{ `email`: `string`; `name`: `string`; `wallet`: `string`; \}\>
 
-Defined in: [src/app/business-portal/\_actions.ts:13](https://github.com/victorbratov/launchpad/blob/6dd13cd77753e59ec2a031fc7279545899826925/src/app/business-portal/_actions.ts#L13)
+Defined in: [src/app/business-portal/\_actions.ts:13](https://github.com/victorbratov/launchpad/blob/d1815ef1a573b42ac1f231f3f3d6617bddce6dbe/src/app/business-portal/_actions.ts#L13)
 
 Get the information about the business account of the current user
 

@@ -4,7 +4,7 @@
 
 > **RAGGauge**(`__namedParameters`): `Element`
 
-Defined in: [src/components/rag\_gauge.tsx:5](https://github.com/victorbratov/launchpad/blob/6dd13cd77753e59ec2a031fc7279545899826925/src/components/rag_gauge.tsx#L5)
+Defined in: [src/components/rag\_gauge.tsx:5](https://github.com/victorbratov/launchpad/blob/d1815ef1a573b42ac1f231f3f3d6617bddce6dbe/src/components/rag_gauge.tsx#L5)
 
 ## Parameters
 
