@@ -44,3 +44,4 @@ export async function getTotalMoneyInvested(): Promise<{busPitchID: number, tota
 
   return result;
 }
+

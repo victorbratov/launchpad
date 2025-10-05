@@ -7,8 +7,10 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { mockPitches } from "../../../mock_data/pitches";
 import { Pitches, Investment } from "../../../types/pitch";
 import { getAllBusinessPitches, getTotalMoneyInvested } from "./_actions";
+import { Card, CardHeader } from "@/components/ui/card";
+import { Slider } from "@/components/ui/slider";
+import { Button } from "@/components/ui/button";
 
- 
 
 //mock pitches data types, DELETE AFTER DATABASE INTEGRATION
 const allTags = Array.from(new Set(mockPitches.flatMap((p) => p.tags)));
@@ -31,6 +33,14 @@ export default function PitchSearchPage() {
   const [investments, setInvestments] = useState<Investment[]>([]); // data from investment ledger
 
 
+  //slider state
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 100]);
+  
+  //button selection states
+  const [selectedSort, setSelectedSort] = useState<'newest' | 'oldest' >(`newest`); // newest and oldest buttons
+  const [FilterOn, setFilterOn] = useState<'on' | 'off' >(`off`);
+
+
 
   //where _actions get is used
   //where the data is put into the arrays above 
@@ -45,11 +55,49 @@ export default function PitchSearchPage() {
       loadData();
   }, []);
 
-
- 
-
+  
 
 
+
+  {/* bubble sort to sort pitches from newest to oldest */}
+
+  const sortPitchesNewest = () => {
+    const sortedPitches = [...pitches]; // copy of pitches as not to modify original before sortted
+    
+    for (let x = 0; x < sortedPitches.length; x++) {
+      for (let y = 0; y < sortedPitches.length - x - 1; y++) {
+        const dA = new Date(sortedPitches[y].InvestmentStart);
+        const B = new Date(sortedPitches[y + 1].InvestmentStart);
+
+        if (dA < B) {
+          [sortedPitches[y], sortedPitches[y + 1]] = [sortedPitches[y + 1], sortedPitches[y]];
+        }
+      }
+    }
+    
+    setPitches(sortedPitches); // Update state with sorted array
+  }
+
+  {/* bubble sort to sort pitches from oldest to newest */}
+
+  const sortPitchesOldest = () => {
+    const sortedPitches = [...pitches]; // copy of pitches as not to modify original before sortted
+    
+    // Bubble sort by InvestmentStart date (oldest first)
+    for (let x = 0; x < sortedPitches.length; x++) {
+      for (let y = 0; y < sortedPitches.length - x - 1; y++) {
+        const dateA = new Date(sortedPitches[y].InvestmentStart);
+        const dateB = new Date(sortedPitches[y + 1].InvestmentStart);
+
+        // If current date is newer than next date, swap them (oldest first)
+        if (dateA > dateB) {
+          [sortedPitches[y], sortedPitches[y + 1]] = [sortedPitches[y + 1], sortedPitches[y]];
+        }
+      }
+    }
+    
+    setPitches(sortedPitches); // Update state with sorted array
+  }
 
   
 
@@ -88,26 +136,56 @@ export default function PitchSearchPage() {
 
 
           {pitches.length ? (  
+            
             pitches.map((CurrentPitch) => { //loops through pitches in array
+              
+              const investmentsIntoPitch = investments.find(inv => inv.busPitchID === CurrentPitch.BusPitchID)?.totalAmount
+              const InvestmentGoal = Number(CurrentPitch.TargetInvAmount);
+
+              const InvestedPercent = ((investmentsIntoPitch || 0) / (InvestmentGoal || 1)) * 100;
 
 
               // Show all pitches if no tags selected, otherwise check for any matching tags
               if(selectedTags.length === 0 || selectedTags.some(selectedTag => CurrentPitch.Tags?.includes(selectedTag))){
-                return (
-                  <PitchCard key={CurrentPitch.BusPitchID}  //creates a card for each pitch 
-                      pitch={{
-                        pitchID: CurrentPitch.BusPitchID.toString(),
-                        pitchName: CurrentPitch.ProductTitle,
-                        pitchStatus: CurrentPitch.statusOfPitch,
-                        currentAmount: investments.find(inv => inv.busPitchID === CurrentPitch.BusPitchID)?.totalAmount || 0,
-                        pitchGoal: Number(CurrentPitch.TargetInvAmount),
-                        pitchImageUrl: "pitch.SuportingMedia" ,
-                        tags: CurrentPitch.Tags || [], 
-                        pitcherID: CurrentPitch.BusAccountID, 
-                        pitchStart: CurrentPitch.InvestmentStart, 
-                        pitchEnd: CurrentPitch.InvestmentEnd,     
-                      }} />
-                  );
+
+                //non tag filers applied here
+                
+                if((FilterOn === `on`)){
+                  if(InvestedPercent >= priceRange[0]){
+                    return (
+                      <PitchCard key={CurrentPitch.BusPitchID}  //creates a card for each pitch 
+                          pitch={{
+                            pitchID: CurrentPitch.BusPitchID.toString(),
+                            pitchName: CurrentPitch.ProductTitle + " " + InvestedPercent.toFixed(2) + '% Funded',
+                            pitchStatus: CurrentPitch.statusOfPitch,
+                            currentAmount: investments.find(inv => inv.busPitchID === CurrentPitch.BusPitchID)?.totalAmount || 0,
+                            pitchGoal: Number(CurrentPitch.TargetInvAmount),
+                            pitchImageUrl: "pitch.SuportingMedia" ,
+                            tags: CurrentPitch.Tags || [], 
+                            pitcherID: CurrentPitch.BusAccountID, 
+                            pitchStart: CurrentPitch.InvestmentStart, 
+                            pitchEnd: CurrentPitch.InvestmentEnd,     
+                          }} />
+                      );
+                  }
+                }
+                else{
+                  return (
+                      <PitchCard key={CurrentPitch.BusPitchID}  //creates a card for each pitch 
+                          pitch={{
+                            pitchID: CurrentPitch.BusPitchID.toString(),
+                            pitchName: CurrentPitch.ProductTitle + " " + InvestedPercent.toFixed(2) + '% Funded',
+                            pitchStatus: CurrentPitch.statusOfPitch,
+                            currentAmount: investments.find(inv => inv.busPitchID === CurrentPitch.BusPitchID)?.totalAmount || 0,
+                            pitchGoal: Number(CurrentPitch.TargetInvAmount),
+                            pitchImageUrl: "pitch.SuportingMedia" ,
+                            tags: CurrentPitch.Tags || [], 
+                            pitcherID: CurrentPitch.BusAccountID, 
+                            pitchStart: CurrentPitch.InvestmentStart, 
+                            pitchEnd: CurrentPitch.InvestmentEnd,     
+                          }} />
+                      );
+                }
               }
               else{
                 return null;
@@ -159,6 +237,92 @@ export default function PitchSearchPage() {
             ))}
           </div>
         </div>
+
+
+
+        {/* Filter by other means */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center gap-8"> 
+              <div> 
+              <h2 className="font-semibold text-lg">Filters</h2>
+              </div>
+              <div>
+                <Button 
+                  style={{ backgroundColor: FilterOn === 'on' ? 'Green' : 'Black' }}
+                  onClick={() => {
+                    const newFilterState = FilterOn === 'off' ? 'on' : 'off';
+                    setFilterOn(newFilterState);
+                    if(newFilterState === 'on' && selectedSort === 'oldest') { 
+                      sortPitchesOldest(); 
+                    }
+                    if(newFilterState === 'on' && selectedSort === 'newest') { 
+                      sortPitchesNewest(); 
+                    }
+                  }}
+                  
+                  >
+                  <div className=" ">
+                    Apply Filters
+                  </div>
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          
+          {/*slider controls */}
+          <div className="p-4 space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="flex-1">
+                <Slider 
+                  value={[priceRange[0]]} 
+                  onValueChange={(value) => setPriceRange([value[0], priceRange[1]])}
+                  max={100} 
+                  step={1}
+                  className="w-full"
+                />
+              </div>
+              <div className="text-sm font-medium text-right">
+                {priceRange[0]}% Invested
+              </div>
+            </div>
+          </div>
+
+
+
+
+          {/* Newest to oldest Buttons */}
+          <div className="flex items-center gap-4 p-4 ">
+
+            <div className="flex-1  ">
+              <Button 
+                variant="outline" 
+                className="w-full font-semibold text-lg" 
+                style={{ backgroundColor: selectedSort === 'newest' ? 'lightgreen' : 'gray' }}
+                onClick={() => { setSelectedSort('newest'); if (FilterOn === 'on') { sortPitchesNewest(); } }}
+              >
+                Newest
+              </Button>
+            </div>
+
+            <div className="flex-1"> 
+              <Button 
+                variant="outline" 
+                className="w-full font-semibold text-lg" 
+                style={{ backgroundColor: selectedSort === 'oldest' ? 'lightgreen' : 'gray' }}
+                onClick={() => { setSelectedSort('oldest'); if (FilterOn === 'on') { sortPitchesOldest(); }  }}
+                
+              >
+                Oldest
+              </Button>
+            </div>
+
+
+          </div>
+        </Card>
+
+
+
       </div>
     </div>
   );
