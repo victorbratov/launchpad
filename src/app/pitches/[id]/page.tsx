@@ -104,23 +104,23 @@ export default function PitchDetailsPage() {
  * @param {string} pitchID - The ID of the pitch to fetch media for
  * @returns {Promise<string[]>} A promise that resolves to an array of media keys
  */
-    async function fetchAllMedia(pitchID: string) {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BUCKET_URL}?list-type=2&prefix=${pitchID}/`);
-      const data = await res.text();
+  async function fetchAllMedia(pitchID: string) {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BUCKET_URL}?list-type=2&prefix=${pitchID}/`);
+    const data = await res.text();
 
-      const parses = new DOMParser();
-      const xml = parses.parseFromString(data, "application/xml");
-      const items = xml.getElementsByTagName("Key");
-    
-      const mediaKeys: string[] = [];
-      for (let i = 0; i < items.length; i++) {
-        const key = items[i].textContent;
-        if (key && !key.endsWith("/")) { // Exclude folder keys
-          mediaKeys.push(process.env.NEXT_PUBLIC_BUCKET_URL + key);
-        }
+    const parses = new DOMParser();
+    const xml = parses.parseFromString(data, "application/xml");
+    const items = xml.getElementsByTagName("Key");
+
+    const mediaKeys: string[] = [];
+    for (let i = 0; i < items.length; i++) {
+      const key = items[i].textContent;
+      if (key && !key.endsWith("/")) { // Exclude folder keys
+        mediaKeys.push(`${process.env.NEXT_PUBLIC_BUCKET_URL}/${key}`);
       }
-      return mediaKeys;
     }
+    return mediaKeys;
+  }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 p-6">
