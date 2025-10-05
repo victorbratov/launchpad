@@ -22,7 +22,7 @@ import { Dropzone } from '@mantine/dropzone';
 import { Group, Text, SimpleGrid, Box } from '@mantine/core';
 import { IconPhoto } from '@tabler/icons-react';
 import SortableList, { SortableItem } from 'react-easy-sort'
-import arrayMove from 'array-move'
+import { arrayMoveImmutable } from 'array-move'
 import { Trash2 } from 'lucide-react';
 
 /**
@@ -194,7 +194,7 @@ export default function CreatePitchPage() {
    * @param newIndex New index of the item
    */
   const onSortEnd = (oldIndex: number, newIndex: number) => {
-    setMediaFiles((array) => arrayMove(array, oldIndex, newIndex))
+    setMediaFiles((array) => arrayMoveImmutable(array, oldIndex, newIndex))
   }
   return (
     <div className="p-6 max-w-6xl mx-auto">
