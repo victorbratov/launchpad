@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { getPitch, updatePitch} from "./_actions"; 
+import { getPitch, updatePitch, deleteMedia} from "./_actions"; 
 import { fetchMedia } from "./s3Service";
 import Image from 'next/image';
 import { useUser } from "@clerk/nextjs";
@@ -85,6 +85,8 @@ export default function PitchDetailsPage() {
         try {
           const s3Media = await fetchMedia(String(pitchId));
           setMediaFiles(Array.from(new Set([...dbMedia, ...s3Media.filter(Boolean)])));
+          console.log("Fetched S3 media keys:", s3Media);
+
         } catch (err) {
           console.error("Error fetching S3 media:", err);
         }
@@ -104,21 +106,33 @@ export default function PitchDetailsPage() {
 
   const targetAmount = Number(pitch.TargetInvAmount) || 0;
 
+
+/**
+ * The Delete function to call upon server action to remove an image from the pitch
+ * @param fileKey 
+ * @returns Deleted pitch
+ */
 const handleDelete = async (fileKey: string) => {
   if (!confirm(`Are you sure you want to delete ${fileKey}?`)) return;
 
   try {
-    // Remove from state
+    await deleteMedia(fileKey);
+
+    // Update local state and DB
     const updatedMedia = media.filter((m) => m !== fileKey);
     setMediaFiles(updatedMedia);
 
-    // Update DB only
-    await updatePitch(pitchId, { SuportingMedia: updatedMedia.join(",") });
+    alert(`Deleted ${fileKey}`);
   } catch (err) {
-    console.error(err);
-    alert(`Failed to remove ${fileKey}`);
+    console.error("Delete failed:", err);
+    alert(`Failed to delete ${fileKey}`);
   }
-};
+}
+
+
+
+
+
 
 
 
@@ -157,11 +171,8 @@ const handleSave = async () => {
         uploadedKeys.push(key);
       }
 
-      //Merge uploaded keys with existing media
-      const newMedia = [...media, ...uploadedKeys];
-      await updatePitch(pitchId, { SuportingMedia: newMedia.join(",") });
+      //Merge uploaded keys with existing medi
 
-      setMediaFiles(newMedia);
     }
 
     alert("Pitch and media updated!");
@@ -184,7 +195,7 @@ return (
           <CardContent className="space-y-4">
             <div className="flex flex-col gap-4">
  {media
-    .filter((item): item is string => !!item && !!BUCKET_URL)
+    .filter(Boolean)
     .map((item, idx) => {
       const extMatch = item.match(/\.(jpg|jpeg|png|gif|webp|mp4|mov)$/i);
       if (!extMatch) return null;

@@ -5,6 +5,7 @@ import { BusinessPitchs} from "@/db/schema";
 import { auth } from '@clerk/nextjs/server';
 import { eq } from "drizzle-orm";
 
+
 /**
  * @param pitchId - Unique ID to search through BusinessPitches for. It then checks if the user is the creator of the pitch.
  * @returns pitch object if the search is successful
@@ -36,6 +37,27 @@ export async function getPitch(pitchId: number) {
   };
 }
 
+/**
+ * Deletes media with filekey from database
+ * @param fileKey 
+ * @returns deletes file with filekey
+ */
+export async function deleteMedia(fileKey: string) {
+  if (!fileKey) throw new Error("Missing file key");
+
+  const BUCKET_URL = process.env.BUCKET_URL;
+
+  const response = await fetch(`${BUCKET_URL}${fileKey}`, {
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    console.error("Failed to delete from S3:", response.status, response.statusText);
+    throw new Error("Failed to delete file from bucket");
+  }
+
+  return true;
+}
 
 /** 
  * @param PitchId The unique ID of the pitch to update.
@@ -82,3 +104,4 @@ export async function updatePitch(
 
   return { success: true };
 }
+

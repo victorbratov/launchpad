@@ -45,7 +45,9 @@ export default function BusinessPortalPage() {
 };
 
 const [pitches, setPitches] = useState<FullPitch[]>([]);
-  const [selectedPitch, setSelectedPitch] = useState<FullPitch | null>(null);
+const [selectedPitch, setSelectedPitch] = useState<FullPitch | null>(null);
+const [loading, setLoading] = useState(true); // add loading state
+
 
   useEffect(() => {
   async function fetchPitches() {
@@ -69,6 +71,8 @@ const [pitches, setPitches] = useState<FullPitch[]>([]);
       setPitches(enriched);
     } catch (error) {
       console.error("Failed to load pitches:", error);
+    }finally {
+      setLoading(false); // stop loading
     }
   }
   fetchPitches();
@@ -81,6 +85,7 @@ const [pitches, setPitches] = useState<FullPitch[]>([]);
           <CardTitle>Businesss Overview</CardTitle>
         </CardHeader>
         <CardContent>
+          
           <div className="flex justify-between flex-wrap">
             <div>
               <p><strong>Owner:</strong> {businessInfo.ownerName}</p>
@@ -100,6 +105,11 @@ const [pitches, setPitches] = useState<FullPitch[]>([]);
           <CardTitle>Your Pitches</CardTitle>
         </CardHeader>
         <CardContent>
+           {loading ? (
+      <p className="text-center text-lg font-semibold py-10">
+        Loading your pitches...
+      </p>
+           ) : (
           <Table>
             <TableHeader>
               <TableRow>
@@ -188,6 +198,7 @@ const [pitches, setPitches] = useState<FullPitch[]>([]);
               ))}
             </TableBody>
           </Table>
+           )}
         </CardContent>
       </Card>
     </div>
