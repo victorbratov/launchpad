@@ -30,7 +30,7 @@ export async function getAllBusinessPitches(): Promise<Pitches[]> {
 //gets total money invested in all the pitches on the db
 // returns an array of objects with busPitchID and totalAmount invested
 
-export async function getTotalMoneyInvested(): Promise<{busPitchID: number, totalAmount: number}[]> {
+export async function getTotalMoneyInvested(): Promise<{ busPitchID: number, totalAmount: number }[]> {
   const result = await db
     .select({
       busPitchID: InvestmentLedger.BusPitchID,
@@ -49,19 +49,19 @@ export async function getTotalMoneyInvested(): Promise<{busPitchID: number, tota
  * @returns url of the featured media, or empty string if none found
  */
 export async function fetchFeaturedMedia(pitchID: string) {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BUCKET_URL}?list-type=2&prefix=${pitchID}/`);
-    const data = await res.text();
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BUCKET_URL}?list-type=2&prefix=${pitchID}/`);
+  const data = await res.text();
 
-    const parser = new XMLParser();
-    const json = parser.parse(data);
+  const parser = new XMLParser();
+  const json = parser.parse(data);
 
-    let items = json.ListBucketResult?.Contents || [];
-    if (!Array.isArray(items)) items = [items];
-    interface S3Item {
-      Key: string;
-      Size: number;
-    }
-    const mediaItem = (items as S3Item[]).find((item: S3Item) => item.Key.startsWith(`${pitchID}/featured`) && item.Size > 0);
-    const mediaUrl = mediaItem ? `${process.env.NEXT_PUBLIC_BUCKET_URL}${mediaItem.Key}` : "";
-    return mediaUrl;
+  let items = json.ListBucketResult?.Contents || [];
+  if (!Array.isArray(items)) items = [items];
+  interface S3Item {
+    Key: string;
+    Size: number;
+  }
+  const mediaItem = (items as S3Item[]).find((item: S3Item) => item.Key.startsWith(`${pitchID}/featured`) && item.Size > 0);
+  const mediaUrl = mediaItem ? `${process.env.NEXT_PUBLIC_BUCKET_URL}/${mediaItem.Key}` : "";
+  return mediaUrl;
 }
