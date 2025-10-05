@@ -24,7 +24,7 @@ import { IconPhoto } from '@tabler/icons-react';
 import SortableList, { SortableItem } from 'react-easy-sort'
 import arrayMove from 'array-move'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faTrash } from '@fortawesome/free-solid-svg-icons'
+import { Trash2 } from 'lucide-react';
 
 /**
  * Create pitch page where the user will create their pitch
@@ -303,7 +303,7 @@ export default function CreatePitchPage() {
                               <div className="p-4 w-full bg-white rounded-2xl shadow-sm border border-gray-200 cursor-grab 
                          hover:shadow-md active:cursor-grabbing transition-all duration-200">{index + 1}. {file.name}
                               </div>
-                              <Button className="bg-white text-red-600 hover:text-red-800 hover:bg-white focus:bg-white" onClick={() => deleteItem(index)}> <FontAwesomeIcon icon={faTrash} /></Button>
+                              <Button className="bg-white text-red-600 hover:text-red-800 hover:bg-white focus:bg-white" onClick={() => deleteItem(index)}> <Trash2 /></Button>
                             </div>
                           </SortableItem>
                         ))}
