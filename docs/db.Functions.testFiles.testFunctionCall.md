@@ -1,3 +1,0 @@
-[**launchpad**](index.md)
-
-***

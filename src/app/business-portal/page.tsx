@@ -2,85 +2,46 @@
 
 import { useEffect, useState } from "react";
 import {
-  Card, CardContent, CardHeader, CardTitle,
+  getUserPitches,
+  getTotalMoneyInvestedInPitch,
+  getTotalInvestorsInPitch,
+  getBusinessAccountInfo,
+  depositBalance,
+  withdrawBalance
+} from "./_actions";
+import { checkBusinessAuthentication } from "@/lib/globalActions";
+import { validateWithdrawalAmount } from "@/lib/utils";
+import {
+  Card, CardContent, CardHeader, CardTitle
 } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow
 } from "@/components/ui/table";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-  DialogDescription,
-  DialogClose
+  Dialog, DialogContent, DialogHeader, DialogTitle,
+  DialogTrigger, DialogFooter
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { get } from "http";
-import { getBusinessAccountInfo, depositBalance, withdrawBalance } from "./_actions";
-import { checkBusinessAuthentication } from "@/lib/globalActions";
-import { Input } from "@/components/ui/input";
+import Link from "next/link";
 import WithdrawDialog from "@/components/withdrawal_dialog";
 import DepositDialog from "@/components/deposit_dialog";
-import { validateWithdrawalAmount } from "@/lib/utils";
+import type { Pitches } from "../../../types/pitch";
 
-/**
- * Basic business account information
- */
 interface businessInfo {
-  name: string; /** The name of the business owner */
-  email: string; /** The email of the business */
-  wallet: string; /** The amount of money in the business account wallet */
-};
-
-const pitches = [
-  {
-    pitchID: "p1",
-    pitchName: "SunDrop: Solar Irrigation",
-    pitchGoal: 10000,
-    currentAmount: 7400,
-    investors: 23,
-    profitSharePercentage: 10,
-    dividendPeriod: "Quarterly",
-    pitchEnd: "2024-08-01",
-    detailedPitch:
-      "Our project empowers farmers in rural Kenya with affordable solar-powered irrigation systems to increase yields and fight climate vulnerability.",
-  },
-  {
-    pitchID: "p2",
-    pitchName: "EcoThreads: Recycled Fashion",
-    pitchGoal: 15000,
-    currentAmount: 15000,
-    investors: 40,
-    profitSharePercentage: 8,
-    dividendPeriod: "Yearly",
-    pitchEnd: "2024-07-15",
-    detailedPitch:
-      "EcoThreads creates sustainable fashion items entirely from recycled plastics and organic cotton, focusing on reducing fast fashion’s footprint.",
-  },
-];
-
-interface Pitch {
-  pitchID: string;
-  pitchName: string;
-  pitchGoal: number;
-  currentAmount: number;
-  investors: number;
-  profitSharePercentage: number;
-  dividendPeriod: string;
-  pitchEnd: string;
-  detailedPitch: string;
+  name: string;
+  email: string;
+  wallet: string;
 }
 
-/**
- * Business Portal Page, showing an overview of the business account and their pitches
- * @returns The business portal page
- */
+// Extend Pitches with extra fields for enriched data
+type FullPitch = Pitches & {
+  raised: number;
+  investorCount: number;
+};
+
 export default function BusinessPortalPage() {
-  const [selectedPitch, setSelectedPitch] = useState<Pitch | null>(null);
+  const [selectedPitch, setSelectedPitch] = useState<FullPitch | null>(null);
   const [busAccountInfo, setBusinessAccountInfo] = useState<businessInfo | null>(null);
   const [withdrawalAmount, setWithdrawalAmount] = useState<number>(0);
   const [withdrawing, setWithdrawing] = useState<boolean>(false);
@@ -89,44 +50,63 @@ export default function BusinessPortalPage() {
   const [openDeposit, setOpenDeposit] = useState<boolean>(false);
   const [depositing, setDepositing] = useState<boolean>(false);
   const [depositAmount, setDepositAmount] = useState<number>(0);
+  const [pitches, setPitches] = useState<FullPitch[]>([]);
+  const [loading, setLoading] = useState(true);
 
+  // Fetch business info & auth
   useEffect(() => {
-    // fetch business account info
     async function loadData() {
-      try {
-        const busInfo: businessInfo = await getBusinessAccountInfo();
-        setBusinessAccountInfo(busInfo);
-      } catch (error) {
-
-      }
-    }
-    // check authentication, and if authenticated, load business data
-    checkBusinessAuthentication().then((isBusiness) => {
+      const isBusiness = await checkBusinessAuthentication();
       if (!isBusiness) {
         window.location.href = '/';
-      } else {
-        loadData();
+        return;
       }
-    });
+      const busInfo = await getBusinessAccountInfo();
+      setBusinessAccountInfo(busInfo);
+    }
+    loadData();
   }, []);
 
-  /**
-   * Handle the withdrawal of funds from the business account
-   * @param amount The amount to withdraw
-   */
+  // Fetch pitches
+  useEffect(() => {
+    async function fetchPitches() {
+      try {
+        const data = await getUserPitches();
+        const enriched: FullPitch[] = await Promise.all(
+          data.map(async (pitch) => {
+            const raised = await getTotalMoneyInvestedInPitch(pitch.BusPitchID);
+            const count = await getTotalInvestorsInPitch(pitch.BusPitchID);
+            return {
+              ...pitch,
+              raised: raised?.totalAmount || 0,
+              investorCount: count?.investorCount || 0,
+            };
+          })
+        );
+        setPitches(enriched);
+      } catch (err) {
+        console.error("Failed to fetch pitches:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchPitches();
+  }, []);
+
+  // Withdraw funds
   async function withdrawFunds(amount: number | null) {
     setWithdrawing(true);
-
-    setErrorMessage(validateWithdrawalAmount(amount, parseFloat(busAccountInfo?.wallet ?? "0")));
-    if (errorMessage === null) {
+    const error = validateWithdrawalAmount(amount, parseFloat(busAccountInfo?.wallet ?? "0"));
+    setErrorMessage(error);
+    if (!error) {
       try {
         await withdrawBalance(amount ?? parseFloat(busAccountInfo?.wallet ?? "0"));
         setOpen(false);
-        // get updated info
-        const busInfo: businessInfo = await getBusinessAccountInfo();
+        const busInfo = await getBusinessAccountInfo();
         setBusinessAccountInfo(busInfo);
-      } catch (error) {
+      } catch {
         setErrorMessage("Error withdrawing funds. Please try again later.");
+      } finally {
         setWithdrawing(false);
       }
     } else {
@@ -134,21 +114,18 @@ export default function BusinessPortalPage() {
     }
   }
 
-  /**
-   * Deposit funds into the business account from the linked bank account
-   * @param amount The amount to deposit
-   */
+  // Deposit funds
   async function depositFunds(amount: number | null) {
-    setErrorMessage("");
     setDepositing(true);
-
+    setErrorMessage("");
     try {
       await depositBalance(amount ?? parseFloat(busAccountInfo?.wallet ?? "0"));
       setOpenDeposit(false);
-      const busInfo: businessInfo = await getBusinessAccountInfo();
+      const busInfo = await getBusinessAccountInfo();
       setBusinessAccountInfo(busInfo);
-    } catch (error) {
-      setErrorMessage("Error withdrawing funds. Please try again later.");
+    } catch {
+      setErrorMessage("Error depositing funds. Please try again later.");
+    } finally {
       setDepositing(false);
     }
   }
@@ -157,24 +134,20 @@ export default function BusinessPortalPage() {
     <div className="p-6 space-y-6">
       {/* Business Overview */}
       <Card>
-        <CardHeader>
-          <CardTitle>Business Overview</CardTitle>
-        </CardHeader>
+        <CardHeader><CardTitle>Business Overview</CardTitle></CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 justify-between flex-wrap items-center">
             <div className="space-y-2">
-              <p><strong>Business:</strong> {busAccountInfo ? busAccountInfo.name : "Loading.."}</p>
-              <p><strong>Email:</strong> {busAccountInfo ? busAccountInfo.email : "Loading..."}</p>
+              <p><strong>Business:</strong> {busAccountInfo?.name ?? "Loading..."}</p>
+              <p><strong>Email:</strong> {busAccountInfo?.email ?? "Loading..."}</p>
             </div>
             <div className="sm:text-right space-x-2 space-y-2">
               <p className="pt-2 sm:pt-0"><strong>Wallet Balance:</strong></p>
-              <p className="text-2xl font-bold">{busAccountInfo ? busAccountInfo.wallet : "Loading..."}</p>
+              <p className="text-2xl font-bold">{busAccountInfo?.wallet ?? "Loading..."}</p>
 
-              {/* Withdraw button */}
-              {/** Only show withdraw option if there is money in the account */}
-              {parseFloat(busAccountInfo?.wallet ?? "") != 0 &&
+              {parseFloat(busAccountInfo?.wallet ?? "0") !== 0 && (
                 <WithdrawDialog
-                  accountInfo={busAccountInfo ? { wallet: parseFloat(busAccountInfo.wallet) } : { wallet: 0 }}
+                  accountInfo={{ wallet: parseFloat(busAccountInfo?.wallet ?? "0") }}
                   fundsFunction={() => withdrawFunds(withdrawalAmount)}
                   open={open}
                   setOpen={setOpen}
@@ -185,14 +158,13 @@ export default function BusinessPortalPage() {
                   errorMessage={errorMessage ?? ""}
                   setErrorMessage={setErrorMessage}
                 />
-              }
+              )}
 
-              {/* Deposit button */}
               <DepositDialog
-                accountInfo={busAccountInfo ? { wallet: parseFloat(busAccountInfo.wallet) } : { wallet: 0 }}
+                accountInfo={{ wallet: parseFloat(busAccountInfo?.wallet ?? "0") }}
                 depositFunds={() => depositFunds(depositAmount)}
-                open={open}
-                setOpen={setOpen}
+                open={openDeposit}
+                setOpen={setOpenDeposit}
                 depositing={depositing}
                 setDepositing={setDepositing}
                 depositAmount={depositAmount}
@@ -202,100 +174,85 @@ export default function BusinessPortalPage() {
               />
             </div>
           </div>
-
         </CardContent>
       </Card>
 
       {/* Pitches Section */}
       <Card>
-        <CardHeader>
-          <CardTitle>Your Pitches</CardTitle>
-        </CardHeader>
+        <CardHeader><CardTitle>Your Pitches</CardTitle></CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Pitch</TableHead>
-                <TableHead>Progress</TableHead>
-                <TableHead>Investors</TableHead>
-                <TableHead>Profit Share</TableHead>
-                <TableHead>Dividend Period</TableHead>
-                <TableHead>Funding End</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {pitches.map((pitch) => (
-                <Dialog key={pitch.pitchID}>
-                  <DialogTrigger asChild>
-                    <TableRow
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => setSelectedPitch(pitch)}
-                    >
-                      <TableCell className="font-medium">
-                        {pitch.pitchName}
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                          <Progress
-                            value={(pitch.currentAmount / pitch.pitchGoal) * 100}
-                          />
-                          <span className="text-xs text-muted-foreground">
-                            ${pitch.currentAmount} / ${pitch.pitchGoal}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell>{pitch.investors}</TableCell>
-                      <TableCell>{pitch.profitSharePercentage}%</TableCell>
-                      <TableCell>{pitch.dividendPeriod}</TableCell>
-                      <TableCell>{pitch.pitchEnd}</TableCell>
-                    </TableRow>
-                  </DialogTrigger>
+          {loading ? (
+            <p className="text-center text-lg font-semibold py-10">Loading your pitches...</p>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Pitch</TableHead>
+                  <TableHead>Progress</TableHead>
+                  <TableHead>Investors</TableHead>
+                  <TableHead>Profit Share</TableHead>
+                  <TableHead>Dividend Period</TableHead>
+                  <TableHead>Funding End</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {pitches.map((pitch) => (
+                  <Dialog key={pitch.BusPitchID}>
+                    <DialogTrigger asChild>
+                      <TableRow
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => setSelectedPitch(pitch)}
+                      >
+                        <TableCell className="font-medium">{pitch.ProductTitle}</TableCell>
+                        <TableCell>
+                          <div className="space-y-1">
+                            <Progress value={(pitch.raised / Number(pitch.TargetInvAmount || 1)) * 100} />
+                            <span className="text-xs text-muted-foreground">
+                              ${pitch.raised} / ${pitch.TargetInvAmount}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell>{pitch.investorCount} investors</TableCell>
+                        <TableCell>{pitch.InvProfShare}%</TableCell>
+                        <TableCell>{pitch.DividEndPayoutPeriod}</TableCell>
+                        <TableCell>{new Date(pitch.InvestmentEnd).toLocaleDateString()}</TableCell>
+                      </TableRow>
+                    </DialogTrigger>
 
-                  {/* Modal Content */}
-                  <DialogContent className="max-w-lg">
-                    {selectedPitch && (
-                      <>
+                    {selectedPitch?.BusPitchID === pitch.BusPitchID && (
+                      <DialogContent className="max-w-lg">
                         <DialogHeader>
-                          <DialogTitle>{selectedPitch.pitchName}</DialogTitle>
+                          <DialogTitle>{selectedPitch.ProductTitle}</DialogTitle>
                         </DialogHeader>
                         <div className="space-y-4">
-                          <p className="text-sm text-muted-foreground">
-                            {selectedPitch.detailedPitch}
-                          </p>
+                          <p className="text-sm text-muted-foreground">{selectedPitch.DetailedPitch}</p>
                           <div>
-                            <p><strong>Goal:</strong> ${selectedPitch.pitchGoal}</p>
-                            <p>
-                              <strong>Raised:</strong> ${selectedPitch.currentAmount}
-                            </p>
-                            <p><strong>Investors:</strong> {selectedPitch.investors}</p>
-                            <p>
-                              <strong>Profit Share:</strong>{" "}
-                              {selectedPitch.profitSharePercentage}%
-                            </p>
-                            <p>
-                              <strong>Dividend Period:</strong>{" "}
-                              {selectedPitch.dividendPeriod}
-                            </p>
-                            <p><strong>Funding End:</strong> {selectedPitch.pitchEnd}</p>
+                            <p><strong>Goal:</strong> ${selectedPitch.TargetInvAmount}</p>
+                            <p><strong>Raised:</strong> ${selectedPitch.raised}</p>
+                            <p><strong>Investors:</strong> {selectedPitch.investorCount}</p>
+                            <p><strong>Profit Share:</strong> {selectedPitch.InvProfShare}%</p>
+                            <p><strong>Dividend Period:</strong> {selectedPitch.DividEndPayoutPeriod}</p>
+                            <p><strong>Funding End:</strong> {new Date(selectedPitch.InvestmentEnd).toLocaleDateString()}</p>
                           </div>
                         </div>
-                        <DialogFooter className="flex gap-3 justify-end">
-                          <Button variant="outline">
-                            Edit Pitch
-                          </Button>
+                                                <DialogFooter className="flex gap-3 justify-end">
+                          <Link href={`/business-portal/${pitch.BusPitchID}`}>
+                            <Button variant="outline">Edit Pitch</Button>
+                          </Link>
                           <Button className="bg-green-600 hover:bg-green-700">
                             Report Profit
                           </Button>
                         </DialogFooter>
-                      </>
+                      </DialogContent>
                     )}
-                  </DialogContent>
-                </Dialog>
-              ))}
-            </TableBody>
-          </Table>
+                  </Dialog>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
-    </div >
+    </div>
   );
 }
+

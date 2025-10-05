@@ -1,3 +1,4 @@
+// types/pitch.ts
 export type Pitch = {
   pitcherID: string;
   pitchID: string;
@@ -20,7 +21,8 @@ export type Pitch = {
     ProductTitle: string;
     ElevatorPitch: string;
     DetailedPitch: string;
-    FeaturedImage: string | null;
+    SuportingMedia: string | null;
+    FeaturedImage?: string | null;
     TargetInvAmount: string;
     InvestmentStart: string;
     InvestmentEnd: string;

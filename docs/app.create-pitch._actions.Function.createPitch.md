@@ -14,6 +14,8 @@ Create a pitch in the database
 
 [`Pitch`](app.create-pitch._actions.Interface.Pitch.md)
 
+How often dividends will be paid out (monthly, yearly, etc.)
+
 ## Returns
 
 `Promise`\<\{ `message`: `string`; `success`: `boolean`; \}\>
