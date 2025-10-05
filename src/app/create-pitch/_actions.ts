@@ -21,7 +21,8 @@ export interface Pitch {
     silverMultiplier: string, 
     silverMax: number, 
     goldMultiplier: string, 
-    dividendPayoutPeriod: string
+    dividendPayoutPeriod: string,
+    tags: string[]
 }
 
 /**
@@ -73,6 +74,7 @@ export const createPitch = async (pitch: Pitch) => {
         goldTierMax: parseInt(pitch.targetAmount),
         dividEndPayout: dividendPayoutDate, // this needs to be calculated based on the dividend period
         DividEndPayoutPeriod: pitch.dividendPayoutPeriod,
+        Tags: pitch.tags || [],
     }).returning();
 
 

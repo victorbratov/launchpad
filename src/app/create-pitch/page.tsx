@@ -6,8 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CalendarIcon } from "lucide-react";
+import { BookOpenCheck, CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -24,6 +25,12 @@ import { IconPhoto } from '@tabler/icons-react';
 import SortableList, { SortableItem } from 'react-easy-sort'
 import arrayMove from 'array-move'
 import { Trash2 } from 'lucide-react';
+
+// Available tags for pitch categorization
+const availableTags = [
+  "green energy", "water", "sustainability", "education", "AI", "language", "community", "food", "fashion"
+  ,"recycling", "VR", "technology", "transportation", "gaming", "indie", "packaging"
+];
 
 /**
  * Create pitch page where the user will create their pitch
@@ -44,6 +51,8 @@ export default function CreatePitchPage() {
   const [silverMax, setSilverMax] = useState<number>();
   const [goldMultiplier, setGoldMultiplier] = useState<string>("");
 
+  const [selectedTags, setSelectedTags] = useState<string[]>([]); ///// tags storing here
+
   const [feedback, setFeedback] = useState<string | null>(null);
   const [ragScore, setRagScore] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -61,6 +70,15 @@ export default function CreatePitchPage() {
       <Label data-testid="media" key={index}>{index + 1}. {file.name}</Label>
     </div>
   });
+
+  // Simple function to add/remove tags
+  const toggleTag = (tag: string) => {
+    if (selectedTags.includes(tag)) {
+      setSelectedTags(selectedTags.filter(t => t !== tag));
+    } else {
+      setSelectedTags([...selectedTags, tag]);
+    }
+  };
 
   useEffect(() => {
     // check if the user is logged in with a business account
@@ -103,7 +121,7 @@ export default function CreatePitchPage() {
     }
     try {
       // non-null assertion, as the input is required by the form so it will always have a value
-      const { success, message } = await createPitch({ title, status, elevatorPitch, detailedPitch, targetAmount: goal!, startDate, endDate, bronzeMultiplier, bronzeMax: bronzeMax!, silverMultiplier, silverMax: silverMax!, goldMultiplier, dividendPayoutPeriod: dividendPeriod });
+      const { success, message } = await createPitch({ title, status, elevatorPitch, detailedPitch, targetAmount: goal!, startDate, endDate, bronzeMultiplier, bronzeMax: bronzeMax!, silverMultiplier, silverMax: silverMax!, goldMultiplier, dividendPayoutPeriod: dividendPeriod, tags: selectedTags });
       if (success) {
           for (const file of mediaFiles) {
           if (!await uploadMedia(file, message)) {
@@ -448,6 +466,23 @@ export default function CreatePitchPage() {
                   onChange={(e) => setGoldMultiplier(e.target.value)}
                   required
                 />
+              </div>
+
+
+              {/* tags scorllable sector*/}
+              <div>
+                <Label>Tags</Label>
+                <div className="max-h-48 overflow-y-auto border rounded p-2">
+                  {availableTags.map((tag) => (
+                    <div key={tag} className="flex items-center gap-2 p-1">
+                      <Checkbox
+                        checked={selectedTags.includes(tag)}
+                        onCheckedChange={() => toggleTag(tag)}
+                      />
+                      <label className="text-sm">{tag}</label>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               {/* Actions */}
