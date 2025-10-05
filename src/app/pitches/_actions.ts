@@ -57,7 +57,11 @@ export async function fetchFeaturedMedia(pitchID: string) {
 
     let items = json.ListBucketResult?.Contents || [];
     if (!Array.isArray(items)) items = [items];
-    const mediaItem = items.find((item: any) => item.Key.startsWith(`${pitchID}/featured`) && item.Size > 0);
+    interface S3Item {
+      Key: string;
+      Size: number;
+    }
+    const mediaItem = (items as S3Item[]).find((item: S3Item) => item.Key.startsWith(`${pitchID}/featured`) && item.Size > 0);
     const mediaUrl = mediaItem ? `${process.env.NEXT_PUBLIC_BUCKET_URL}${mediaItem.Key}` : "";
     return mediaUrl;
 }
