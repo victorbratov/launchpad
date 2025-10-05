@@ -82,7 +82,7 @@ const [loading, setLoading] = useState(true); // add loading state
       {/* Business Overview */}
       <Card>
         <CardHeader>
-          <CardTitle>Businesss Overview</CardTitle>
+          <CardTitle>Business Overview</CardTitle>
         </CardHeader>
         <CardContent>
           
