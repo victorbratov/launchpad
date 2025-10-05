@@ -4,7 +4,7 @@
  * @returns mediaKeys
  */
 export async function fetchMedia(pitchID: string) {
-    const BUCKET_URL = process.env.BUCKET_URL;
+    const BUCKET_URL = process.env.NEXT_PUBLIC_BUCKET_URL;
     const res = await fetch(`${BUCKET_URL}?list-type=2&prefix=${pitchID}/`);
     const data = await res.text();
 

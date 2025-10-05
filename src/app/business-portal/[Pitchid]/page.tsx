@@ -48,59 +48,42 @@ export default function PitchDetailsPage() {
   const BUCKET_URL = process.env.NEXT_PUBLIC_BUCKET_URL;
 
 
-  useEffect(() => {
+useEffect(() => {
+  async function fetchPitchAndMedia() {
+    if (!pitchId) return;
 
-    async function fetchPitchAndMedia() {
-      if (!pitchId) return;
+    try {
+      const data = await getPitch(pitchId);
+      if (!data) return;
 
-      try {
-        //Fetch DB pitch data
-        const data = await getPitch(pitchId);
-        if (!data) {
-          console.warn(`No pitch found for ID ${pitchId}`);
-          setLoading(false);
-          return;
-        }
-        console.log("Pitch owner ID:", data.BusAccountID);
-        console.log("Current user ID:", userId);
- 
-      
+      setPitch(data);
+      setPitchName(data.ProductTitle || "");
+      setElevatorPitch(data.ElevatorPitch || "");
+      setDetailedPitch(data.DetailedPitch || "");
 
-        //Make variables out of read data
-        setPitch(data);
+      const raisedData = await getTotalMoneyInvestedInPitch(pitchId);
+      const investorData = await getTotalInvestorsInPitch(pitchId);
+      setRaisedAmount(raisedData?.totalAmount || 0);
+      setInvestorCount(investorData?.investorCount || 0);
 
-        const raisedData = await getTotalMoneyInvestedInPitch(pitchId);
-        const investorData = await getTotalInvestorsInPitch(pitchId);
+      // Fetch S3 media only
+      const s3Media = await fetchAllMedia(String(pitchId));
+      console.log("Fetched S3 media keys:", s3Media);
 
-        setRaisedAmount(raisedData?.totalAmount || 0);
-        setInvestorCount(investorData?.investorCount || 0);
-        setPitchName(data.ProductTitle || "");
-        setElevatorPitch(data.ElevatorPitch || "");
-        setDetailedPitch(data.DetailedPitch || "");
+      setMediaFiles(s3Media);
 
-        const dbMedia = data.SuportingMedia ? [data.SuportingMedia] : [];
-        setMediaFiles(dbMedia);
-
-
-        //Fetch S3 media data
-        try {
-          const s3Media = await fetchMedia(String(pitchId));
-          setMediaFiles(Array.from(new Set([...dbMedia, ...s3Media.filter(Boolean)])));
-          console.log("Fetched S3 media keys:", s3Media);
-
-        } catch (err) {
-          console.error("Error fetching S3 media:", err);
-        }
-
-      } catch (err) {
-        console.error("Error fetching pitch:", err);
-      } finally {
-        setLoading(false);
-      }
+    } catch (err) {
+      console.error("Error fetching pitch or media:", err);
+    } finally {
+      setLoading(false);
     }
+  }
 
-    fetchPitchAndMedia();
-  }, [pitchId]);
+  fetchPitchAndMedia();
+}, [pitchId]);
+
+
+
 
   if (loading) return <p>Loading...</p>;
   if (!pitch) return <p>Pitch not found</p>;
@@ -113,22 +96,45 @@ export default function PitchDetailsPage() {
  * @param fileKey 
  * @returns Deleted pitch
  */
-const handleDelete = async (fileKey: string) => {
-  if (!confirm(`Are you sure you want to delete ${fileKey}?`)) return;
+async function fetchAllMedia(pitchID: string) {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BUCKET_URL}?list-type=2&prefix=${pitchID}/`);
+  const data = await res.text();
+
+  const parser = new DOMParser();
+  const xml = parser.parseFromString(data, "application/xml");
+  const items = xml.getElementsByTagName("Key");
+
+  const mediaKeys: string[] = [];
+  for (let i = 0; i < items.length; i++) {
+    const key = items[i].textContent;
+    if (key && !key.endsWith("/")) { // skip folder keys
+      mediaKeys.push(`${process.env.NEXT_PUBLIC_BUCKET_URL}${key}`);
+    }
+  }
+
+  return mediaKeys;
+}
+
+const handleDelete = async (fileUrl: string) => {
+  if (!confirm(`Are you sure you want to delete ${fileUrl}?`)) return;
 
   try {
-    await deleteMedia(fileKey);
+    // Extract S3 key from URL
+    const key = fileUrl.replace(process.env.NEXT_PUBLIC_BUCKET_URL!, "");
 
-    // Update local state and DB
-    const updatedMedia = media.filter((m) => m !== fileKey);
-    setMediaFiles(updatedMedia);
+    // Delete from S3
+    await deleteMedia(key);
 
-    alert(`Deleted ${fileKey}`);
+    // Update local state
+    setMediaFiles((prev) => prev.filter((m) => m !== fileUrl));
+
+    alert(`Deleted ${fileUrl}`);
   } catch (err) {
     console.error("Delete failed:", err);
-    alert(`Failed to delete ${fileKey}`);
+    alert(`Failed to delete ${fileUrl}`);
   }
-}
+};
+
 
 
 
@@ -196,55 +202,64 @@ return (
           <CardContent className="space-y-4">
             <div className="flex flex-col gap-4">
  {media
-    .filter(Boolean)
-    .map((item, idx) => {
-      const extMatch = item.match(/\.(jpg|jpeg|png|gif|webp|mp4|mov)$/i);
-      if (!extMatch) return null;
+  .filter(Boolean)
+  .map((item, idx) => {
+    const extMatch = item.match(/\.(jpg|jpeg|png|gif|webp|mp4|mov)$/i);
+    if (!extMatch) return null;
 
-      return (
-        <div key={idx} className="relative">
-          {item.toLowerCase().endsWith(".mp4") ? (
-            <video src={`${BUCKET_URL}${item}`} width={400} height={300} controls />
-          ) : (
-            <Image src={`${BUCKET_URL}${item}`} alt={`Media ${idx + 1}`} width={400} height={300} />
-          )}
-          <button
-            className="absolute top-2 right-2 bg-red-600 text-white rounded px-4 py-2 text-base font-semibold shadow-lg hover:bg-red-700 transition"
-            onClick={() => handleDelete(item)}
-          >
-            Delete
-          </button>
-        </div>
-      );
-    })}
+    return (
+      <div key={idx} className="relative">
+        {item.toLowerCase().endsWith(".mp4") ? (
+          <video src={item} width={400} height={300} controls />
+        ) : (
+          <Image
+            src={item} // <--- use item directly
+            alt={`Media ${idx + 1}`}
+            width={400}
+            height={300}
+          />
+        )}
+        <button
+          className="absolute top-2 right-2 bg-red-600 text-white rounded px-4 py-2 text-base font-semibold shadow-lg hover:bg-red-700 transition"
+          onClick={() => handleDelete(item)}
+        >
+          Delete
+        </button>
+      </div>
+    );
+  })}
+
             </div>
                   {/*Do the same but for pending files array */}
-                {pendingFiles.length > 0 && (
-                  <div className="mt-4 flex flex-wrap gap-3">
-                    {pendingFiles.map((file, idx) => {
-                      const fileURL = URL.createObjectURL(file);
-                      const handlePendingDelete = () => {
-                        setPendingFiles((prev) => prev.filter((_, i) => i !== idx));
-                      };
+                        {pendingFiles.length > 0 && (
+                        <div className="mt-4">
+                          <h3 className="text-lg font-semibold mb-2">Pending Images</h3>
+                          <div className="flex flex-wrap gap-3">
+                            {pendingFiles.map((file, idx) => {
+                              const fileURL = URL.createObjectURL(file);
+                              const handlePendingDelete = () => {
+                                setPendingFiles((prev) => prev.filter((_, i) => i !== idx));
+                              };
 
-                      return (
-                        <div key={idx} className="relative">
-                          {file.type.startsWith("video/") ? (
-                            <video src={fileURL} width={200} height={150} controls />
-                          ) : (
-                            <Image src={fileURL} alt={`Pending ${idx + 1}`} width={200} height={150} />
-                          )}
-                          <button
-                            className="absolute top-2 right-2 bg-red-600 text-white rounded px-3 py-1 text-sm font-semibold shadow hover:bg-red-700 transition"
-                            onClick={handlePendingDelete} // just removes from pendingFiles
-                          >
-                            Delete
-                          </button>
+                              return (
+                                <div key={idx} className="relative">
+                                  {file.type.startsWith("video/") ? (
+                                    <video src={fileURL} width={200} height={150} controls />
+                                  ) : (
+                                    <Image src={fileURL} alt={`Pending ${idx + 1}`} width={200} height={150} />
+                                  )}
+                                  <button
+                                    className="absolute top-2 right-2 bg-red-600 text-white rounded px-3 py-1 text-sm font-semibold shadow hover:bg-red-700 transition"
+                                    onClick={handlePendingDelete} // just removes from pendingFiles
+                                  >
+                                    Delete
+                                  </button>
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
-                      );
-                    })}
-                  </div>
-                )}
+                      )}
 
                 <div>
                   <input
