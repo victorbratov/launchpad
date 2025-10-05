@@ -4,4 +4,4 @@
 
 > `const` **default**: `React.FC`\<`WithdrawDialogProps`\>
 
-Defined in: [src/components/withdrawal\_dialog.tsx:27](https://github.com/victorbratov/launchpad/blob/d14315d3bd6634bc1c0e4507f8ad0551e9221cbc/src/components/withdrawal_dialog.tsx#L27)
+Defined in: [src/components/withdrawal\_dialog.tsx:27](https://github.com/victorbratov/launchpad/blob/6dd13cd77753e59ec2a031fc7279545899826925/src/components/withdrawal_dialog.tsx#L27)

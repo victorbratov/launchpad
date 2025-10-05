@@ -4,7 +4,7 @@
 
 > **Spinner**(`__namedParameters`): `Element`
 
-Defined in: [src/components/ui/shadcn-io/spinner/index.tsx:253](https://github.com/victorbratov/launchpad/blob/d14315d3bd6634bc1c0e4507f8ad0551e9221cbc/src/components/ui/shadcn-io/spinner/index.tsx#L253)
+Defined in: [src/components/ui/shadcn-io/spinner/index.tsx:253](https://github.com/victorbratov/launchpad/blob/6dd13cd77753e59ec2a031fc7279545899826925/src/components/ui/shadcn-io/spinner/index.tsx#L253)
 
 ## Parameters
 

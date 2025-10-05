@@ -4,7 +4,7 @@
 
 > **DialogDescription**(`__namedParameters`): `Element`
 
-Defined in: [src/components/ui/dialog.tsx:119](https://github.com/victorbratov/launchpad/blob/3cec89d9fa4be2794c552b4b2e488c08b6798868/src/components/ui/dialog.tsx#L119)
+Defined in: [src/components/ui/dialog.tsx:119](https://github.com/victorbratov/launchpad/blob/6dd13cd77753e59ec2a031fc7279545899826925/src/components/ui/dialog.tsx#L119)
 
 ## Parameters
 
