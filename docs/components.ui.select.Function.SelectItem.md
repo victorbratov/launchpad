@@ -4,7 +4,7 @@
 
 > **SelectItem**(`__namedParameters`): `Element`
 
-Defined in: [src/components/ui/select.tsx:101](https://github.com/victorbratov/launchpad/blob/6dd13cd77753e59ec2a031fc7279545899826925/src/components/ui/select.tsx#L101)
+Defined in: [src/components/ui/select.tsx:101](https://github.com/victorbratov/launchpad/blob/d1815ef1a573b42ac1f231f3f3d6617bddce6dbe/src/components/ui/select.tsx#L101)
 
 ## Parameters
 

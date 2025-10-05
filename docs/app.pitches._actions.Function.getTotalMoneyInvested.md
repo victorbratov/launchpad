@@ -4,7 +4,7 @@
 
 > **getTotalMoneyInvested**(): `Promise`\<`object`[]\>
 
-Defined in: [src/app/pitches/\_actions.ts:36](https://github.com/victorbratov/launchpad/blob/6dd13cd77753e59ec2a031fc7279545899826925/src/app/pitches/_actions.ts#L36)
+Defined in: [src/app/pitches/\_actions.ts:33](https://github.com/victorbratov/launchpad/blob/d1815ef1a573b42ac1f231f3f3d6617bddce6dbe/src/app/pitches/_actions.ts#L33)
 
 ## Returns
 

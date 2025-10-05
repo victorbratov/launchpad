@@ -24,19 +24,26 @@ export function PitchCard({ pitch }: PitchCardProps) {
 
         {/* Image should stretch across the whole card (ignore CardContent padding) */}
         <div className="relative w-full h-48">
-          <Image
-            src={pitch.pitchImageUrl}
-            alt={pitch.pitchName}
-            fill
-            className="object-cover"
-            unoptimized
-          />
+          {pitch.pitchImageUrl && pitch.pitchImageUrl.endsWith(".mp4") ? (
+            <video
+              src={pitch.pitchImageUrl}
+              controls
+              className="h-48 w-full object-contain bg-black rounded-md"
+            />
+          ) : (
+            <Image
+              src={pitch.pitchImageUrl ?? "/nasa-dCgbRAQmTQA-unsplash.jpg"}
+              alt={pitch.pitchName}
+              fill
+              className="object-contain"
+              unoptimized
+            />)}
         </div>
 
         <CardContent className="space-y-3">
           <Progress value={progress} className="w-full" />
           <p className="text-sm">
-            {pitch.currentAmount} / {pitch.pitchGoal} raised
+            {pitch.currentAmount} / {pitch.pitchGoal}
           </p>
           <div className="flex flex-wrap gap-2">
             {pitch.tags.map((tag) => (

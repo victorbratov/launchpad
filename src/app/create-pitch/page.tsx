@@ -19,8 +19,11 @@ import { validateDates, validateMaxes, validateMultipliers, setPitchStatus } fro
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 
 import { Dropzone } from '@mantine/dropzone';
-import { Group, Text } from '@mantine/core';
-import { IconUpload, IconX, IconPhoto } from '@tabler/icons-react';
+import { Group, Text, SimpleGrid, Box } from '@mantine/core';
+import { IconPhoto } from '@tabler/icons-react';
+import SortableList, { SortableItem } from 'react-easy-sort'
+import arrayMove from 'array-move'
+import { Trash2 } from 'lucide-react';
 
 /**
  * Create pitch page where the user will create their pitch
@@ -46,7 +49,18 @@ export default function CreatePitchPage() {
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<string>("Pending");
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
-  const [mediaSuccess, setMediaSuccess] = useState<boolean>(false);
+  const [editing, setEditing] = useState(false);
+  const previews = mediaFiles.map((file, index) => {
+    const imageUrl = URL.createObjectURL(file);
+    return <div key={index} className="w-full max-w-[200px] mx-auto">
+      <img
+        src={imageUrl}
+        alt={`preview-${index}`}
+        className="w-full h-auto object-contain"
+      />
+      <Label data-testid="media" key={index}>{index + 1}. {file.name}</Label>
+    </div>
+  });
 
   useEffect(() => {
     // check if the user is logged in with a business account
@@ -89,9 +103,9 @@ export default function CreatePitchPage() {
     }
     try {
       // non-null assertion, as the input is required by the form so it will always have a value
-      const { success, message } = await createPitch({title, status, elevatorPitch, detailedPitch, targetAmount: goal!, startDate, endDate, bronzeMultiplier, bronzeMax: bronzeMax!, silverMultiplier, silverMax: silverMax!, goldMultiplier, dividendPayoutPeriod: dividendPeriod});
+      const { success, message } = await createPitch({ title, status, elevatorPitch, detailedPitch, targetAmount: goal!, startDate, endDate, bronzeMultiplier, bronzeMax: bronzeMax!, silverMultiplier, silverMax: silverMax!, goldMultiplier, dividendPayoutPeriod: dividendPeriod });
       if (success) {
-        for (const file of mediaFiles) {
+          for (const file of mediaFiles) {
           if (!await uploadMedia(file, message)) {
             alert("Error uploading image");
             return;
@@ -150,7 +164,7 @@ export default function CreatePitchPage() {
  */
   const uploadMedia = async (file: File, url: string) => {
     // upload file to S3 bucket
-    const response = await fetch(`${url}/${file.name}`, {
+    const response = await fetch(`${url}/${ file === mediaFiles[0] ? 'featured/': ""}${file.name}`, {
       method: 'PUT',
       headers: {
         'Content-Type': file.type,
@@ -164,6 +178,24 @@ export default function CreatePitchPage() {
     }
   };
 
+  /**
+   * Delete an item from the mediaFiles array
+   * @param index Index of the item to be deleted
+   */
+  function deleteItem(index: number) {
+    setMediaFiles((files) => files.filter((_, i) => i !== index));
+  }
+
+  /**
+   * Sortable list onSortEnd handler
+   * Sorts the mediaFiles array when an item is moved
+   * Taken from https://www.npmjs.com/package/react-easy-sort/v/0.1.1
+   * @param oldIndex Old index of the item
+   * @param newIndex New index of the item
+   */
+  const onSortEnd = (oldIndex: number, newIndex: number) => {
+    setMediaFiles((array) => arrayMove(array, oldIndex, newIndex))
+  }
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <Dialog open={loading}>
@@ -218,6 +250,7 @@ export default function CreatePitchPage() {
               {/* Supporting media */}
               <div className="space-y-2">
                 <Label>Supporting Media</Label>
+                <p className="text-neutral-500 text-sm">The image labeled 1 will be the feature image, the first image seen when your pitch is viewed. Edit images to re-order.</p>
                 <Dropzone
                   onDrop={handleDrop}
                   onReject={(files) => setStatus("failed")}
@@ -230,36 +263,56 @@ export default function CreatePitchPage() {
                   data-testid="dropzone"
                 >
                   <Group justify="center" gap="xl" mih={220} style={{ pointerEvents: 'none' }}>
-                    <Dropzone.Accept>
-                      <IconUpload size={52} color="green" stroke={1.5} />
-                    </Dropzone.Accept>
-                    <Dropzone.Reject>
-                      <IconX size={52} color="red" stroke={1.5} />
-                    </Dropzone.Reject>
                     <Dropzone.Idle>
-                      {mediaFiles.length == 0 &&
-                        <div className="text-center space-y-2" >
-                          <Text size="sm" inline>Drag images or videos here or click to select files</Text>
-                          <IconPhoto className="mx-auto w-1/2" size={52} color="#6e6e6eff" stroke={1.5} />
-                        </div>
-                      }
                       <div className="text-center space-y-2" >
-                        {mediaFiles.length > 0 &&
-                          <Text className="pb-2">Media to upload:</Text>}
-                        {mediaFiles.map((file, index) => (
-
-                          <Label data-testid="media" key={index}>{file.name}</Label>
-                        ))}
+                        <Text size="sm" inline>Drag images or videos here or click to select files</Text>
+                        <IconPhoto className="mx-auto w-1/2" size={52} color="#6e6e6eff" stroke={1.5} />
                       </div>
                     </Dropzone.Idle>
-
                     <div>
-
                     </div>
                   </Group>
                 </Dropzone>
+                {mediaFiles.length > 0 &&
+                  <div className="text-center space-y-2 border-2 p-4" >
 
+                    <div className="flex justify-between items-center">
+                      <Text className="pb-2">Media pending upload:</Text>
+                      <Button type="button" onClick={() => setEditing(true)}>Edit Media</Button>
+                    </div>
+                    <div className="grid grid-cols-3 gap-4 pt-4">
+                      {previews}
+                    </div>
+                  </div>}
               </div>
+
+              {/* Media editing dialog*/}
+              <Dialog open={editing} onOpenChange={setEditing}>
+                <DialogContent className="max-w-3xl">
+                  <DialogHeader>
+                    <DialogTitle>Edit Media</DialogTitle>
+                  </DialogHeader>
+                  <CardContent className="space-y-4">
+                    <Text>Drag and drop to re-order media <i className="fa fa-trash" aria-hidden="true"></i></Text>
+                    <div>
+                      <SortableList onSortEnd={onSortEnd} className="list" draggedItemClassName="dragged">
+                        {mediaFiles.map((file, index) => (
+                          <SortableItem key={index}>
+                            <div className="flex justify-between items-center space-y-1" key={index}>
+                              <div className="p-4 w-full bg-white rounded-2xl shadow-sm border border-gray-200 cursor-grab 
+                         hover:shadow-md active:cursor-grabbing transition-all duration-200">{index + 1}. {file.name}
+                              </div>
+                              <Button className="bg-white text-red-600 hover:text-red-800 hover:bg-white focus:bg-white" onClick={() => deleteItem(index)}> <Trash2 /></Button>
+                            </div>
+                          </SortableItem>
+                        ))}
+                      </SortableList>
+                    </div>
+                    <Button className="mt-4" onClick={() => setEditing(false)}>Done</Button>
+                  </CardContent>
+                </DialogContent>
+              </Dialog>
+
               {/* Goal */}
               <div className="space-y-2">
                 <Label>Funding Goal (USD)</Label>
@@ -271,18 +324,6 @@ export default function CreatePitchPage() {
                   required
                 />
               </div>
-              {/* Might be done later but leaving for now */}
-              {/* Profit Share
-            <div className="space-y-2">
-              <Label>Profit Share % (Dividends)</Label>
-              <Input
-                type="number"
-                placeholder="10"
-                value={profitShare}
-                onChange={(e) => setProfitShare(e.target.value)}
-                
-              />
-            </div> */}
 
               {/* Dividend Period */}
               <div className="space-y-2">
@@ -418,10 +459,10 @@ export default function CreatePitchPage() {
               </div>
             </CardContent>
           </form>
-        </Card>
+        </Card >
 
         {/* Right: AI Feedback */}
-        <Card className="lg:col-span-1">
+        < Card className="lg:col-span-1" >
           <CardHeader>
             <CardTitle>AI Assistance</CardTitle>
           </CardHeader>
@@ -443,8 +484,8 @@ export default function CreatePitchPage() {
               </p>
             )}
           </CardContent>
-        </Card>
-      </div>
-    </div>
+        </Card >
+      </div >
+    </div >
   );
 }

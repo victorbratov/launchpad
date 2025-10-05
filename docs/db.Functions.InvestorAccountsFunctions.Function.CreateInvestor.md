@@ -4,7 +4,7 @@
 
 > **CreateInvestor**(`__namedParameters`): `Promise`\<`void`\>
 
-Defined in: [src/db/Functions/InvestorAccountsFunctions.ts:11](https://github.com/victorbratov/launchpad/blob/6dd13cd77753e59ec2a031fc7279545899826925/src/db/Functions/InvestorAccountsFunctions.ts#L11)
+Defined in: [src/db/Functions/InvestorAccountsFunctions.ts:11](https://github.com/victorbratov/launchpad/blob/d1815ef1a573b42ac1f231f3f3d6617bddce6dbe/src/db/Functions/InvestorAccountsFunctions.ts#L11)
 
 ## Parameters
 

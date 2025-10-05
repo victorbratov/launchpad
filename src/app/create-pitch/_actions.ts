@@ -77,7 +77,7 @@ export const createPitch = async (pitch: Pitch) => {
 
 
     // update the database with the media url based on pitch ID
-    const mediaURL = `${process.env.BUCKET_URL}${insertedPitch.BusPitchID}`
+    const mediaURL = `${process.env.NEXT_PUBLIC_BUCKET_URL}${insertedPitch.BusPitchID}`
     await db.update(BusinessPitchs).set({ SuportingMedia: mediaURL }).where(eq(BusinessPitchs.BusPitchID, insertedPitch.BusPitchID))
     return { success: true, message: mediaURL }
 }
