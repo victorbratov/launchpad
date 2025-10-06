@@ -65,6 +65,7 @@ export default function CreatePitchPage() {
   const [silverMultiplier, setSilverMultiplier] = useState("");
   const [silverMax, setSilverMax] = useState<number | undefined>();
   const [goldMultiplier, setGoldMultiplier] = useState("");
+  const [profitShare, setProfitShare] = useState<number>();
 
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [status, setStatus] = useState("Pending");
@@ -105,7 +106,10 @@ export default function CreatePitchPage() {
     );
   };
 
-  /** Validate before submitting */
+  /**
+   * Validates all form inputs before submission
+   * @returns {boolean} true if all inputs are valid, false otherwise
+   */
   function validateInput(): boolean {
     const dateCheck = validateDates(startDate, endDate);
     if (!dateCheck.success) {
@@ -129,7 +133,13 @@ export default function CreatePitchPage() {
     return true;
   }
 
-  /** Uploader to S3 */
+  /**
+   * Uploads media to the S3 bucket
+   * The user's chosen featured media (first file) is uploaded to the "featured/" subfolder
+   * @param file File to upload
+   * @param url S3 url to upload to 
+   * @returns {Promise<boolean>} true if upload succeeded, false otherwise
+   */
   const uploadMedia = async (file: File, url: string): Promise<boolean> => {
     const featured = file === mediaFiles[0] ? "featured/" : "";
     const response = await fetch(`${url}/${featured}${file.name}`, {
@@ -140,7 +150,12 @@ export default function CreatePitchPage() {
     return response.ok;
   };
 
-  /** Handle form submit */
+  /**
+   * Handles the form submission
+   * Creates a pitch in the database and uploads media to S3
+   * @param e Event that triggered the submit
+   * @returns {void} Used to exit early on validation failure
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateInput()) return;
@@ -161,6 +176,7 @@ export default function CreatePitchPage() {
         goldMultiplier,
         dividendPayoutPeriod: dividendPeriod,
         tags: selectedTags,
+        profitShare: profitShare!,
       });
 
       if (!success) {
@@ -207,6 +223,7 @@ export default function CreatePitchPage() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
+      
       <Dialog open={loading}>
         <DialogContent>
           <DialogHeader>
@@ -230,13 +247,14 @@ export default function CreatePitchPage() {
               {/* Title */}
               <div>
                 <Label>Pitch Title</Label>
-                <Input value={title} onChange={(e) => setTitle(e.target.value)} required />
+                <Input value={title} placeholder="Enter your pitch title" onChange={(e) => setTitle(e.target.value)} required />
               </div>
 
               {/* Elevator Pitch */}
               <div>
                 <Label>Elevator Pitch</Label>
                 <Input
+                  placeholder="One-sentence overview"
                   value={elevatorPitch}
                   onChange={(e) => setElevatorPitch(e.target.value)}
                   required
@@ -247,6 +265,7 @@ export default function CreatePitchPage() {
               <div>
                 <Label>Detailed Pitch</Label>
                 <Textarea
+                  placeholder="Describe your pitch in detail"
                   value={detailedPitch}
                   onChange={(e) => setDetailedPitch(e.target.value)}
                   required
@@ -333,11 +352,24 @@ export default function CreatePitchPage() {
                 <Label>Funding Goal (USD)</Label>
                 <Input
                   type="number"
-                  value={goal}
+                  placeholder="10000"
+                  value={goal ?? ""}
                   onChange={(e) => setGoal(e.target.value)}
                   required
                 />
               </div>
+
+              {/* Profit Share % */}
+              <Label>Profit Share %</Label>
+              <Input
+                type="number"
+                placeholder="Enter % of profits distributed"
+                value={profitShare ?? "Enter percentage of profits distributed"}
+                onChange={(e) => {
+                  setProfitShare(Math.min(Math.max(Number(e.target.value), 1), 100));
+                }}
+                min={1} max={100} step={0.1}
+                required />
 
               {/* Dividend period */}
               <div>
@@ -400,15 +432,15 @@ export default function CreatePitchPage() {
               {/* Multipliers */}
               <div className="pt-4 font-semibold">Set Tier Multipliers</div>
               <Label>Bronze Max (USD)</Label>
-              <Input type="number" value={bronzeMax ?? ""} onChange={(e) => setBronzeMax(+e.target.value)} required />
+              <Input type="number" placeholder="500" value={bronzeMax ?? ""} onChange={(e) => setBronzeMax(e.target.value === "" ? undefined : + e.target.value)} required />
               <Label>Bronze Multiplier</Label>
-              <Input type="number" value={bronzeMultiplier} onChange={(e) => setBronzeMultiplier(e.target.value)} required />
+              <Input type="number" placeholder="1.0" step={0.1} value={bronzeMultiplier} onChange={(e) => setBronzeMultiplier(e.target.value)} required />
               <Label>Silver Max (USD)</Label>
-              <Input type="number" value={silverMax ?? ""} onChange={(e) => setSilverMax(+e.target.value)} required />
+              <Input type="number" placeholder="800" value={silverMax ?? ""} onChange={(e) => setSilverMax(e.target.value === "" ? undefined : + e.target.value)} required />
               <Label>Silver Multiplier</Label>
-              <Input type="number" value={silverMultiplier} onChange={(e) => setSilverMultiplier(e.target.value)} required />
+              <Input type="number" placeholder="1.2" step={0.1} value={silverMultiplier} onChange={(e) => setSilverMultiplier(e.target.value)} required />
               <Label>Gold Multiplier</Label>
-              <Input type="number" value={goldMultiplier} onChange={(e) => setGoldMultiplier(e.target.value)} required />
+              <Input type="number" placeholder="1.5" step={0.1} value={goldMultiplier} onChange={(e) => setGoldMultiplier(e.target.value)} required />
 
               {/* Tags */}
               <div>
