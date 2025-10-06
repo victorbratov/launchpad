@@ -4,6 +4,8 @@ import { db } from '@/db';
 import { BusinessPitchs, BusinessAccount } from '@/db/schema';
 import { auth } from '@clerk/nextjs/server';
 import { eq } from 'drizzle-orm';
+import { GoogleGenAI } from "@google/genai";
+import type {AIFeedback} from "../../../types/Feedback";
 
 /**
  * Represents a business pitch
@@ -98,4 +100,90 @@ function calculateDividendPayoutDate(period: string, end: Date) {
     payoutDate.setFullYear(payoutDate.getFullYear() + 1)
   }
   return payoutDate
+}
+
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+
+//app/api/evaluatePitch/route.ts
+export async function evaluatePitchServer(pitchData: {
+  title: string;
+  elevatorPitch: string;
+  detailedPitch: string;
+  goal: string;
+  dividendPeriod: string;
+  startDate: Date;
+  endDate: Date;
+  bronzeMultiplier: string;
+  bronzeMax: number;
+  silverMultiplier: string;
+  silverMax: number;
+  goldMultiplier: string;
+}) {
+  const ai = new GoogleGenAI({
+    apiKey: process.env.GEMINI_API_KEY,
+  });
+
+  //Compose instructions for structured JSON output to parse through into object
+  const instructions = `
+You are an expert business analyst AI evaluating startup pitches.
+Return a JSON object with:
+{
+  "feedback": {
+    "overallAssessment": "Concise professional paragraph.",
+    "clarity": { "score": 1-5, "comments": ["..."] },
+    "viability": { "score": 1-5, "comments": ["..."] },
+    "appeal": { "score": 1-5, "comments": ["..."] }
+  },
+  "ragScore": "Red" | "Amber" | "Green"
+}
+Use the pitch data below to generate the JSON.
+`;
+
+  const formattedPitch = `
+Pitch Title: ${pitchData.title}
+Elevator Pitch: ${pitchData.elevatorPitch}
+Detailed Pitch: ${pitchData.detailedPitch}
+
+Funding Goal: $${pitchData.goal}
+Dividend Period: ${pitchData.dividendPeriod}
+Start Date: ${pitchData.startDate}
+End Date: ${pitchData.endDate}
+
+Tier Structure:
+- Bronze: Max $${pitchData.bronzeMax}, Multiplier ${pitchData.bronzeMultiplier}
+- Silver: Max $${pitchData.silverMax}, Multiplier ${pitchData.silverMultiplier}
+- Gold: Multiplier ${pitchData.goldMultiplier}
+`;
+
+  //enerate content
+const response = await ai.models.generateContent({
+  model: "gemini-2.5-flash",
+  contents: [instructions, formattedPitch],
+});
+
+const rawText = response.text ?? "No response from AI";
+
+//Remove ```json fences and trim whitespace
+const cleanedText = rawText.replace(/```json|```/g, "").trim();
+
+//Full fallback to satisfy TypeScript
+const fallbackFeedback: AIFeedback = {
+  overallAssessment: cleanedText,
+  clarity: { score: 0, comments: ["No clarity information available."] },
+  viability: { score: 0, comments: ["No viability information available."] },
+  appeal: { score: 0, comments: ["No appeal information available."] },
+};
+
+try {
+  const parsed: { feedback: AIFeedback; ragScore: "Red" | "Amber" | "Green" } =
+    JSON.parse(cleanedText);
+  console.log("Parsed AI Result:", parsed);
+  return parsed;
+} catch (err) {
+  console.error("Failed to parse AI JSON:", err);
+  return {
+    feedback: fallbackFeedback,
+    ragScore: "Amber",
+  };
+}
 }

@@ -13,7 +13,7 @@ import { format } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { RAGGauge } from "@/components/rag_gauge";
-import { createPitch } from "./_actions";
+import { createPitch, evaluatePitchServer} from "./_actions";
 import { checkBusinessAuthentication } from "@/lib/globalActions";
 import { useRouter } from "next/navigation";
 import { validateDates, validateMaxes, validateMultipliers, setPitchStatus } from "./utils";
@@ -25,6 +25,7 @@ import { IconPhoto } from '@tabler/icons-react';
 import SortableList, { SortableItem } from 'react-easy-sort'
 import { arrayMoveImmutable } from 'array-move'
 import { Trash2 } from 'lucide-react';
+import type {AIFeedback} from "../../../types/Feedback";
 
 // Available tags for pitch categorization
 const availableTags = [
@@ -53,8 +54,8 @@ export default function CreatePitchPage() {
 
   const [selectedTags, setSelectedTags] = useState<string[]>([]); ///// tags storing here
 
-  const [feedback, setFeedback] = useState<string | null>(null);
-  const [ragScore, setRagScore] = useState<string | null>(null);
+const [feedback, setFeedback] = useState<AIFeedback | null>(null);
+const [ragScore, setRagScore] = useState<"Red" | "Amber" | "Green" | null>(null);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<string>("Pending");
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
@@ -95,16 +96,49 @@ export default function CreatePitchPage() {
 
   /**
    * Handle AI evaluation button being clicked
-   * curently a mock, just gives a random score
+   * curently not a mock
    */
-  const handleEvaluate = () => {
-    const scores = ["Red", "Amber", "Green"];
-    const randomScore = scores[Math.floor(Math.random() * scores.length)];
-    setRagScore(randomScore);
-    setFeedback(
-      "This is a mocked AI evaluation: The pitch has a good problem/solution fit, but could elaborate further on target market sizing and competitor differentiation."
-    );
-  };
+  const handleEvaluate = async () => {
+  if (!title && !detailedPitch) return alert("Enter some pitch text first");
+
+  setLoading(true);
+  try {
+    const result = await evaluatePitchServer({
+      title,
+      elevatorPitch,
+      detailedPitch,
+      goal: goal!,
+      dividendPeriod,
+      startDate,
+      endDate,
+      bronzeMultiplier,
+      bronzeMax: bronzeMax!,
+      silverMultiplier,
+      silverMax: silverMax!,
+      goldMultiplier,
+    });
+
+    console.log("AI Result:", result); //log full structure
+
+    //Ragscore fallback
+    const validRagScores = ["Red", "Amber", "Green"] as const;
+    const rag: "Red" | "Amber" | "Green" =
+      validRagScores.includes(result.ragScore as any)
+        ? (result.ragScore as "Red" | "Amber" | "Green")
+        : "Amber"; // fallback
+
+    setRagScore(rag);
+
+    //feedback is now an object
+    setFeedback(result.feedback);
+
+  } catch (err) {
+    console.error(err);
+    alert("Failed to evaluate pitch. See console for details.");
+  } finally {
+    setLoading(false);
+  }
+};
 
   /**
    * Handle the submission of the pitch
@@ -487,7 +521,7 @@ export default function CreatePitchPage() {
 
               {/* Actions */}
               <div className="flex gap-4">
-                <Button variant="outline" onClick={handleEvaluate}>
+                <Button type="button" variant="outline" onClick={handleEvaluate}>
                   AI Evaluation
                 </Button>
                 <Button type="submit">Submit Pitch</Button>
@@ -497,30 +531,55 @@ export default function CreatePitchPage() {
         </Card >
 
         {/* Right: AI Feedback */}
-        < Card className="lg:col-span-1" >
-          <CardHeader>
-            <CardTitle>AI Assistance</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {ragScore ? (
-              <div className="space-y-6">
-                {/* New RAG Gauge */}
-                <RAGGauge ragScore={ragScore as "Red" | "Amber" | "Green"} />
+<Card className="lg:col-span-1">
+<CardContent>
+  {feedback && ragScore ? (
+    <div className="space-y-6">
+      <RAGGauge ragScore={ragScore} />
 
-                {/* Feedback Panel */}
-                <div className="p-4 rounded-md border bg-muted">
-                  <p className="font-semibold mb-2">AI Feedback</p>
-                  <p className="text-sm text-muted-foreground">{feedback}</p>
-                </div>
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                Run an AI evaluation to receive a score and feedback for your pitch.
-              </p>
-            )}
-          </CardContent>
-        </Card >
-      </div >
-    </div >
+      {/* Overall Assessment */}
+      <div className="p-4 rounded-md border bg-muted space-y-4">
+        <p className="font-semibold mb-2">Overall Assessment</p>
+        <p className="text-sm text-muted-foreground">
+          {feedback.overallAssessment}
+        </p>
+
+        {/* Detailed Categories */}
+        {["clarity", "viability", "appeal"].map((cat) => {
+  const catFeedback = feedback[cat as keyof AIFeedback];
+
+  // Type guard: make sure it's not a string and exists
+  if (!catFeedback || typeof catFeedback === "string") return null;
+
+  return (
+    <div key={cat} className="pt-2">
+      <p className="font-semibold capitalize">{cat}</p>
+      <p>Score: {catFeedback.score}/5</p>
+      <ul className="list-disc list-inside text-sm text-muted-foreground">
+        {catFeedback.comments.map((c, i) => (
+          <li key={i}>{c}</li>
+        ))}
+      </ul>
+    </div>
+  );
+})}
+
+      </div>
+    </div>
+  ) : (
+    <p className="text-sm text-muted-foreground">
+      Run an AI evaluation to receive a score and feedback for your pitch.
+    </p>
+  )}
+</CardContent>
+
+
+
+
+
+
+        </Card>
+      </div>
+    </div>
   );
 }
