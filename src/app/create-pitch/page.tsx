@@ -13,7 +13,7 @@ import { format } from "date-fns";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { RAGGauge } from "@/components/rag_gauge";
-import { createPitch, evaluatePitchServer} from "./_actions";
+import { createPitch, evaluatePitchServer } from "./_actions";
 import { checkBusinessAuthentication } from "@/lib/globalActions";
 import { useRouter } from "next/navigation";
 import { validateDates, validateMaxes, validateMultipliers, setPitchStatus } from "./utils";
@@ -25,12 +25,12 @@ import { IconPhoto } from '@tabler/icons-react';
 import SortableList, { SortableItem } from 'react-easy-sort'
 import { arrayMoveImmutable } from 'array-move'
 import { Trash2 } from 'lucide-react';
-import type {AIFeedback} from "../../../types/Feedback";
+import type { AIFeedback } from "../../../types/Feedback";
 
 // Available tags for pitch categorization
 const availableTags = [
   "green energy", "water", "sustainability", "education", "AI", "language", "community", "food", "fashion"
-  ,"recycling", "VR", "technology", "transportation", "gaming", "indie", "packaging"
+  , "recycling", "VR", "technology", "transportation", "gaming", "indie", "packaging"
 ];
 
 /**
@@ -54,8 +54,8 @@ export default function CreatePitchPage() {
 
   const [selectedTags, setSelectedTags] = useState<string[]>([]); ///// tags storing here
 
-const [feedback, setFeedback] = useState<AIFeedback | null>(null);
-const [ragScore, setRagScore] = useState<"Red" | "Amber" | "Green" | null>(null);
+  const [feedback, setFeedback] = useState<AIFeedback | null>(null);
+  const [ragScore, setRagScore] = useState<"Red" | "Amber" | "Green" | null>(null);
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<string>("Pending");
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
@@ -99,46 +99,46 @@ const [ragScore, setRagScore] = useState<"Red" | "Amber" | "Green" | null>(null)
    * curently not a mock
    */
   const handleEvaluate = async () => {
-  if (!title && !detailedPitch) return alert("Enter some pitch text first");
+    if (!title && !detailedPitch) return alert("Enter some pitch text first");
 
-  setLoading(true);
-  try {
-    const result = await evaluatePitchServer({
-      title,
-      elevatorPitch,
-      detailedPitch,
-      goal: goal!,
-      dividendPeriod,
-      startDate,
-      endDate,
-      bronzeMultiplier,
-      bronzeMax: bronzeMax!,
-      silverMultiplier,
-      silverMax: silverMax!,
-      goldMultiplier,
-    });
+    setLoading(true);
+    try {
+      const result = await evaluatePitchServer({
+        title,
+        elevatorPitch,
+        detailedPitch,
+        goal: goal!,
+        dividendPeriod,
+        startDate,
+        endDate,
+        bronzeMultiplier,
+        bronzeMax: bronzeMax!,
+        silverMultiplier,
+        silverMax: silverMax!,
+        goldMultiplier,
+      });
 
-    console.log("AI Result:", result); //log full structure
+      console.log("AI Result:", result); //log full structure
 
-    //Ragscore fallback
-    const validRagScores = ["Red", "Amber", "Green"] as const;
-    const rag: "Red" | "Amber" | "Green" =
-      validRagScores.includes(result.ragScore as any)
-        ? (result.ragScore as "Red" | "Amber" | "Green")
-        : "Amber"; // fallback
+      //Ragscore fallback
+      const validRagScores = ["Red", "Amber", "Green"] as const;
+      const rag: "Red" | "Amber" | "Green" =
+        validRagScores.includes(result.ragScore as any) // eslint-disable-line @typescript-eslint/no-explicit-any
+          ? (result.ragScore as "Red" | "Amber" | "Green")
+          : "Amber"; // fallback
 
-    setRagScore(rag);
+      setRagScore(rag);
 
-    //feedback is now an object
-    setFeedback(result.feedback);
+      //feedback is now an object
+      setFeedback(result.feedback);
 
-  } catch (err) {
-    console.error(err);
-    alert("Failed to evaluate pitch. See console for details.");
-  } finally {
-    setLoading(false);
-  }
-};
+    } catch (err) {
+      console.error(err);
+      alert("Failed to evaluate pitch. See console for details.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   /**
    * Handle the submission of the pitch
@@ -157,7 +157,7 @@ const [ragScore, setRagScore] = useState<"Red" | "Amber" | "Green" | null>(null)
       // non-null assertion, as the input is required by the form so it will always have a value
       const { success, message } = await createPitch({ title, status, elevatorPitch, detailedPitch, targetAmount: goal!, startDate, endDate, bronzeMultiplier, bronzeMax: bronzeMax!, silverMultiplier, silverMax: silverMax!, goldMultiplier, dividendPayoutPeriod: dividendPeriod, tags: selectedTags });
       if (success) {
-          for (const file of mediaFiles) {
+        for (const file of mediaFiles) {
           if (!await uploadMedia(file, message)) {
             alert("Error uploading image");
             return;
@@ -216,7 +216,7 @@ const [ragScore, setRagScore] = useState<"Red" | "Amber" | "Green" | null>(null)
  */
   const uploadMedia = async (file: File, url: string) => {
     // upload file to S3 bucket
-    const response = await fetch(`${url}/${ file === mediaFiles[0] ? 'featured/': ""}${file.name}`, {
+    const response = await fetch(`${url}/${file === mediaFiles[0] ? 'featured/' : ""}${file.name}`, {
       method: 'PUT',
       headers: {
         'Content-Type': file.type,
@@ -531,47 +531,47 @@ const [ragScore, setRagScore] = useState<"Red" | "Amber" | "Green" | null>(null)
         </Card >
 
         {/* Right: AI Feedback */}
-<Card className="lg:col-span-1">
-<CardContent>
-  {feedback && ragScore ? (
-    <div className="space-y-6">
-      <RAGGauge ragScore={ragScore} />
+        <Card className="lg:col-span-1">
+          <CardContent>
+            {feedback && ragScore ? (
+              <div className="space-y-6">
+                <RAGGauge ragScore={ragScore} />
 
-      {/* Overall Assessment */}
-      <div className="p-4 rounded-md border bg-muted space-y-4">
-        <p className="font-semibold mb-2">Overall Assessment</p>
-        <p className="text-sm text-muted-foreground">
-          {feedback.overallAssessment}
-        </p>
+                {/* Overall Assessment */}
+                <div className="p-4 rounded-md border bg-muted space-y-4">
+                  <p className="font-semibold mb-2">Overall Assessment</p>
+                  <p className="text-sm text-muted-foreground">
+                    {feedback.overallAssessment}
+                  </p>
 
-        {/* Detailed Categories */}
-        {["clarity", "viability", "appeal"].map((cat) => {
-  const catFeedback = feedback[cat as keyof AIFeedback];
+                  {/* Detailed Categories */}
+                  {["clarity", "viability", "appeal"].map((cat) => {
+                    const catFeedback = feedback[cat as keyof AIFeedback];
 
-  // Type guard: make sure it's not a string and exists
-  if (!catFeedback || typeof catFeedback === "string") return null;
+                    // Type guard: make sure it's not a string and exists
+                    if (!catFeedback || typeof catFeedback === "string") return null;
 
-  return (
-    <div key={cat} className="pt-2">
-      <p className="font-semibold capitalize">{cat}</p>
-      <p>Score: {catFeedback.score}/5</p>
-      <ul className="list-disc list-inside text-sm text-muted-foreground">
-        {catFeedback.comments.map((c, i) => (
-          <li key={i}>{c}</li>
-        ))}
-      </ul>
-    </div>
-  );
-})}
+                    return (
+                      <div key={cat} className="pt-2">
+                        <p className="font-semibold capitalize">{cat}</p>
+                        <p>Score: {catFeedback.score}/5</p>
+                        <ul className="list-disc list-inside text-sm text-muted-foreground">
+                          {catFeedback.comments.map((c, i) => (
+                            <li key={i}>{c}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    );
+                  })}
 
-      </div>
-    </div>
-  ) : (
-    <p className="text-sm text-muted-foreground">
-      Run an AI evaluation to receive a score and feedback for your pitch.
-    </p>
-  )}
-</CardContent>
+                </div>
+              </div>
+            ) : (
+              <p className="text-sm text-muted-foreground">
+                Run an AI evaluation to receive a score and feedback for your pitch.
+              </p>
+            )}
+          </CardContent>
 
 
 
