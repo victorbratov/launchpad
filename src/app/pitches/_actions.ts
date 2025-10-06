@@ -1,67 +1,33 @@
 "use server";
 
-import { auth } from "@clerk/nextjs/server";
-import { db } from "@/db"; // adjust to your drizzle client path
-import { InvestorAccounts, InvestmentLedger, DividendPayouts, BusinessPitchs } from "@/db/schema";
-import { eq, InferInsertModel, InferSelectModel, exists, sql } from "drizzle-orm";
-import { Pitches } from "../../../types/pitch";
-import { XMLParser } from "fast-xml-parser";
+import { db } from "@/db";
+import { business_pitches, investment_ledger } from "@/db/schema";
+import { BusinessPitch } from "@/db/types";
+import { sql } from "drizzle-orm";
 
-// gets the pitches from the da and returns them in an array of Pitches objects
-// data types of investmentStart to dividEndPayout are converted from Date to string to match Pitches type
-//returns an array of Pitches objects
-
-export async function getAllBusinessPitches(): Promise<Pitches[]> {
-  const pitches = await db
-    .select()
-    .from(BusinessPitchs);
-  // Convert Date objects to strings to match Pitches type
-  return await Promise.all(
-    pitches.map(async (pitch) => ({
-      ...pitch,
-      InvestmentStart: pitch.InvestmentStart.toISOString(),
-      InvestmentEnd: pitch.InvestmentEnd.toISOString(),
-      dividEndPayout: pitch.dividEndPayout.toISOString(),
-      FeaturedImage: pitch.SuportingMedia ? await fetchFeaturedMedia(pitch.BusPitchID.toString()) : null,
-    }))
-  );
+export interface PitchWithStats extends BusinessPitch {
+  total_invested: number;
+  invested_percent: number;
 }
 
-//gets total money invested in all the pitches on the db
-// returns an array of objects with busPitchID and totalAmount invested
+export async function getPitches(): Promise<PitchWithStats[]> {
+  const pitches = await db.select().from(business_pitches);
 
-export async function getTotalMoneyInvested(): Promise<{ busPitchID: number, totalAmount: number }[]> {
-  const result = await db
+  const investments = await db
     .select({
-      busPitchID: InvestmentLedger.BusPitchID,
-      totalAmount: sql<number>`SUM(${InvestmentLedger.AmountInvested})`.as('totalAmount')
+      pitch_id: investment_ledger.pitch_id,
+      total_invested: sql<number>`sum(${investment_ledger.amount_invested})`,
     })
-    .from(InvestmentLedger)
-    .groupBy(InvestmentLedger.BusPitchID);
+    .from(investment_ledger)
+    .groupBy(investment_ledger.pitch_id);
 
-  return result;
-}
+  const investmentMap = new Map(investments.map((i) => [i.pitch_id, Number(i.total_invested)]));
 
-/**
- * Fetches the featured media for a given pitch from the S3 bucket
- * The featured media is stored in the folder named featured in the bucket
- * @param pitchID ID of the pitch to fetch media for
- * @returns url of the featured media, or empty string if none found
- */
-export async function fetchFeaturedMedia(pitchID: string) {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BUCKET_URL}?list-type=2&prefix=${pitchID}/`);
-  const data = await res.text();
+  const enriched: PitchWithStats[] = pitches.map((pitch) => {
+    const total = investmentMap.get(pitch.instance_id) || 0;
+    const invested_percent = (total / (pitch.target_investment_amount || 1)) * 100;
+    return { ...pitch, total_invested: total, invested_percent };
+  });
 
-  const parser = new XMLParser();
-  const json = parser.parse(data);
-
-  let items = json.ListBucketResult?.Contents || [];
-  if (!Array.isArray(items)) items = [items];
-  interface S3Item {
-    Key: string;
-    Size: number;
-  }
-  const mediaItem = (items as S3Item[]).find((item: S3Item) => item.Key.startsWith(`${pitchID}/featured`) && item.Size > 0);
-  const mediaUrl = mediaItem ? `${process.env.NEXT_PUBLIC_BUCKET_URL}/${mediaItem.Key}` : "";
-  return mediaUrl;
+  return enriched;
 }

@@ -1,102 +1,100 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { BookOpenCheck, CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { RAGGauge } from "@/components/rag_gauge";
-import { createPitch } from "./_actions";
-import { checkBusinessAuthentication } from "@/lib/globalActions";
-import { useRouter } from "next/navigation";
-import { validateDates, validateMaxes, validateMultipliers, setPitchStatus } from "./utils";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { CalendarIcon } from "lucide-react";
 
-import { Dropzone } from '@mantine/dropzone';
-import { Group, Text, SimpleGrid, Box } from '@mantine/core';
-import { IconPhoto } from '@tabler/icons-react';
-import SortableList, { SortableItem } from 'react-easy-sort'
-import { arrayMoveImmutable } from 'array-move'
-import { Trash2 } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { RAGGauge } from "@/components/rag_gauge";
+
+import { Dropzone } from "@mantine/dropzone";
+import { Group, Text } from "@mantine/core";
+import { ImageIcon, Trash2 } from "lucide-react";
+import SortableList, { SortableItem } from "react-easy-sort";
+import { arrayMoveImmutable } from "array-move";
+
+import { format } from "date-fns";
+import { createPitch, checkBusinessAuthentication } from "./_actions";
+import {
+  validateDates,
+  validateMaxes,
+  validateMultipliers,
+  setPitchStatus,
+} from "./utils";
 
 // Available tags for pitch categorization
 const availableTags = [
-  "green energy", "water", "sustainability", "education", "AI", "language", "community", "food", "fashion"
-  ,"recycling", "VR", "technology", "transportation", "gaming", "indie", "packaging"
+  "green energy", "water", "sustainability", "education", "AI", "language", "community",
+  "food", "fashion", "recycling", "VR", "technology", "transportation", "gaming", "indie", "packaging"
 ];
 
-/**
- * Create pitch page where the user will create their pitch
- * @returns Create pitch page
- */
 export default function CreatePitchPage() {
   const router = useRouter();
+
+  // Core form state
   const [title, setTitle] = useState("");
   const [elevatorPitch, setElevatorPitch] = useState("");
   const [detailedPitch, setDetailedPitch] = useState("");
   const [goal, setGoal] = useState<string>("");
   const [dividendPeriod, setDividendPeriod] = useState("quarterly");
-  const [endDate, setEndDate] = useState<Date>(new Date());
   const [startDate, setStartDate] = useState<Date>(new Date());
-  const [bronzeMultiplier, setBronzeMultiplier] = useState<string>("");
-  const [bronzeMax, setBronzeMax] = useState<number | undefined>(undefined);
-  const [silverMultiplier, setSilverMultiplier] = useState<string>("");
-  const [silverMax, setSilverMax] = useState<number>();
-  const [goldMultiplier, setGoldMultiplier] = useState<string>("");
+  const [endDate, setEndDate] = useState<Date>(new Date());
+  const [bronzeMultiplier, setBronzeMultiplier] = useState("");
+  const [bronzeMax, setBronzeMax] = useState<number | undefined>();
+  const [silverMultiplier, setSilverMultiplier] = useState("");
+  const [silverMax, setSilverMax] = useState<number | undefined>();
+  const [goldMultiplier, setGoldMultiplier] = useState("");
 
-  const [selectedTags, setSelectedTags] = useState<string[]>([]); ///// tags storing here
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [status, setStatus] = useState("Pending");
 
-  const [feedback, setFeedback] = useState<string | null>(null);
-  const [ragScore, setRagScore] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState<string>("Pending");
+  // Media
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
   const [editing, setEditing] = useState(false);
-  const previews = mediaFiles.map((file, index) => {
-    const imageUrl = URL.createObjectURL(file);
-    return <div key={index} className="w-full max-w-[200px] mx-auto">
-      <img
-        src={imageUrl}
-        alt={`preview-${index}`}
-        className="w-full h-auto object-contain"
-      />
-      <Label data-testid="media" key={index}>{index + 1}. {file.name}</Label>
-    </div>
-  });
 
-  // Simple function to add/remove tags
-  const toggleTag = (tag: string) => {
-    if (selectedTags.includes(tag)) {
-      setSelectedTags(selectedTags.filter(t => t !== tag));
-    } else {
-      setSelectedTags([...selectedTags, tag]);
-    }
-  };
+  // Feedback loader
+  const [loading, setLoading] = useState(false);
+  const [feedback, setFeedback] = useState<string | null>(null);
+  const [ragScore, setRagScore] = useState<string | null>(null);
 
+  // ensure business authentication
   useEffect(() => {
-    // check if the user is logged in with a business account
     checkBusinessAuthentication().then((isBusiness) => {
       if (!isBusiness) {
         alert("You must be logged in with a business account to create a pitch.");
-        window.location.href = "/"; // Redirect to home page
-      } else {
-        console.log("User is authenticated with a business account");
+        window.location.href = "/";
       }
     });
   }, []);
 
+  /** Toggle tags */
+  const toggleTag = (tag: string) => {
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    );
+  };
 
-  /**
-   * Handle AI evaluation button being clicked
-   * curently a mock, just gives a random score
-   */
+  /** Handle AI mock evaluation */
   const handleEvaluate = () => {
     const scores = ["Red", "Amber", "Green"];
     const randomScore = scores[Math.floor(Math.random() * scores.length)];
@@ -106,114 +104,106 @@ export default function CreatePitchPage() {
     );
   };
 
-  /**
-   * Handle the submission of the pitch
-   * @param e event triggered by form submission
-   * @returns {void} Return used to exit the function early
-   */
+  /** Validate before submitting */
+  function validateInput(): boolean {
+    const dateCheck = validateDates(startDate, endDate);
+    if (!dateCheck.success) {
+      alert(dateCheck.message);
+      return false;
+    }
+
+    setStatus(setPitchStatus(startDate));
+
+    if (!validateMultipliers(bronzeMultiplier, silverMultiplier, goldMultiplier)) {
+      alert("Multiplier value must be lowest for bronze and highest for gold.");
+      return false;
+    }
+
+    const goalNum = parseInt(goal || "0");
+    if (!validateMaxes(bronzeMax!, silverMax!, goalNum)) {
+      alert("Error with maximum tier values");
+      return false;
+    }
+
+    return true;
+  }
+
+  /** Uploader to S3 */
+  const uploadMedia = async (file: File, url: string): Promise<boolean> => {
+    const featured = file === mediaFiles[0] ? "featured/" : "";
+    const response = await fetch(`${url}/${featured}${file.name}`, {
+      method: "PUT",
+      headers: { "Content-Type": file.type },
+      body: file,
+    });
+    return response.ok;
+  };
+
+  /** Handle form submit */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validateInput()) return;
     setLoading(true);
-
-    if (!validateInput()) {
-      setLoading(false);
-      return // exit early if invalid input
-    }
     try {
-      // non-null assertion, as the input is required by the form so it will always have a value
-      const { success, message } = await createPitch({ title, status, elevatorPitch, detailedPitch, targetAmount: goal!, startDate, endDate, bronzeMultiplier, bronzeMax: bronzeMax!, silverMultiplier, silverMax: silverMax!, goldMultiplier, dividendPayoutPeriod: dividendPeriod, tags: selectedTags });
-      if (success) {
-          for (const file of mediaFiles) {
-          if (!await uploadMedia(file, message)) {
-            alert("Error uploading image");
-            return;
-          }
-        }
-        router.push("/business-portal");
-      } else {
+      const { success, message } = await createPitch({
+        title,
+        status,
+        elevatorPitch,
+        detailedPitch,
+        targetAmount: goal,
+        startDate,
+        endDate,
+        bronzeMultiplier,
+        bronzeMax: bronzeMax!,
+        silverMultiplier,
+        silverMax: silverMax!,
+        goldMultiplier,
+        dividendPayoutPeriod: dividendPeriod,
+        tags: selectedTags,
+      });
+
+      if (!success) {
+        alert("Failed to create pitch");
         setLoading(false);
+        return;
       }
 
+      for (const file of mediaFiles) {
+        const ok = await uploadMedia(file, message);
+        if (!ok) {
+          alert("Error uploading media file.");
+          break;
+        }
+      }
+
+      router.push("/business-portal");
     } catch (err) {
+      console.error(err);
       alert("Error: Unable to create pitch");
-      setLoading(false)
     } finally {
       setLoading(false);
     }
   };
 
-  /**
-   * Calls all input validation functions
-   * @returns Whether the input is valid or not
-   */
-  function validateInput() {
-    // validate dates
-    const { success: success, message: message } = validateDates(startDate, endDate)
-    if (!success) {
-      alert(message)
-      return false
-    }
-    setStatus(setPitchStatus(startDate))
-
-    // validate tier max and multipliers
-    if (!validateMultipliers(bronzeMultiplier, silverMultiplier, goldMultiplier)) {
-      alert("Multiplier value must be lowest for bronze and highest for gold")
-      return false
-    }
-    if (!validateMaxes(bronzeMax!, silverMax!, parseInt(goal!))) {
-      alert("Error with maximum tier values")
-      return false
-    }
-    return true
-  }
-
-  /**
-   * Handle files being dropped and stores them
-   * @param files files that were dropped
-   */
-  const handleDrop = (files: File[]) => {
+  /** Drop / sort handlers */
+  const handleDrop = (files: File[]) =>
     setMediaFiles((prev) => [...prev, ...files]);
-  };
-
-  /**
- * Function to upload an image or video to the S3 bucket
- * @param file File to be uploaded
- * @param url The url to upload the media to
- */
-  const uploadMedia = async (file: File, url: string) => {
-    // upload file to S3 bucket
-    const response = await fetch(`${url}/${ file === mediaFiles[0] ? 'featured/': ""}${file.name}`, {
-      method: 'PUT',
-      headers: {
-        'Content-Type': file.type,
-      },
-      body: file,
-    });
-    if (response.ok) {
-      return true;
-    } else {
-      return false;
-    }
-  };
-
-  /**
-   * Delete an item from the mediaFiles array
-   * @param index Index of the item to be deleted
-   */
-  function deleteItem(index: number) {
+  const deleteItem = (index: number) =>
     setMediaFiles((files) => files.filter((_, i) => i !== index));
-  }
+  const onSortEnd = (oldIndex: number, newIndex: number) =>
+    setMediaFiles((arr) => arrayMoveImmutable(arr, oldIndex, newIndex));
 
-  /**
-   * Sortable list onSortEnd handler
-   * Sorts the mediaFiles array when an item is moved
-   * Taken from https://www.npmjs.com/package/react-easy-sort/v/0.1.1
-   * @param oldIndex Old index of the item
-   * @param newIndex New index of the item
-   */
-  const onSortEnd = (oldIndex: number, newIndex: number) => {
-    setMediaFiles((array) => arrayMoveImmutable(array, oldIndex, newIndex))
-  }
+  /** Previews */
+  const previews = mediaFiles.map((file, index) => {
+    const src = URL.createObjectURL(file);
+    return (
+      <div key={index} className="w-full max-w-[200px] mx-auto">
+        <img src={src} alt={file.name} className="w-full h-auto object-contain" />
+        <Label data-testid="media">{index + 1}. {file.name}</Label>
+      </div>
+    );
+  });
+
   return (
     <div className="p-6 max-w-6xl mx-auto">
       <Dialog open={loading}>
@@ -221,33 +211,31 @@ export default function CreatePitchPage() {
           <DialogHeader>
             <DialogTitle>Creating pitch</DialogTitle>
           </DialogHeader>
-          <Text className="text-center">Your pitch is being created. Please wait ....</Text>
+          <Text className="text-center">
+            Your pitch is being created. Please wait...
+          </Text>
         </DialogContent>
       </Dialog>
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left: Pitch Form */}
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>Create New Pitch</CardTitle>
           </CardHeader>
-          <form onSubmit={handleSubmit} data-testid="pitch-form">
+
+          <form onSubmit={handleSubmit}>
             <CardContent className="space-y-6">
               {/* Title */}
-              <div className="space-y-2">
+              <div>
                 <Label>Pitch Title</Label>
-                <Input
-                  placeholder="Enter your pitch title"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  required
-                />
+                <Input value={title} onChange={(e) => setTitle(e.target.value)} required />
               </div>
 
               {/* Elevator Pitch */}
-              <div className="space-y-2">
+              <div>
                 <Label>Elevator Pitch</Label>
                 <Input
-                  placeholder="One-sentence overview"
                   value={elevatorPitch}
                   onChange={(e) => setElevatorPitch(e.target.value)}
                   required
@@ -255,98 +243,108 @@ export default function CreatePitchPage() {
               </div>
 
               {/* Detailed Pitch */}
-              <div className="space-y-2">
+              <div>
                 <Label>Detailed Pitch</Label>
                 <Textarea
-                  placeholder="Describe your pitch in detail"
                   value={detailedPitch}
                   onChange={(e) => setDetailedPitch(e.target.value)}
                   required
                 />
               </div>
 
-              {/* Supporting media */}
-              <div className="space-y-2">
+              {/* Media */}
+              <div>
                 <Label>Supporting Media</Label>
-                <p className="text-neutral-500 text-sm">The image labeled 1 will be the feature image, the first image seen when your pitch is viewed. Edit images to re-order.</p>
+                <p className="text-neutral-500 text-sm">
+                  First image will be used as featured image.
+                </p>
                 <Dropzone
                   onDrop={handleDrop}
-                  onReject={(files) => setStatus("failed")}
-                  maxSize={100 * 1024 ** 2} // 100mb currently but can be changed
-                  accept={{
-                    'image/*': [], // All images
-                    'video/*': [], // all videos
+                  maxSize={100 * 1024 ** 2}
+                  accept={{ "image/*": [], "video/*": [] }}
+                  styles={{
+                    root: {
+                      borderWidth: 1.5,
+                      borderRadius: 7,
+                      borderStyle: "solid",
+                      padding: "2rem",
+                      backgroundColor: "#fff",
+                    },
                   }}
-                  styles={{ root: { borderWidth: 1.5, borderRadius: 7, borderStyle: 'solid', padding: '2rem', backgroundColor: "#ffffffff", color: "#6e6e6eff" } }}
                   data-testid="dropzone"
                 >
-                  <Group justify="center" gap="xl" mih={220} style={{ pointerEvents: 'none' }}>
+                  <Group justify="center" gap="xl" mih={180} style={{ pointerEvents: "none" }}>
                     <Dropzone.Idle>
-                      <div className="text-center space-y-2" >
-                        <Text size="sm" inline>Drag images or videos here or click to select files</Text>
-                        <IconPhoto className="mx-auto w-1/2" size={52} color="#6e6e6eff" stroke={1.5} />
+                      <div className="text-center space-y-2">
+                        <Text size="sm">
+                          Drag or click to upload images/videos
+                        </Text>
+                        <ImageIcon className="mx-auto" size={48} />
                       </div>
                     </Dropzone.Idle>
-                    <div>
-                    </div>
                   </Group>
                 </Dropzone>
-                {mediaFiles.length > 0 &&
-                  <div className="text-center space-y-2 border-2 p-4" >
 
+                {mediaFiles.length > 0 && (
+                  <div className="border mt-4 p-3 space-y-2">
                     <div className="flex justify-between items-center">
-                      <Text className="pb-2">Media pending upload:</Text>
+                      <Text>Media pending upload:</Text>
                       <Button type="button" onClick={() => setEditing(true)}>Edit Media</Button>
                     </div>
-                    <div className="grid grid-cols-3 gap-4 pt-4">
-                      {previews}
-                    </div>
-                  </div>}
+                    <div className="grid grid-cols-3 gap-4 pt-4">{previews}</div>
+                  </div>
+                )}
               </div>
 
-              {/* Media editing dialog*/}
+              {/* Editing dialog */}
               <Dialog open={editing} onOpenChange={setEditing}>
                 <DialogContent className="max-w-3xl">
                   <DialogHeader>
                     <DialogTitle>Edit Media</DialogTitle>
                   </DialogHeader>
                   <CardContent className="space-y-4">
-                    <Text>Drag and drop to re-order media <i className="fa fa-trash" aria-hidden="true"></i></Text>
-                    <div>
-                      <SortableList onSortEnd={onSortEnd} className="list" draggedItemClassName="dragged">
-                        {mediaFiles.map((file, index) => (
-                          <SortableItem key={index}>
-                            <div className="flex justify-between items-center space-y-1" key={index}>
-                              <div className="p-4 w-full bg-white rounded-2xl shadow-sm border border-gray-200 cursor-grab 
-                         hover:shadow-md active:cursor-grabbing transition-all duration-200">{index + 1}. {file.name}
-                              </div>
-                              <Button className="bg-white text-red-600 hover:text-red-800 hover:bg-white focus:bg-white" onClick={() => deleteItem(index)}> <Trash2 /></Button>
+                    <Text>Drag to reorder or delete files</Text>
+                    <SortableList onSortEnd={onSortEnd} className="list">
+                      {mediaFiles.map((file, idx) => (
+                        <SortableItem key={idx}>
+                          <div className="flex justify-between items-center gap-2 py-1">
+                            <div className="flex-1 border p-3 rounded-md bg-white shadow-sm">
+                              {idx + 1}. {file.name}
                             </div>
-                          </SortableItem>
-                        ))}
-                      </SortableList>
-                    </div>
-                    <Button className="mt-4" onClick={() => setEditing(false)}>Done</Button>
+                            <Button
+                              onClick={() => deleteItem(idx)}
+                              variant="ghost"
+                              className="text-red-500 hover:text-red-700"
+                            >
+                              <Trash2 />
+                            </Button>
+                          </div>
+                        </SortableItem>
+                      ))}
+                    </SortableList>
+                    <Button onClick={() => setEditing(false)}>Done</Button>
                   </CardContent>
                 </DialogContent>
               </Dialog>
 
               {/* Goal */}
-              <div className="space-y-2">
+              <div>
                 <Label>Funding Goal (USD)</Label>
                 <Input
                   type="number"
-                  placeholder="10000"
                   value={goal}
-                  onChange={(e) => setGoal((e.target.value))}
+                  onChange={(e) => setGoal(e.target.value)}
                   required
                 />
               </div>
 
-              {/* Dividend Period */}
-              <div className="space-y-2">
+              {/* Dividend period */}
+              <div>
                 <Label>Dividend Period</Label>
-                <Select value={dividendPeriod} onValueChange={setDividendPeriod}>
+                <Select
+                  value={dividendPeriod}
+                  onValueChange={setDividendPeriod}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select period" />
                   </SelectTrigger>
@@ -357,129 +355,71 @@ export default function CreatePitchPage() {
                 </Select>
               </div>
 
-              {/* Start Date */}
-              <div className="space-y-2">
-                <Label>Funding Start Date</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant={"outline"}
-                      className="justify-start text-left font-normal"
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {startDate ? format(startDate, "PPP") : "Pick a start date"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={startDate}
-                      onSelect={(date) => setStartDate(date)}
-                      required
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
+              {/* Dates */}
+              <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex-1">
+                  <Label>Funding Start Date</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="justify-start font-normal">
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {format(startDate, "PPP")}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent align="start" className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={startDate}
+                        onSelect={(d) => d && setStartDate(d)}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                <div className="flex-1">
+                  <Label>Funding End Date</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className="justify-start font-normal">
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {format(endDate, "PPP")}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent align="start" className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={endDate}
+                        onSelect={(d) => d && setEndDate(d)}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
               </div>
 
-              {/* End Date */}
-              <div className="space-y-2">
-                <Label>Funding End Date</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant={"outline"}
-                      className="justify-start text-left font-normal"
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {endDate ? format(endDate, "PPP") : "Pick an end date"}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={endDate}
-                      onSelect={(date) => setEndDate(date)}
-                      required
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
+              {/* Multipliers */}
+              <div className="pt-4 font-semibold">Set Tier Multipliers</div>
+              <Label>Bronze Max (USD)</Label>
+              <Input type="number" value={bronzeMax ?? ""} onChange={(e) => setBronzeMax(+e.target.value)} required />
+              <Label>Bronze Multiplier</Label>
+              <Input type="number" value={bronzeMultiplier} onChange={(e) => setBronzeMultiplier(e.target.value)} required />
+              <Label>Silver Max (USD)</Label>
+              <Input type="number" value={silverMax ?? ""} onChange={(e) => setSilverMax(+e.target.value)} required />
+              <Label>Silver Multiplier</Label>
+              <Input type="number" value={silverMultiplier} onChange={(e) => setSilverMultiplier(e.target.value)} required />
+              <Label>Gold Multiplier</Label>
+              <Input type="number" value={goldMultiplier} onChange={(e) => setGoldMultiplier(e.target.value)} required />
 
-              {/* Tier Max and Multipliers */}
-              <div className="pt-4">Set Tier Multipliers</div>
-              <div className="space-y-2">
-                <Label>Bronze Tier Maximum (USD)</Label>
-                <Input
-                  type="number"
-                  placeholder="500"
-                  value={bronzeMax !== undefined ? bronzeMax.toString() : ""}
-                  onChange={(e) => setBronzeMax(parseInt(e.target.value))}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Bronze Tier Multiplier</Label>
-                <Input
-                  type="number"
-                  placeholder="1.0"
-                  value={bronzeMultiplier}
-                  onChange={(e) => setBronzeMultiplier(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Silver Tier Maximum (USD)</Label>
-                <Input
-                  type="number"
-                  placeholder="1000"
-                  value={silverMax !== undefined ? silverMax.toString() : ""}
-                  onChange={(e) => setSilverMax(parseInt(e.target.value))}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Silver Tier Multiplier</Label>
-                <Input
-                  type="number"
-                  placeholder="1.2"
-                  value={silverMultiplier}
-                  onChange={(e) => setSilverMultiplier(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Gold Tier Maximum (USD)</Label>
-                <Input
-                  type="number"
-                  placeholder={goal}
-                  disabled // Gold max is disabled as it is the same as the goal amount
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Gold Tier Multiplier</Label>
-                <Input
-                  type="number"
-                  placeholder="1.0"
-                  value={goldMultiplier}
-                  onChange={(e) => setGoldMultiplier(e.target.value)}
-                  required
-                />
-              </div>
-
-
-              {/* tags scorllable sector*/}
+              {/* Tags */}
               <div>
                 <Label>Tags</Label>
-                <div className="max-h-48 overflow-y-auto border rounded p-2">
+                <div className="max-h-48 overflow-y-auto border rounded p-2 space-y-1">
                   {availableTags.map((tag) => (
-                    <div key={tag} className="flex items-center gap-2 p-1">
+                    <div key={tag} className="flex items-center gap-2">
                       <Checkbox
                         checked={selectedTags.includes(tag)}
                         onCheckedChange={() => toggleTag(tag)}
                       />
-                      <label className="text-sm">{tag}</label>
+                      <span className="text-sm">{tag}</span>
                     </div>
                   ))}
                 </div>
@@ -487,40 +427,37 @@ export default function CreatePitchPage() {
 
               {/* Actions */}
               <div className="flex gap-4">
-                <Button variant="outline" onClick={handleEvaluate}>
+                <Button variant="outline" type="button" onClick={handleEvaluate}>
                   AI Evaluation
                 </Button>
                 <Button type="submit">Submit Pitch</Button>
               </div>
             </CardContent>
           </form>
-        </Card >
+        </Card>
 
-        {/* Right: AI Feedback */}
-        < Card className="lg:col-span-1" >
+        {/* Right panel: AI feedback */}
+        <Card className="lg:col-span-1">
           <CardHeader>
             <CardTitle>AI Assistance</CardTitle>
           </CardHeader>
           <CardContent>
             {ragScore ? (
               <div className="space-y-6">
-                {/* New RAG Gauge */}
                 <RAGGauge ragScore={ragScore as "Red" | "Amber" | "Green"} />
-
-                {/* Feedback Panel */}
-                <div className="p-4 rounded-md border bg-muted">
-                  <p className="font-semibold mb-2">AI Feedback</p>
+                <div className="p-4 border rounded bg-muted">
+                  <p className="font-semibold mb-1">AI Feedback</p>
                   <p className="text-sm text-muted-foreground">{feedback}</p>
                 </div>
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
-                Run an AI evaluation to receive a score and feedback for your pitch.
+                Run AI evaluation to get a score and feedback for your pitch.
               </p>
             )}
           </CardContent>
-        </Card >
-      </div >
-    </div >
+        </Card>
+      </div>
+    </div>
   );
 }
