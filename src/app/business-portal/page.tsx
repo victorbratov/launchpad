@@ -51,8 +51,8 @@ export default function BusinessPortalPage() {
               <p className="pt-2 sm:pt-0"><strong>Wallet Balance:</strong></p>
               <p className="text-2xl font-bold">{accountInfo?.wallet_balance ?? "Loading..."}</p>
 
-              <FundsDialog mode="deposit" balance={accountInfo?.wallet_balance!} onSubmit={depositFunds} />
-              <FundsDialog mode="withdraw" balance={accountInfo?.wallet_balance!} onSubmit={withdrawFunds} />
+              <FundsDialog mode="deposit" balance={accountInfo?.wallet_balance ?? 0} onSubmit={depositFunds} />
+              <FundsDialog mode="withdraw" balance={accountInfo?.wallet_balance ?? 0} onSubmit={withdrawFunds} />
             </div>
           </div>
         </CardContent>

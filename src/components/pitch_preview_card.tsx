@@ -6,6 +6,8 @@ import { Progress } from "@/components/ui/progress";
 import Image from "next/image";
 import Link from "next/link";
 import { BusinessPitch } from "@/db/types";
+import { fetchFeaturedMedia } from "@/lib/s3_utils";
+import { useEffect, useState } from "react";
 
 type PitchCardProps = {
   pitch: BusinessPitch;
@@ -13,6 +15,16 @@ type PitchCardProps = {
 
 export function PitchCard({ pitch }: PitchCardProps) {
   const progress = (pitch.raised_amount / pitch.target_investment_amount) * 100;
+  const [media, setMedia] = useState<string | null>()
+
+  useEffect(() => {
+    async function loadMedia() {
+      const mediaUrl = await fetchFeaturedMedia(pitch.instance_id);
+
+      setMedia(mediaUrl);
+    }
+    loadMedia();
+  })
 
   return (
     <Link href={`/pitches/${pitch.instance_id}`}>
@@ -22,20 +34,19 @@ export function PitchCard({ pitch }: PitchCardProps) {
           <p className="text-sm text-muted-foreground">{pitch.status}</p>
         </CardHeader>
 
-        {/* Image should stretch across the whole card (ignore CardContent padding) */}
         <div className="relative w-full h-48">
-          {pitch.supporting_media && pitch.supporting_media.endsWith(".mp4") ? (
+          {media && media.endsWith(".mp4") ? (
             <video
-              src={pitch.supporting_media}
+              src={media}
               controls
               className="h-48 w-full object-contain bg-black rounded-md"
             />
           ) : (
             <Image
-              src={pitch.supporting_media ?? "/nasa-dCgbRAQmTQA-unsplash.jpg"}
+              src={media ?? "/nasa-dCgbRAQmTQA-unsplash.jpg"}
               alt={pitch.product_title}
               fill
-              className="object-contain"
+              className="object-cover"
               unoptimized
             />)}
         </div>

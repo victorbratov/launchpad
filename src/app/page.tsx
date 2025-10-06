@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Shield, Rocket, Bot } from "lucide-react";
 import { SignUpButton } from "@clerk/nextjs";
+import Image from "next/image";
 
 export default function LandingPage() {
   return (
@@ -31,7 +32,7 @@ export default function LandingPage() {
         </div>
         {/* optional hero image */}
         <div className="mt-12">
-          <img
+          <Image
             src="https://placehold.co/800x400?text=AI+Helping+Small+Businesses"
             alt="AI helping create pitches"
             className="rounded-lg shadow-lg"

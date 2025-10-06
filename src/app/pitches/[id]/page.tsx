@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useParams } from "next/navigation";
-import Link from "next/link";
 import { format } from "date-fns";
 
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
@@ -14,6 +13,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { MediaCarousel } from "@/components/media_carousel";
 import { getPitchByInstanceId, getPitchVersions, getTotalMoneyInvestedInPitch, investInPitch } from "./_actions";
 import { BusinessPitch } from "@/db/types";
+import { fetchAllMedia } from "@/lib/s3_utils";
 
 function calculateShares(amount: number, pitch: BusinessPitch | null) {
   if (!pitch || amount <= 0) return { tier: null, shares: 0 };
@@ -90,30 +90,8 @@ export default function PitchDetailsPage() {
     });
   };
 
-  // Fetch all S3 media for a pitch ID
-  async function fetchAllMedia(instanceId: string) {
-    const res = await fetch(
-      `${process.env.NEXT_PUBLIC_BUCKET_URL}?list-type=2&prefix=${instanceId}/`
-    );
-    const text = await res.text();
-
-    const parser = new DOMParser();
-    const xml = parser.parseFromString(text, "application/xml");
-    const items = xml.getElementsByTagName("Key");
-
-    const mediaKeys: string[] = [];
-    for (let i = 0; i < items.length; i++) {
-      const key = items[i].textContent;
-      if (key && !key.endsWith("/")) {
-        mediaKeys.push(`${process.env.NEXT_PUBLIC_BUCKET_URL}/${key}`);
-      }
-    }
-    return mediaKeys;
-  }
-
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 p-6">
-      {/* LEFT: Media & description */}
       <div className="lg:col-span-2 space-y-6">
         {media.length > 0 && (
           <div className="flex justify-center">
