@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { format } from "date-fns";
 
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
@@ -43,6 +43,8 @@ export default function PitchDetailsPage() {
 
   const [media, setMedia] = useState<string[]>([]);
   const amount = parseFloat(input) || 0;
+
+  const router = useRouter();
 
   // Load pitch + versions + investments
   useEffect(() => {
@@ -216,37 +218,55 @@ export default function PitchDetailsPage() {
 
               {message && <p className="text-sm mt-2">{message}</p>}
 
-              {/* Pitch Versions */}
               {versions.length > 1 && (
                 <div className="pt-4">
                   <label className="text-sm font-medium text-muted-foreground">
                     Pitch Version
                   </label>
+
                   <Select
                     value={pitch?.instance_id || ""}
-                    onValueChange={(id) => (window.location.href = `/pitch/${id}`)}
+                    // ✅ Use router.push instead of full page reloads
+                    onValueChange={(id) => router.push(`/pitches/${id}`)}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="mt-1 w-full">
                       <SelectValue placeholder="Select version" />
                     </SelectTrigger>
+
                     <SelectContent>
-                      {versions.map((v) => (
-                        <SelectItem key={v.instance_id} value={v.instance_id}>
-                          <div className="flex flex-col">
-                            <span className="font-medium">
-                              v{v.version}
-                              {v.instance_id === pitch?.instance_id && (
-                                <span className="ml-2 text-xs bg-primary text-primary-foreground px-1.5 rounded">
-                                  Current
+                      {[...versions] // ✅ Sort newest → oldest
+                        .sort((a, b) => b.version - a.version)
+                        .map((v) => {
+                          const isCurrent = v.instance_id === pitch?.instance_id;
+                          const createdDate = v.created_at
+                            ? new Date(v.created_at)
+                            : null;
+
+                          return (
+                            <SelectItem
+                              key={v.instance_id}
+                              value={v.instance_id}
+                              className="py-2 px-3 hover:bg-secondary/10 cursor-pointer"
+                            >
+                              <div className="flex flex-col w-full text-left">
+                                <span className="font-medium flex items-center gap-2">
+                                  v{v.version}
+                                  {isCurrent && (
+                                    <span className="text-xs bg-primary text-primary-foreground px-1.5 rounded">
+                                      Current
+                                    </span>
+                                  )}
                                 </span>
-                              )}
-                            </span>
-                            <span className="text-xs text-muted-foreground">
-                              {format(new Date(v.created_at ?? ""), "PPP")}
-                            </span>
-                          </div>
-                        </SelectItem>
-                      ))}
+
+                                {createdDate && (
+                                  <span className="text-xs text-muted-foreground">
+                                    {format(createdDate, "PPP")}
+                                  </span>
+                                )}
+                              </div>
+                            </SelectItem>
+                          );
+                        })}
                     </SelectContent>
                   </Select>
                 </div>

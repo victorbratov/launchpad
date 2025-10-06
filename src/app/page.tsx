@@ -32,7 +32,7 @@ export default function LandingPage() {
         </div>
         {/* optional hero image */}
         <div className="mt-12">
-          <Image
+          <img
             src="https://placehold.co/800x400?text=AI+Helping+Small+Businesses"
             alt="AI helping create pitches"
             className="rounded-lg shadow-lg"

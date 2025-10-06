@@ -199,7 +199,7 @@ export default function CreatePitchPage() {
     const src = URL.createObjectURL(file);
     return (
       <div key={index} className="w-full max-w-[200px] mx-auto">
-        <Image src={src} alt={file.name} className="w-full h-auto object-contain" />
+        <Image src={src} alt={file.name} width={200} height={100} className="object-contain" />
         <Label data-testid="media">{index + 1}. {file.name}</Label>
       </div>
     );

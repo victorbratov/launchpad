@@ -185,7 +185,7 @@ export default function PitchDetailsPage() {
                         {file.type.startsWith("video/") ? (
                           <video src={fileURL} width={200} height={150} controls />
                         ) : (
-                          <Image src={fileURL} alt={`Pending ${idx}`} width={200} height={150} />
+                          <Image src={fileURL} fill alt={`Pending ${idx}`} width={200} height={150} />
                         )}
                         <div className="absolute top-2 right-2 flex gap-2">
                           <Button
