@@ -7,6 +7,12 @@ import { auth } from "@clerk/nextjs/server";
 import { eq, sql } from "drizzle-orm";
 
 
+/**
+ * Get the business account information for the currently authenticated user
+ * @returns The business account information for the currently authenticated user
+ * @throws Error if the user is not authenticated or the business account is not found
+ * @returns {Promise<BusinessAccount>} Promise that resolves to the business account information
+ */
 export const getBusinessAccountInfo = async (): Promise<BusinessAccount> => {
   const { userId } = await auth()
 
@@ -24,6 +30,12 @@ export const getBusinessAccountInfo = async (): Promise<BusinessAccount> => {
 
 }
 
+/**
+ * Deposit funds into the business account
+ * @param amount The amount to deposit
+ * @throws Error if the user is not authenticated, bank account not found, or insufficient funds
+ * @returns {Promise<void>}
+ */
 export const depositFunds = async (amount: number): Promise<void> => {
   const { userId } = await auth()
 
@@ -56,6 +68,12 @@ export const depositFunds = async (amount: number): Promise<void> => {
   })
 }
 
+/**
+ * Withdraw funds from the business account to the linked bank account
+ * @param amount The amount to withdraw
+ * @throws Error if the user is not authenticated, bank account not found, or insufficient funds
+ * @returns {Promise<void>}
+ */
 export const withdrawFunds = async (amount: number): Promise<void> => {
   const { userId } = await auth()
 
