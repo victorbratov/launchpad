@@ -1,101 +1,98 @@
-"use server"
+"use server";
 
-import { db } from '@/db';
-import { BusinessPitchs, BusinessAccount } from '@/db/schema';
-import { auth } from '@clerk/nextjs/server';
-import { eq } from 'drizzle-orm';
+import { db } from "@/db";
+import { business_pitches, business_accounts } from "@/db/schema";
+import { NewBusinessPitch } from "@/db/types";
+import { auth } from "@clerk/nextjs/server";
+import { eq } from "drizzle-orm";
 
-/**
- * Represents a business pitch
- */
 export interface Pitch {
-  title: string,
-  status: string,
-  elevatorPitch: string,
-  detailedPitch: string,
-  targetAmount: string,
-  startDate: Date,
-  endDate: Date,
-  bronzeMultiplier: string,
-  bronzeMax: number,
-  silverMultiplier: string,
-  silverMax: number,
-  goldMultiplier: string,
-  dividendPayoutPeriod: string,
-  tags: string[]
+  title: string;
+  status: string;
+  elevatorPitch: string;
+  detailedPitch: string;
+  targetAmount: string;
+  startDate: Date;
+  endDate: Date;
+  bronzeMultiplier: string;
+  bronzeMax: number;
+  silverMultiplier: string;
+  silverMax: number;
+  goldMultiplier: string;
+  dividendPayoutPeriod: string;
+  tags: string[];
 }
 
-/**
- * Function to check the user is authenticated and has a business account
- * @returns true if the user has a business account, false otherwise
- */
-export const checkBusinessAuthentication = async () => {
-  const { isAuthenticated, userId } = await auth();
-  if (!isAuthenticated) {
-    return false;
-  }
-  const businessAccount = await db.select().from(BusinessAccount).where(eq(BusinessAccount.BusAccountID, userId));
-  if (businessAccount.length === 1) {
-    return true;
-  }
-  return false;
+export async function checkBusinessAuthentication(): Promise<boolean> {
+  const { userId } = await auth();
+
+  if (!userId) return false;
+
+  const businessAccount = await db
+    .select()
+    .from(business_accounts)
+    .where(eq(business_accounts.id, userId));
+
+  return businessAccount.length === 1;
 }
 
-/**
- * Create a pitch in the database
- * @param Pitch Pitch object containing all information necessary to create the pitch
- * @returns {{success: boolean, message: string}} An object with success indicating the success of the pitch creation, and message holding either the successfully created pitch ID or an error message
- */
-export const createPitch = async (pitch: Pitch) => {
-  const { isAuthenticated, userId } = await auth();
-
-  if (!isAuthenticated) {
-    return { success: false, message: 'User not authenticated' };
+export async function createPitch(pitch: Pitch): Promise<{
+  success: boolean;
+  message: string;
+}> {
+  const { userId } = await auth();
+  if (!userId) {
+    return { success: false, message: "User not authenticated" };
   }
 
-  const dividendPayoutDate: Date = calculateDividendPayoutDate(pitch.dividendPayoutPeriod, pitch.endDate);
+  // derive next payout date
+  const nextPayout = calculateDividendPayoutDate(
+    pitch.dividendPayoutPeriod,
+    pitch.endDate
+  );
 
-  const [insertedPitch] = await db.insert(BusinessPitchs).values({
-    BusAccountID: userId,
-    statusOfPitch: pitch.status,
-    ProductTitle: pitch.title,
-    ElevatorPitch: pitch.elevatorPitch,
-    DetailedPitch: pitch.detailedPitch,
-    TargetInvAmount: pitch.targetAmount,
-    InvestmentStart: pitch.startDate,
-    InvestmentEnd: pitch.endDate,
-    InvProfShare: 0, // to be added later if profit share is implemented
-    pricePerShare: "0", // think this is calculated, not needed as an input?
-    bronseTierMulti: pitch.bronzeMultiplier,
-    bronseInvMax: pitch.bronzeMax,
-    silverTierMulti: pitch.silverMultiplier,
-    silverInvMax: pitch.silverMax,
-    goldTierMulti: pitch.goldMultiplier,
-    goldTierMax: parseInt(pitch.targetAmount),
-    dividEndPayout: dividendPayoutDate, // this needs to be calculated based on the dividend period
-    DividEndPayoutPeriod: pitch.dividendPayoutPeriod,
-    Tags: pitch.tags || [],
-  }).returning();
+  /** Map frontend fields → DB column names */
+  const newPitch: NewBusinessPitch = {
+    business_account_id: userId,
+    status: pitch.status,
+    product_title: pitch.title,
+    elevator_pitch: pitch.elevatorPitch,
+    detailed_pitch: pitch.detailedPitch,
+    target_investment_amount: Number(pitch.targetAmount),
+    raised_amount: 0,
+    investor_profit_share_percent: 0,
+    start_date: pitch.startDate,
+    end_date: pitch.endDate,
+    bronze_multiplier: Number(pitch.bronzeMultiplier),
+    silver_multiplier: Number(pitch.silverMultiplier),
+    gold_multiplier: Number(pitch.goldMultiplier),
+    silver_threshold: pitch.bronzeMax,
+    gold_threshold: pitch.silverMax,
+    dividend_payout_period: pitch.dividendPayoutPeriod,
+    next_payout_date: nextPayout,
+    tags: pitch.tags,
+  };
 
+  const [inserted] = await db.insert(business_pitches).values(newPitch).returning({
+    instance_id: business_pitches.instance_id,
+  });
 
-  // update the database with the media url based on pitch ID
-  const mediaURL = `${process.env.NEXT_PUBLIC_BUCKET_URL}/${insertedPitch.BusPitchID}`
-  await db.update(BusinessPitchs).set({ SuportingMedia: mediaURL }).where(eq(BusinessPitchs.BusPitchID, insertedPitch.BusPitchID))
-  return { success: true, message: mediaURL }
+  // Build S3 media path
+  const mediaUrl = `${process.env.NEXT_PUBLIC_BUCKET_URL}/${inserted.instance_id}`;
+  await db
+    .update(business_pitches)
+    .set({ supporting_media: mediaUrl })
+    .where(eq(business_pitches.instance_id, inserted.instance_id));
+
+  return { success: true, message: mediaUrl };
 }
 
-/**
- * Calcualte the dividend payout date based on the funding end date and the dividend period
- * @param period Lenght of the period
- * @param end End date of the pitch
- * @returns The payout date
- */
-function calculateDividendPayoutDate(period: string, end: Date) {
-  const payoutDate = new Date(end)
-  if (period == "quarterly") {
-    payoutDate.setFullYear(payoutDate.getFullYear(), payoutDate.getMonth() + 4)
-  } else if (period == "yearly") {
-    payoutDate.setFullYear(payoutDate.getFullYear() + 1)
+function calculateDividendPayoutDate(period: string, end: Date): Date {
+  const payout = new Date(end);
+  if (period === "quarterly") {
+    payout.setMonth(payout.getMonth() + 3);
+  } else if (period === "yearly") {
+    payout.setFullYear(payout.getFullYear() + 1);
   }
-  return payoutDate
+  return payout;
 }

@@ -1,147 +1,117 @@
 "use server";
 
 import { db } from "@/db";
-import { BusinessAccount, TheBank, InvestmentLedger, BusinessPitchs } from "@/db/schema";
+import { bank_accounts, business_accounts, business_pitches, transactions } from "@/db/schema";
+import { BusinessAccount, BusinessPitch } from "@/db/types";
 import { auth } from "@clerk/nextjs/server";
 import { eq, sql } from "drizzle-orm";
-import type { Pitches } from "../../../types/pitch";
 
-/** Business account info */
-export const getBusinessAccountInfo = async () => {
-  const { isAuthenticated, userId } = await auth();
-  if (!isAuthenticated) throw new Error("User not authenticated");
 
-  const businessAccount = await db
-    .select({
-      name: BusinessAccount.BusName,
-      email: BusinessAccount.BusEmail,
-      wallet: BusinessAccount.BusWallet,
-    })
-    .from(BusinessAccount)
-    .where(eq(BusinessAccount.BusAccountID, userId))
-    .limit(1);
+export const getBusinessAccountInfo = async (): Promise<BusinessAccount> => {
+  const { userId } = await auth()
 
-  return businessAccount[0];
-};
+  if (userId === null) {
+    throw new Error("User not authenticated");
+  }
 
-/** Withdraw funds from business account to linked bank account */
-export const withdrawBalance = async (amount: number) => {
-  const { isAuthenticated, userId } = await auth();
-  if (!isAuthenticated) throw new Error("User not authenticated");
+  const account_info = await db.select().from(business_accounts).where(eq(business_accounts.id, userId)).limit(1)
 
-  const [updatedAccount] = await db
-    .update(BusinessAccount)
-    .set({ BusWallet: sql`${BusinessAccount.BusWallet} - ${amount}` })
-    .where(eq(BusinessAccount.BusAccountID, userId))
-    .returning();
+  if (account_info.length === 0) {
+    throw new Error("Business account not found");
+  }
 
-  if (!updatedAccount) throw new Error("Business account not found");
+  return account_info[0];
 
-  await db
-    .update(TheBank)
-    .set({ Ballance: sql`${TheBank.Ballance} + ${amount}` })
-    .where(eq(TheBank.BankAccountNumber, updatedAccount.BusBankAcc));
-};
+}
 
-/** Deposit funds from linked bank account to business account */
-export const depositBalance = async (amount: number) => {
-  const { isAuthenticated, userId } = await auth();
-  if (!isAuthenticated) throw new Error("User not authenticated");
+export const depositFunds = async (amount: number): Promise<void> => {
+  const { userId } = await auth()
 
-  const [businessAccount] = await db
-    .select()
-    .from(BusinessAccount)
-    .where(eq(BusinessAccount.BusAccountID, userId))
-    .limit(1);
-  if (!businessAccount) throw new Error("Business account not found");
+  if (userId === null) {
+    throw new Error("User not authenticated");
+  }
 
-  const [bankAccount] = await db
-    .select()
-    .from(TheBank)
-    .where(eq(TheBank.BankAccountNumber, businessAccount.BusBankAcc))
-    .limit(1);
+  const userInfo = await getBusinessAccountInfo()
 
-  if (parseFloat(bankAccount.Ballance) < amount) {
+  const [userBankAccount] = await db.select().from(bank_accounts).where(eq(bank_accounts.id, userInfo.bank_account_id)).limit(1)
+
+  if (userBankAccount === undefined) {
+    throw new Error("Bank account not found");
+  }
+
+  if (userBankAccount.balance < amount) {
     throw new Error("Insufficient funds in bank account");
   }
 
-  await db
-    .update(BusinessAccount)
-    .set({ BusWallet: sql`${BusinessAccount.BusWallet} + ${amount}` })
-    .where(eq(BusinessAccount.BusAccountID, userId));
+  await db.transaction(async (tx) => {
+    await tx.update(bank_accounts).set({
+      balance: userBankAccount.balance - amount,
+    }).where(eq(bank_accounts.id, userBankAccount.id));
 
-  await db
-    .update(TheBank)
-    .set({ Ballance: sql`${TheBank.Ballance} - ${amount}` })
-    .where(eq(TheBank.BankAccountNumber, businessAccount.BusBankAcc));
-};
+    await tx.update(business_accounts).set({
+      wallet_balance: userInfo.wallet_balance + amount,
+    }).where(eq(business_accounts.id, userId));
 
-/** Fetch all pitches for the current user */
-export async function getUserPitches(): Promise<Pitches[]> {
-  const { isAuthenticated, userId } = await auth();
-  if (!isAuthenticated || !userId) throw new Error("Not authenticated");
+    await tx.insert(transactions).values({ account_type: "business", account_id: userId, txn_type: "deposit", amount });
+  })
+}
+
+export const withdrawFunds = async (amount: number): Promise<void> => {
+  const { userId } = await auth()
+
+  if (userId === null) {
+    throw new Error("User not authenticated");
+  }
+
+  const userInfo = await getBusinessAccountInfo()
+
+  const [userBankAccount] = await db.select().from(bank_accounts).where(eq(bank_accounts.id, userInfo.bank_account_id)).limit(1)
+
+  if (userBankAccount === undefined) {
+    throw new Error("Bank account not found");
+  }
+
+  if (userInfo.wallet_balance < amount) {
+    throw new Error("Insufficient funds in wallet");
+  }
+
+  await db.transaction(async (tx) => {
+    await tx.update(bank_accounts).set({
+      balance: userBankAccount.balance + amount,
+    }).where(eq(bank_accounts.id, userBankAccount.id))
+
+    await tx.update(business_accounts).set({
+      wallet_balance: userInfo.wallet_balance - amount,
+    }).where(eq(business_accounts.id, userId))
+
+    await tx.insert(transactions).values({ account_type: "business", account_id: userId, txn_type: "withdrawal", amount });
+  })
+}
+
+export const getPitches = async (): Promise<BusinessPitch[]> => {
+  const { userId } = await auth();
+
+  if (userId === null) {
+    throw new Error("User not authenticated");
+  }
+
+  const latestVersions = db
+    .select({
+      pitch_id: business_pitches.pitch_id,
+      max_version: sql<number>`MAX(${business_pitches.version})`.as("max_version"),
+    })
+    .from(business_pitches)
+    .where(eq(business_pitches.business_account_id, userId))
+    .groupBy(business_pitches.pitch_id)
+    .as("latest_versions");
 
   const pitches = await db
     .select()
-    .from(BusinessPitchs)
-    .where(eq(BusinessPitchs.BusAccountID, userId));
+    .from(business_pitches)
+    .innerJoin(
+      latestVersions,
+      sql`${business_pitches.pitch_id} = ${latestVersions.pitch_id} AND ${business_pitches.version} = ${latestVersions.max_version}`
+    );
 
-  return pitches.map((p) => ({
-    BusPitchID: p.BusPitchID,
-    BusAccountID: p.BusAccountID,
-    ProductTitle: p.ProductTitle,
-    ElevatorPitch: p.ElevatorPitch,
-    DetailedPitch: p.DetailedPitch,
-    SuportingMedia: p.SuportingMedia,
-    TargetInvAmount: p.TargetInvAmount,
-    InvProfShare: p.InvProfShare,
-    DividEndPayoutPeriod: p.DividEndPayoutPeriod,
-    statusOfPitch: p.statusOfPitch ?? "pending",
-    InvestmentStart: p.InvestmentStart?.toISOString() ?? new Date().toISOString(),
-    InvestmentEnd: p.InvestmentEnd?.toISOString() ?? new Date().toISOString(),
-    pricePerShare: p.pricePerShare ?? "0",
-    bronseTierMulti: p.bronseTierMulti ?? "0",
-    bronseInvMax: p.bronseInvMax ?? 0,
-    silverTierMulti: p.silverTierMulti ?? "0",
-    silverInvMax: p.silverInvMax ?? 0,
-    goldTierMulti: p.goldTierMulti ?? "0",
-    goldTierMax: p.goldTierMax ?? 0,
-    dividEndPayout: p.dividEndPayout?.toISOString() ?? new Date().toISOString(),
-    FeaturedImage: "",
-    Tags: p.Tags ?? [],
-  }));
-}
-
-/** Get total money invested in a pitch */
-export async function getTotalMoneyInvestedInPitch(
-  busPitchID: number
-): Promise<{ busPitchID: number; totalAmount: number } | null> {
-  const result = await db
-    .select({
-      busPitchID: InvestmentLedger.BusPitchID,
-      totalAmount: sql<number>`SUM(${InvestmentLedger.AmountInvested})`.as("totalAmount"),
-    })
-    .from(InvestmentLedger)
-    .where(eq(InvestmentLedger.BusPitchID, busPitchID))
-    .groupBy(InvestmentLedger.BusPitchID)
-    .limit(1);
-
-  return result.length > 0 ? result[0] : null;
-}
-
-/** Get total investors in a pitch */
-export async function getTotalInvestorsInPitch(
-  busPitchID: number
-): Promise<{ busPitchID: number; investorCount: number } | null> {
-  const result = await db
-    .select({
-      busPitchID: InvestmentLedger.BusPitchID,
-      investorCount: sql<number>`COUNT(DISTINCT ${InvestmentLedger.InvestorID})`.as("investorCount"),
-    })
-    .from(InvestmentLedger)
-    .where(eq(InvestmentLedger.BusPitchID, busPitchID))
-    .groupBy(InvestmentLedger.BusPitchID)
-    .limit(1);
-
-  return result.length > 0 ? result[0] : null;
-}
+  return pitches.map(p => p.business_pitches);
+};

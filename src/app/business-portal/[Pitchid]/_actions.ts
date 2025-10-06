@@ -1,107 +1,78 @@
 "use server";
 
 import { db } from "@/db";
-import { BusinessPitchs} from "@/db/schema";
-import { auth } from '@clerk/nextjs/server';
-import { eq } from "drizzle-orm";
-
+import { business_pitches } from "@/db/schema";
+import { auth } from "@clerk/nextjs/server";
+import { eq, desc } from "drizzle-orm";
 
 /**
- * @param pitchId - Unique ID to search through BusinessPitches for. It then checks if the user is the creator of the pitch.
- * @returns pitch object if the search is successful
+ * Fetch the latest version of a pitch by pitch_id
  */
-export async function getPitch(pitchId: number) {
+export async function getPitch(pitchId: string) {
   const { isAuthenticated, userId } = await auth();
-  console.log("[getPitch] Received pitchId:", pitchId);
-   if (!isAuthenticated || !userId) {
-    throw new Error("Not authenticated");
-  }
+  if (!isAuthenticated || !userId) throw new Error("Not authenticated");
 
   const [pitch] = await db
     .select()
-    .from(BusinessPitchs)
-    .where(eq(BusinessPitchs.BusPitchID, pitchId));
+    .from(business_pitches)
+    .where(eq(business_pitches.pitch_id, pitchId))
+    .orderBy(desc(business_pitches.version))
+    .limit(1);
 
-  if (!pitch) {console.log("[getPitch] No pitch found for pitchId:", pitchId);
-  }
-  
-  if (pitch.BusAccountID !== userId) {
-    throw new Error("You do not own this pitch");
-  }
+  if (!pitch) throw new Error("Pitch not found");
+  if (pitch.business_account_id !== userId) throw new Error("Unauthorized");
 
-   return {
-    ...pitch,
-    InvestmentStart: pitch.InvestmentStart?.toISOString() ?? null,
-    InvestmentEnd: pitch.InvestmentEnd?.toISOString() ?? null,
-    dividEndPayout: pitch.dividEndPayout?.toISOString() ?? null,
-  };
+  return pitch;
 }
 
 /**
- * Deletes media with filekey from database
- * @param fileKey 
- * @returns deletes file with filekey
+ * Create new version (metadata only) and return instance_id
  */
-export async function deleteMedia(fileKey: string) {
-  if (!fileKey) throw new Error("Missing file key");
-
-  const BUCKET_URL = process.env.BUCKET_URL;
-
-  const response = await fetch(`${BUCKET_URL}${fileKey}`, {
-    method: "DELETE",
-  });
-
-  if (!response.ok) {
-    console.error("Failed to delete from S3:", response.status, response.statusText);
-    throw new Error("Failed to delete file from bucket");
-  }
-
-  return true;
-}
-
-/** 
- * @param PitchId The unique ID of the pitch to update.
- * @param values An object containing the below fields to update.
- * @param ProductTitle The new title.
- * @param ElevatorPitch The new elevator pitch.
- * @param DetailedPitch The new detailed pitch.
- * @param SuportingMedia Link to S3 https for page
- * @returns {Promise<{ success: boolean; message?: string }>} The result of the update operation.
-*/
-export async function updatePitch(
-  pitchId: number,
+export async function createPitchVersion(
+  pitchId: string,
   values: {
-    ProductTitle?: string;
-    ElevatorPitch?: string;
-    DetailedPitch?: string;
-    SuportingMedia?: string;
+    product_title: string;
+    elevator_pitch: string;
+    detailed_pitch: string;
   }
 ) {
-  console.log("[updatePitch] Updating pitch:", pitchId, values);
+  const { isAuthenticated, userId } = await auth();
+  if (!isAuthenticated || !userId) throw new Error("Not authenticated");
 
-    const setValues: Partial<{
-    ProductTitle: string;
-    ElevatorPitch: string;
-    DetailedPitch: string;
-    SuportingMedia: string;
-  }> = {};
+  const [latest] = await db
+    .select()
+    .from(business_pitches)
+    .where(eq(business_pitches.pitch_id, pitchId))
+    .orderBy(desc(business_pitches.version))
+    .limit(1);
 
-  if (values.ProductTitle !== undefined) setValues.ProductTitle = values.ProductTitle;
-  if (values.ElevatorPitch !== undefined) setValues.ElevatorPitch = values.ElevatorPitch;
-  if (values.DetailedPitch !== undefined) setValues.DetailedPitch = values.DetailedPitch;
-  if (values.SuportingMedia !== undefined) setValues.SuportingMedia = values.SuportingMedia;
+  if (!latest) throw new Error("Pitch not found");
+  if (latest.business_account_id !== userId) throw new Error("Unauthorized");
 
-  // Prevent error if setValues is empty
-  if (Object.keys(setValues).length === 0) {
-    console.warn("[updatePitch] No values to update");
-    return { success: false, message: "No values to update" };
-  }
+  const [newVersion] = await db
+    .insert(business_pitches)
+    .values({
+      ...latest,
+      instance_id: undefined, // auto-generated
+      version: latest.version + 1,
+      product_title: values.product_title,
+      elevator_pitch: values.elevator_pitch,
+      detailed_pitch: values.detailed_pitch,
+      supporting_media: "", // will fill later
+      created_at: new Date(),
+    })
+    .returning({ instance_id: business_pitches.instance_id });
 
-  await db
-    .update(BusinessPitchs)
-    .set(setValues)
-    .where(eq(BusinessPitchs.BusPitchID, pitchId));
-
-  return { success: true };
+  return newVersion.instance_id;
 }
 
+/**
+ * Update the media URLs for a specific instance
+ */
+export async function updatePitchMedia(instanceId: string, mediaUrls: string) {
+  await db
+    .update(business_pitches)
+    .set({ supporting_media: mediaUrls })
+    .where(eq(business_pitches.instance_id, instanceId));
+  return { success: true };
+}

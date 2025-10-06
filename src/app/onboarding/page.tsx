@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,14 +11,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  RadioGroup,
-  RadioGroupItem,
-} from "@/components/ui/radio-group";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { completeOnboarding } from "./_actions";
 
 export default function OnboardingPage() {
-  const [role, setRole] = useState<string>("business");
+  const [role, setRole] = useState<"business" | "investor">("business");
   const [name, setName] = useState("");
   const [bankAccount, setBankAccount] = useState("");
   const [loading, setLoading] = useState(false);
@@ -29,12 +25,10 @@ export default function OnboardingPage() {
     setLoading(true);
 
     try {
-
       await completeOnboarding(role, name, bankAccount);
-
     } catch (err) {
       console.error(err);
-      alert("Something went wrong.");
+      alert("Something went wrong while onboarding. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -56,7 +50,7 @@ export default function OnboardingPage() {
               <Label>Choose your role</Label>
               <RadioGroup
                 defaultValue="business"
-                onValueChange={setRole}
+                onValueChange={(v) => setRole(v as "business" | "investor")}
                 className="flex gap-6"
               >
                 <div className="flex items-center space-x-2">

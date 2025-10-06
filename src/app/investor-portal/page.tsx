@@ -31,14 +31,11 @@ import {
   Bar,
   ResponsiveContainer,
 } from "recharts";
-import { User, Wallet, LineChart as ChartIcon, Coins, BarChart3 } from "lucide-react";
-import { getInvestorInfo, getDividends, getInvestments } from "./_actions";
+import { User, LineChart as ChartIcon, Coins, BarChart3 } from "lucide-react";
+import { getInvestorInfo, getDividends, getInvestments, depositFunds, withdrawFunds } from "./_actions";
 import { useEffect, useState } from "react";
-import { Dividend, Investment, InvestorInfo } from "../../../types/investor_data";
-import WithdrawDialog from "@/components/withdrawal_dialog";
-import DepositDialog from "@/components/deposit_dialog";
-import { withdrawBalance, depositBalance } from "./_actions";
-import { validateWithdrawalAmount } from "@/lib/utils"; 
+import { InvestmentRecord, InvestorAccount, Transaction } from "@/db/types";
+import { FundsDialog } from "@/components/funds_dialog";
 
 /**
  * Investor Portal Page, showing an overview of the investor account, their investments and dividends
@@ -46,16 +43,10 @@ import { validateWithdrawalAmount } from "@/lib/utils";
  */
 export default function InvestorPortalPage() {
 
-  const [investorInfo, setInvestorInfo] = useState<InvestorInfo | null>(null);
-  const [investments, setInvestments] = useState<Array<Investment>>([]);
-  const [dividends, setDividends] = useState<Array<Dividend>>([]);
-  const [withdrawalAmount, setWithdrawalAmount] = useState<number>(0);
-  const [withdrawing, setWithdrawing] = useState<boolean>(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [open, setOpen] = useState<boolean>(false);
-  const [depositing, setDepositing] = useState<boolean>(false);
-  const [depositAmount, setDepositAmount] = useState<number>(0);
-  const [openDeposit, setOpenDeposit] = useState<boolean>(false);
+  const [investorInfo, setInvestorInfo] = useState<InvestorAccount | null>(null);
+  const [investments, setInvestments] = useState<InvestmentRecord[]>([]);
+  const [dividends, setDividends] = useState<Transaction[]>([]);
+  const [reloadInvestorInfo, setReloadInvestorInfo] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -67,79 +58,45 @@ export default function InvestorPortalPage() {
       setDividends(divs);
     }
     loadData();
-  }, []);
+  }, [reloadInvestorInfo]);
 
   if (!investorInfo) {
     return <div className="p-6">No investor profile found.</div>;
   }
 
-  // --- Calculations ---
-  const totalInvested = investments.reduce((sum, inv) => sum + inv.investmentCost, 0);
-  const totalShares = investments.reduce((sum, inv) => sum + inv.shareAmount!, 0);
-  const totalDividends = dividends.reduce((sum, d) => sum + d.dividendAmount, 0);
+  const totalInvested = investments.reduce((sum, inv) => sum + inv.amount_invested, 0);
+  const totalShares = investments.reduce((sum, inv) => sum + inv.shares_allocated, 0);
+  const totalDividends = dividends.reduce((sum, d) => sum + d.amount, 0);
   const roiPercent = ((totalDividends / totalInvested) * 100).toFixed(2);
 
   let cumulative = 0;
   const dividendsOverTime = dividends
-    .sort((a, b) => new Date(a.dividendDate).getTime() - new Date(b.dividendDate).getTime())
+    .sort((a, b) => a.created_at!.getTime() - b.created_at!.getTime())
     .map((d) => {
-      cumulative += d.dividendAmount;
-      return { date: d.dividendDate, cumulative };
+      cumulative += d.amount;
+      return { date: d.created_at, cumulative };
     });
 
   let runningDividends = 0;
   const roiOverTime = dividends
-    .sort((a, b) => new Date(a.dividendDate).getTime() - new Date(b.dividendDate).getTime())
+    .sort((a, b) => a.created_at!.getTime() - b.created_at!.getTime())
     .map((d) => {
-      runningDividends += d.dividendAmount;
+      runningDividends += d.amount;
       const roi = (runningDividends / totalInvested) * 100;
-      return { date: d.dividendDate, roi: parseFloat(roi.toFixed(2)) };
+      return { date: d.created_at, roi: parseFloat(roi.toFixed(2)) };
     });
 
-
-  /**
-   * Handle the withdrawal of funds from the business account
-   * @param amount The amount to withdraw
-   */
-  async function withdrawFunds(amount: number | null) {
-    setWithdrawing(true);
-
-    setErrorMessage(validateWithdrawalAmount(amount, investorInfo?.walletAmount ?? 0));
-
-    if (errorMessage === null) {
-      try {
-        await withdrawBalance(amount ?? investorInfo?.walletAmount ?? 0);
-        setOpen(false);
-        // get updated info
-        const info = await getInvestorInfo();
-        setInvestorInfo(info);
-      } catch (error) {
-        setErrorMessage("Error withdrawing funds. Please try again later.");
-        setWithdrawing(false);
-      } 
-    } else {
-      setWithdrawing(false);
-    }
+  function onDepositFunds(amount: number) {
+    return depositFunds(amount).then(() => {
+      setReloadInvestorInfo(!reloadInvestorInfo);
+    })
   }
 
-  /**
-   * Handle the deposit of funds into the business account
-   * @param amount The amount to deposit
-   */
-  async function depositFunds(amount: number | null) {
-      setDepositing(true);
-  
-      try {
-        await depositBalance(amount ?? investorInfo?.walletAmount ?? 0);
-        setOpenDeposit(false);
-        // get updated info
-        const info = await getInvestorInfo();
-        setInvestorInfo(info);
-      } catch (error) {
-        setErrorMessage("Error withdrawing funds. Please try again later.");
-        setDepositing(false);
-      }
-    }
+  function onWithdrawFunds(amount: number) {
+    return withdrawFunds(amount).then(() => {
+      setReloadInvestorInfo(!reloadInvestorInfo);
+    })
+  }
 
   return (
     <div className="p-6">
@@ -160,9 +117,6 @@ export default function InvestorPortalPage() {
               <div>
                 <CardTitle>{investorInfo.name}</CardTitle>
                 <p className="text-sm text-muted-foreground">{investorInfo.email}</p>
-                <p className="text-sm text-muted-foreground">
-                  Bank Acc: ****{String(investorInfo.bankAccNum).slice(-4)}
-                </p>
               </div>
             </CardHeader>
           </Card>
@@ -170,38 +124,14 @@ export default function InvestorPortalPage() {
           {/* Quick Stats Grid */}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <Card>
-              <CardContent className="grid grid-rows-2 grid-flow-col flex items-center justify-between py-6">
+              <CardContent className="grid-rows-2 grid-flow-col flex items-center justify-between py-6">
                 <div>
                   <p className="text-sm text-muted-foreground">Wallet Balance</p>
-                  <p className="text-xl font-semibold">${investorInfo.walletAmount}</p>
+                  <p className="text-xl font-semibold">${investorInfo.wallet_balance}</p>
                 </div>
-                {/* <Wallet className="w-6 h-6 text-primary" /> */}
-                {/* {investorInfo?.walletAmount != 0 && */}
                 <div className="flex flex-col space-y-2">
-                <WithdrawDialog
-                  accountInfo={investorInfo ? { wallet: investorInfo.walletAmount } : { wallet: 0 }}
-                  fundsFunction={() => withdrawFunds(withdrawalAmount)}
-                  open={open}
-                  setOpen={setOpen}
-                  withdrawing={withdrawing}
-                  setWithdrawing={setWithdrawing}
-                  withdrawalAmount={withdrawalAmount}
-                  setWithdrawalAmount={setWithdrawalAmount}
-                  errorMessage={errorMessage ?? ""}
-                  setErrorMessage={setErrorMessage}
-                />
-                <DepositDialog
-                  accountInfo={investorInfo ? { wallet: investorInfo.walletAmount } : { wallet: 0 }}
-                  depositFunds={() => depositFunds(depositAmount)}
-                  open={openDeposit}
-                  setOpen={setOpenDeposit}
-                  depositing={depositing}
-                  setDepositing={setDepositing}
-                  depositAmount={depositAmount}
-                  setDepositAmount={setDepositAmount}
-                  errorMessage={errorMessage ?? ""}
-                  setErrorMessage={setErrorMessage}
-                />
+                  <FundsDialog mode="deposit" balance={investorInfo.wallet_balance} onSubmit={onDepositFunds} />
+                  <FundsDialog mode="withdraw" balance={investorInfo.wallet_balance} onSubmit={onWithdrawFunds} />
                 </div>
               </CardContent>
             </Card>
@@ -294,11 +224,10 @@ export default function InvestorPortalPage() {
                 </TableHeader>
                 <TableBody>
                   {investments.map((inv) => (
-                    <TableRow key={inv.investmentID}>
-                      <TableCell>{inv.pitchName}</TableCell>
-                      <TableCell>{inv.investmentDate}</TableCell>
-                      <TableCell>${inv.investmentCost}</TableCell>
-                      <TableCell>{inv.shareAmount}</TableCell>
+                    <TableRow key={inv.id}>
+                      <TableCell>{inv.investment_date!.toDateString()}</TableCell>
+                      <TableCell>${inv.amount_invested}</TableCell>
+                      <TableCell>{inv.shares_allocated}</TableCell>
                       <TableCell>{inv.tier}</TableCell>
                     </TableRow>
                   ))}
@@ -342,9 +271,9 @@ export default function InvestorPortalPage() {
                 <TableBody>
                   {dividends.map((d, i) => (
                     <TableRow key={i}>
-                      <TableCell>{d.pitchName}</TableCell>
-                      <TableCell>{d.dividendDate}</TableCell>
-                      <TableCell>${d.dividendAmount}</TableCell>
+                      <TableCell>{d.related_pitch_id}</TableCell>
+                      <TableCell>{d.amount}</TableCell>
+                      <TableCell>${d.created_at!.toDateString()}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

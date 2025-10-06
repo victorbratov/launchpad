@@ -1,151 +1,137 @@
 "use server";
 
 import { auth } from "@clerk/nextjs/server";
-import { db } from "@/db"; // adjust to your drizzle client path
-import { InvestorAccounts, InvestmentLedger, DividendPayouts, BusinessPitchs, BusinessAccount } from "@/db/schema";
-import { eq, InferInsertModel, InferSelectModel, exists, sql } from "drizzle-orm";
-import { Dividend, Investment, InvestorInfo } from "../../../../types/investor_data";
-import { Pitches } from "../../../../types/pitch";
+import { db } from "@/db";
+import {
+  business_pitches,
+  investor_accounts,
+  investment_ledger,
+  business_accounts,
+} from "@/db/schema";
+import { BusinessPitch } from "@/db/types";
+import { eq, sql } from "drizzle-orm";
 
-
-type BusinessPitchRow = InferInsertModel<typeof BusinessPitchs>;
-
-
-//  Gets pitch by the ID inputted 
-//  @param pitchID - The ID of the pitch to retrieve
-//  @returns A Promise that resolves to a Pitches object or null if not found
-
-export async function getPitchById(pitchID: number): Promise<Pitches | null> {
-  const result = await db
+/**
+ * Get a pitch version by instance_id (a specific version).
+ * @param instanceId - The version-specific ID of the pitch.
+ */
+export async function getPitchByInstanceId(instanceId: string): Promise<BusinessPitch | null> {
+  const [pitch] = await db
     .select()
-    .from(BusinessPitchs)
-    .where(eq(BusinessPitchs.BusPitchID, pitchID))
+    .from(business_pitches)
+    .where(eq(business_pitches.instance_id, instanceId))
     .limit(1);
 
-  if (result.length === 0) return null;
-
-  const pitch = result[0];
-
-  // Convert dates to strings to match Pitches type
-  return {
-    ...pitch,
-    InvestmentStart: pitch.InvestmentStart.toISOString(),
-    InvestmentEnd: pitch.InvestmentEnd.toISOString(),
-    dividEndPayout: pitch.dividEndPayout.toISOString(),
-    FeaturedImage: null, // not needed here
-  };
-}
-
-
-//gets total money invested in the pitches on the db
-// returns a single object with busPitchID and totalAmount invested
-//@param busPitchID - The ID of the pitch to retrieve total investment for
-
-
-export async function getTotalMoneyInvestedInPitch(busPitchID: number): Promise<{ busPitchID: number, totalAmount: number } | null> {
-  const result = await db
-    .select({
-      busPitchID: InvestmentLedger.BusPitchID,
-      totalAmount: sql<number>`SUM(${InvestmentLedger.AmountInvested})`.as('totalAmount')
-    })
-    .from(InvestmentLedger)
-    .where(eq(InvestmentLedger.BusPitchID, busPitchID))
-    .groupBy(InvestmentLedger.BusPitchID)
-    .limit(1);
-
-  return result.length > 0 ? result[0] : null;
+  return pitch ?? null;
 }
 
 /**
- * Handles the investment (share purchase) process for a specific business pitch.
- *
- * This server action performs validation, deducts the investment amount from the investor’s wallet,
- * records the investment in the ledger, and credits the business account wallet (optional).
- *
- * ### Validations:
- * - Ensures the user is authenticated.
- * - Confirms that the pitch exists.
- * - Verifies that the investor account exists.
- * - Checks that the investor has sufficient funds.
- * - Prevents investments that exceed the remaining target amount for the pitch.
- * - Determines the appropriate investment tier and calculates corresponding shares.
- *
- * ### Database Effects:
- * 1. Updates the `InvestorAccounts` table to deduct the invested amount from the user’s wallet.
- * 2. Inserts a new entry into the `InvestmentLedger` to record the transaction.
- * 3. (Optional) Updates the `BusinessAccount` table to increment the business wallet.
- *
- * @param busPitchID - The unique ID of the business pitch being invested in.
- * @param amount - The amount, in USD, the investor wishes to invest.
- * @returns A success message and investment summary if the operation completes successfully.
- * @throws If the user is unauthenticated, pitch or investor not found, insufficient funds, or investment exceeds the target.
+ * Get all versions of a pitch by entity_id.
+ * @param entityId The stable unique entity ID (shared across all versions).
  */
-export async function investInPitch(busPitchID: number, amount: number) {
+export async function getPitchVersions(entityId: string): Promise<BusinessPitch[]> {
+  return await db
+    .select()
+    .from(business_pitches)
+    .where(eq(business_pitches.pitch_id, entityId))
+    .orderBy(business_pitches.version);
+}
+
+/**
+ * Calculate total investments for a canonical pitch entity (across all versions).
+ * @param entityId The canonical entity_id of the pitch.
+ */
+export async function getTotalMoneyInvestedInPitch(
+  entityId: string
+): Promise<{ pitch_id: string; totalAmount: number }> {
+  const [row] = await db
+    .select({
+      pitch_id: investment_ledger.pitch_id,
+      totalAmount: sql<number>`SUM(${investment_ledger.amount_invested})`.as("totalAmount"),
+    })
+    .from(investment_ledger)
+    .where(eq(investment_ledger.pitch_id, entityId))
+    .groupBy(investment_ledger.pitch_id);
+
+  return row ?? { pitch_id: entityId, totalAmount: 0 };
+}
+
+/**
+ * Handle investment into a pitch.
+ *
+ * Investments always attach to the canonical entity (entity_id), not the instance_id/version.
+ */
+export async function investInPitch(entityId: string, amount: number) {
   const { userId } = await auth();
   if (!userId) throw new Error("User not authenticated");
+  if (amount <= 0) throw new Error("Invalid investment amount");
 
+  // Find the current active pitch version for this entity
   const [pitch] = await db
     .select()
-    .from(BusinessPitchs)
-    .where(eq(BusinessPitchs.BusPitchID, busPitchID))
+    .from(business_pitches)
+    .where(eq(business_pitches.pitch_id, entityId))
+    .orderBy(sql`${business_pitches.version} DESC`)
     .limit(1);
 
   if (!pitch) throw new Error("Pitch not found");
 
   const [investor] = await db
     .select()
-    .from(InvestorAccounts)
-    .where(eq(InvestorAccounts.InvestorID, userId))
-    .limit(1);
+    .from(investor_accounts)
+    .where(eq(investor_accounts.id, userId));
 
-  if (!investor) throw new Error("Investor not found");
+  if (!investor) throw new Error("Investor account not found");
 
-  const totalInvested = await getTotalMoneyInvestedInPitch(busPitchID);
-  const investedSoFar = parseFloat(totalInvested?.totalAmount?.toString() || "0");
-  const target = parseFloat(pitch.TargetInvAmount);
-  const remaining = target - investedSoFar;
+  // Get current invested total across entity versions
+  const totalResult = await getTotalMoneyInvestedInPitch(entityId);
+  const investedSoFar = totalResult?.totalAmount || 0;
+  const remaining = pitch.target_investment_amount - investedSoFar;
 
-  if (amount <= 0) throw new Error("Invalid investment amount");
   if (amount > remaining) throw new Error("Investment exceeds remaining target");
-  const wallet = parseFloat(investor.InvWallet);
-  if (wallet < amount) throw new Error("Insufficient funds");
+  if (investor.wallet_balance < amount) throw new Error("Insufficient wallet balance");
 
+  // Determine tier based on thresholds
   let tier = "Bronze";
-  let multiplier = parseFloat(pitch.bronseTierMulti);
-  if (amount > pitch.bronseInvMax && amount <= pitch.silverInvMax) {
+  let multiplier = pitch.bronze_multiplier;
+  if (amount > pitch.silver_threshold && amount <= pitch.gold_threshold) {
     tier = "Silver";
-    multiplier = parseFloat(pitch.silverTierMulti);
-  } else if (amount > pitch.silverInvMax && amount <= pitch.goldTierMax) {
+    multiplier = pitch.silver_multiplier;
+  } else if (amount > pitch.gold_threshold) {
     tier = "Gold";
-    multiplier = parseFloat(pitch.goldTierMulti);
+    multiplier = pitch.gold_multiplier;
   }
+
   const shares = Math.floor(amount * multiplier);
 
-  await db
-    .update(InvestorAccounts)
-    .set({
-      InvWallet: sql`${InvestorAccounts.InvWallet} - ${amount}`,
-    })
-    .where(eq(InvestorAccounts.InvestorID, userId));
+  // -- Apply updates --
 
-  await db.insert(InvestmentLedger).values({
-    InvestorID: userId,
-    BusPitchID: busPitchID,
-    TierOfInvestment: tier,
-    AmountInvested: amount.toString(),
-    shares,
+  await db
+    .update(investor_accounts)
+    .set({
+      wallet_balance: sql`${investor_accounts.wallet_balance} - ${amount}`,
+    })
+    .where(eq(investor_accounts.id, userId));
+
+  await db.insert(investment_ledger).values({
+    investor_id: userId,
+    pitch_id: entityId, // canonical entity reference
+    tier,
+    amount_invested: amount,
+    shares_allocated: shares,
   });
 
-  // STEP 3 (optional): Credit the business account wallet
   await db
-    .update(BusinessAccount)
+    .update(business_accounts)
     .set({
-      BusWallet: sql`${BusinessAccount.BusWallet} + ${amount}`,
+      wallet_balance: sql`${business_accounts.wallet_balance} + ${amount}`,
     })
-    .where(eq(BusinessAccount.BusAccountID, pitch.BusAccountID));
+    .where(eq(business_accounts.id, pitch.business_account_id));
 
   return {
     success: true,
-    message: `Invested $${amount.toLocaleString()} in ${pitch.ProductTitle}`,
+    message: `Invested $${amount.toLocaleString()} in ${pitch.product_title}`,
+    tier,
+    shares,
   };
 }

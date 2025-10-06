@@ -1,328 +1,288 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { getPitch, updatePitch, deleteMedia} from "./_actions"; 
-import { fetchMedia } from "./s3Service";
-import Image from 'next/image';
-import { useUser } from "@clerk/nextjs";
-import type { Pitches } from "../../../../types/pitch";
-import { useRouter } from "next/navigation";
-import {getTotalInvestorsInPitch,getTotalMoneyInvestedInPitch} from "../_actions";
+import { getPitch, createPitchVersion, updatePitchMedia } from "./_actions";
+import { fetchAllMedia } from "@/lib/s3_utils";
+import Image from "next/image";
+import type { BusinessPitch } from "@/db/types";
 
-
-
-
-/**
- * Page component for displaying and editing the details of a pitch
- * @returns Edit Pitch Page
- */
 export default function PitchDetailsPage() {
   const { Pitchid: pitchIdParam } = useParams();
-  const pitchId = Number(pitchIdParam);
-  const { user } = useUser();
-  const userId = user?.id;
   const router = useRouter();
+  const BUCKET_URL = process.env.NEXT_PUBLIC_BUCKET_URL!;
 
-
-  const [pitch, setPitch] = useState<Pitches | null>(null);
+  const pitchId = String(pitchIdParam);
+  const [pitch, setPitch] = useState<BusinessPitch | null>(null);
   const [loading, setLoading] = useState(true);
+
   const [media, setMediaFiles] = useState<string[]>([]);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
-
+  const [featured, setFeatured] = useState<string | null>(null); // <- track featured file
 
   const [pitchName, setPitchName] = useState("");
   const [elevatorPitch, setElevatorPitch] = useState("");
   const [detailedPitch, setDetailedPitch] = useState("");
 
-  const [raisedAmount, setRaisedAmount] = useState(0);
-  const [investorCount, setInvestorCount] = useState(0);
+  useEffect(() => {
+    async function loadPitch() {
+      if (!pitchId) return;
 
+      try {
+        const fetchedPitch = await getPitch(pitchId);
+        setPitch(fetchedPitch);
+        setPitchName(fetchedPitch.product_title);
+        setElevatorPitch(fetchedPitch.elevator_pitch);
+        setDetailedPitch(fetchedPitch.detailed_pitch);
 
-  //finds public bucket key- May need to change to private for security
-  const BUCKET_URL = process.env.NEXT_PUBLIC_BUCKET_URL;
-
-
-useEffect(() => {
-  async function fetchPitchAndMedia() {
-    if (!pitchId) return;
-
-    try {
-      const data = await getPitch(pitchId);
-      if (!data) return;
-
-      setPitch(data);
-      setPitchName(data.ProductTitle || "");
-      setElevatorPitch(data.ElevatorPitch || "");
-      setDetailedPitch(data.DetailedPitch || "");
-
-      const raisedData = await getTotalMoneyInvestedInPitch(pitchId);
-      const investorData = await getTotalInvestorsInPitch(pitchId);
-      setRaisedAmount(raisedData?.totalAmount || 0);
-      setInvestorCount(investorData?.investorCount || 0);
-
-      // Fetch S3 media only
-      const s3Media = await fetchAllMedia(String(pitchId));
-      console.log("Fetched S3 media keys:", s3Media);
-
-      setMediaFiles(s3Media);
-
-    } catch (err) {
-      console.error("Error fetching pitch or media:", err);
-    } finally {
-      setLoading(false);
+        const mediaURLs = await fetchAllMedia(fetchedPitch.instance_id);
+        setMediaFiles(mediaURLs);
+        if (mediaURLs.length > 0) setFeatured(mediaURLs[0]); // Default first as featured
+      } catch (err) {
+        console.error("Error loading pitch:", err);
+      } finally {
+        setLoading(false);
+      }
     }
-  }
 
-  fetchPitchAndMedia();
-}, [pitchId]);
-
-
-
+    loadPitch();
+  }, [pitchId]);
 
   if (loading) return <p>Loading...</p>;
-  if (!pitch) return <p>Pitch not found</p>;
+  if (!pitch) return <p>Pitch not found.</p>;
 
-  const targetAmount = Number(pitch.TargetInvAmount) || 0;
+  const handleSave = async () => {
+    try {
+      // 1️⃣ Create a new DB version entry (metadata only)
+      const newInstanceId = await createPitchVersion(pitch.pitch_id, {
+        product_title: pitchName,
+        elevator_pitch: elevatorPitch,
+        detailed_pitch: detailedPitch,
+      });
 
-
-/**
- * The Delete function to call upon server action to remove an image from the pitch
- * @param fileKey 
- * @returns Deleted pitch
- */
-async function fetchAllMedia(pitchID: string) {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BUCKET_URL}?list-type=2&prefix=${pitchID}/`);
-  const data = await res.text();
-
-  const parser = new DOMParser();
-  const xml = parser.parseFromString(data, "application/xml");
-  const items = xml.getElementsByTagName("Key");
-
-  const mediaKeys: string[] = [];
-  for (let i = 0; i < items.length; i++) {
-    const key = items[i].textContent;
-    if (key && !key.endsWith("/")) { // skip folder keys
-      mediaKeys.push(`${process.env.NEXT_PUBLIC_BUCKET_URL}${key}`);
-    }
-  }
-
-  return mediaKeys;
-}
-
-const handleDelete = async (fileUrl: string) => {
-  if (!confirm(`Are you sure you want to delete ${fileUrl}?`)) return;
-
-  try {
-    // Extract S3 key from URL
-    const key = fileUrl.replace(process.env.NEXT_PUBLIC_BUCKET_URL!, "");
-
-    // Delete from S3
-    await deleteMedia(key);
-
-    // Update local state
-    setMediaFiles((prev) => prev.filter((m) => m !== fileUrl));
-
-    alert(`Deleted ${fileUrl}`);
-  } catch (err) {
-    console.error("Delete failed:", err);
-    alert(`Failed to delete ${fileUrl}`);
-  }
-};
-
-
-
-
-
-
-
-
-
-/**
-   * Saves edited pitch fields back into the database.
-   *
-   * @returns Uploads new field values to database
-   */
-const handleSave = async () => {
-  try {
-    await updatePitch(pitchId, {
-      ProductTitle: pitchName,
-      ElevatorPitch: elevatorPitch,
-      DetailedPitch: detailedPitch,
-    });
-
-    if (pendingFiles.length > 0) {
-      const uploadedKeys: string[] = [];
       const allowedTypes = ["image/", "video/"];
+      const allMedia: (string | File)[] = [
+        ...media.filter(Boolean),
+        ...pendingFiles,
+      ];
 
-      for (const file of pendingFiles) {
-        //Filters non media from upload
-        if (!allowedTypes.some(type => file.type.startsWith(type))) {
-          alert(`"${file.name}" is not an image or video file! Skipping.`);
+      // 2️⃣ Loop over all media and upload each to the right subpath
+      for (const item of allMedia) {
+        let file: File;
+        let fileName: string;
+
+        if (typeof item === "string") {
+          // Reupload existing file from its current URL
+          try {
+            const res = await fetch(item);
+            if (!res.ok) {
+              console.warn(`Skipping unreachable media: ${item}`);
+              continue;
+            }
+            const blob = await res.blob();
+            file = new File([blob], item.split("/").pop() || "media", {
+              type: blob.type || "application/octet-stream",
+            });
+            fileName = file.name;
+          } catch (err) {
+            console.warn("Unable to re-fetch existing media:", item, err);
+            continue;
+          }
+        } else {
+          file = item;
+          fileName = file.name;
+        }
+
+        if (!allowedTypes.some((t) => file.type.startsWith(t))) {
+          console.warn(`Skipping non-media file ${fileName}`);
           continue;
         }
 
-        const key = `${pitchId}/${file.name}`;
-        const response = await fetch(`${BUCKET_URL}${key}`, {
+        // Decide upload destination
+        const isFeatured =
+          item === featured ||
+          (typeof item === "string" && item === featured);
+
+        const key = isFeatured
+          ? `${newInstanceId}/featured/${fileName}`
+          : `${newInstanceId}/${fileName}`;
+
+        const uploadUrl = `${BUCKET_URL.replace(/\/$/, "")}/${key}`;
+
+        // Upload to public S3
+        const response = await fetch(uploadUrl, {
           method: "PUT",
           headers: { "Content-Type": file.type },
           body: file,
         });
 
-        if (!response.ok) throw new Error(`Failed to upload ${file.name}`);
-        uploadedKeys.push(key);
+        if (!response.ok) {
+          throw new Error(`Failed to upload ${fileName}: ${response.statusText}`);
+        }
+
+        console.log("✅ Uploaded:", uploadUrl);
       }
 
-      //Merge uploaded keys with existing medi
+      // 3️⃣ Finally update the new pitch version’s supporting_media with the folder path
+      await updatePitchMedia(newInstanceId, `${BUCKET_URL.replace(/\/$/, "")}/${newInstanceId}`);
 
+      alert("New version with featured media saved successfully!");
+      router.push("/business-portal");
+    } catch (err) {
+      console.error("Save failed:", err);
+      alert("Save failed, check console for details.");
     }
+  };
 
-    alert("Pitch and media updated!");
-    router.push("/business-portal"); // <- redirect to business portal
-  } catch (err) {
-    console.error("Error saving pitch:", err);
-    alert("Save failed, check console for details.");
-  }
-};
-
-
-return (
+  return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 p-6">
       <div className="lg:col-span-2 space-y-6">
-        {/* media Section */}
         <Card>
           <CardHeader>
             <CardTitle>Supporting Media</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent>
+            {/* Existing media */}
             <div className="flex flex-col gap-4">
- {media
-  .filter(Boolean)
-  .map((item, idx) => {
-    const extMatch = item.match(/\.(jpg|jpeg|png|gif|webp|mp4|mov)$/i);
-    if (!extMatch) return null;
-
-    return (
-      <div key={idx} className="relative">
-        {item.toLowerCase().endsWith(".mp4") ? (
-          <video src={item} width={400} height={300} controls />
-        ) : (
-          <Image
-            src={item} // <--- use item directly
-            alt={`Media ${idx + 1}`}
-            width={400}
-            height={300}
-          />
-        )}
-        <button
-          className="absolute top-2 right-2 bg-red-600 text-white rounded px-4 py-2 text-base font-semibold shadow-lg hover:bg-red-700 transition"
-          onClick={() => handleDelete(item)}
-        >
-          Delete
-        </button>
-      </div>
-    );
-  })}
-
-            </div>
-                  {/*Do the same but for pending files array */}
-                        {pendingFiles.length > 0 && (
-                        <div className="mt-4">
-                          <h3 className="text-lg font-semibold mb-2">Pending Images</h3>
-                          <div className="flex flex-wrap gap-3">
-                            {pendingFiles.map((file, idx) => {
-                              const fileURL = URL.createObjectURL(file);
-                              const handlePendingDelete = () => {
-                                setPendingFiles((prev) => prev.filter((_, i) => i !== idx));
-                              };
-
-                              return (
-                                <div key={idx} className="relative">
-                                  {file.type.startsWith("video/") ? (
-                                    <video src={fileURL} width={200} height={150} controls />
-                                  ) : (
-                                    <Image src={fileURL} alt={`Pending ${idx + 1}`} width={200} height={150} />
-                                  )}
-                                  <button
-                                    className="absolute top-2 right-2 bg-red-600 text-white rounded px-3 py-1 text-sm font-semibold shadow hover:bg-red-700 transition"
-                                    onClick={handlePendingDelete} // just removes from pendingFiles
-                                  >
-                                    Delete
-                                  </button>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
-
-                <div>
-                  <input
-                    type="file"
-                    accept="image/*,video/*"
-                    multiple
-                    onChange={(e) => {
-                      if (e.target.files) {
-                        setPendingFiles([...pendingFiles, ...Array.from(e.target.files)]);
-                      }
-                    }}
-                    className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 
-                      file:rounded-md file:border-0 file:text-sm file:font-semibold 
-                      file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
-                  />
+              {media.map((url, idx) => (
+                <div key={idx} className="relative">
+                  <div
+                    className={`relative border-4 ${featured === url ? "border-yellow-500" : "border-transparent"
+                      }`}
+                  >
+                    {url.endsWith(".mp4") ? (
+                      <video src={url} width={400} height={300} controls />
+                    ) : (
+                      <Image src={url} alt={`Media ${idx}`} width={400} height={300} />
+                    )}
+                    <div className="flex gap-2 absolute top-2 right-2">
+                      <Button
+                        size="sm"
+                        variant={featured === url ? "secondary" : "default"}
+                        onClick={() => setFeatured(url)}
+                      >
+                        {featured === url ? "⭐ Featured" : "Set Featured"}
+                      </Button>
+                    </div>
+                  </div>
                 </div>
-                  </CardContent>
+              ))}
+            </div>
+
+            {/* Pending uploads */}
+            {pendingFiles.length > 0 && (
+              <div className="mt-4">
+                <h3 className="text-lg font-semibold">Pending Uploads</h3>
+                <div className="flex flex-wrap gap-3">
+                  {pendingFiles.map((file, idx) => {
+                    const fileURL = URL.createObjectURL(file);
+                    return (
+                      <div key={idx} className="relative">
+                        {file.type.startsWith("video/") ? (
+                          <video src={fileURL} width={200} height={150} controls />
+                        ) : (
+                          <Image src={fileURL} fill alt={`Pending ${idx}`} width={200} height={150} />
+                        )}
+                        <div className="absolute top-2 right-2 flex gap-2">
+                          <Button
+                            size="sm"
+                            onClick={() => setFeatured(fileURL)}
+                            variant={featured === fileURL ? "secondary" : "default"}
+                          >
+                            {featured === fileURL ? "⭐ Featured" : "Set Featured"}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            onClick={() =>
+                              setPendingFiles((prev) => prev.filter((_, i) => i !== idx))
+                            }
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <input
+              type="file"
+              accept="image/*,video/*"
+              multiple
+              onChange={(e) => {
+                if (e.target.files) {
+                  setPendingFiles([...pendingFiles, ...Array.from(e.target.files)]);
+                }
+              }}
+              className="mt-4 block w-full file:rounded-md file:border-0 file:py-2 file:px-4
+                  file:bg-primary file:text-primary-foreground hover:file:bg-primary/90"
+            />
+          </CardContent>
         </Card>
 
-        {/* edit pitch text fields */}
-        <div className="space-y-6">
+        {/* Editable text fields */}
+        <div className="space-y-6 mt-6">
           <div>
-            <h2 className="text-2xl font-semibold mb-2">Title</h2>
-            <Input value={pitchName} onChange={(e) => setPitchName(e.target.value)} className="text-3xl font-bold w-full" placeholder="Pitch Name" />
+            <h2 className="text-2xl font-semibold">Title</h2>
+            <Input value={pitchName} onChange={(e) => setPitchName(e.target.value)} />
           </div>
 
           <div>
-            <h3 className="text-2xl font-semibold mb-2">Elevator Pitch</h3>
-            <textarea value={elevatorPitch} onChange={(e) => setElevatorPitch(e.target.value)} className="w-full text-lg p-2 border rounded-md resize-none" rows={3} placeholder="Elevator Pitch" />
+            <h3 className="text-2xl font-semibold">Elevator Pitch</h3>
+            <textarea
+              value={elevatorPitch}
+              onChange={(e) => setElevatorPitch(e.target.value)}
+              rows={3}
+              className="w-full p-2 border rounded-md"
+            />
           </div>
 
           <div>
-            <h2 className="text-2xl font-semibold mb-2">Detailed Pitch</h2>
-            <textarea value={detailedPitch} onChange={(e) => setDetailedPitch(e.target.value)} className="w-full p-3 border rounded-md resize-none h-72" placeholder="Detailed Pitch" />
-          </div>
-
-          <div className="space-y-1">
-            <h2 className="text-2xl font-semibold">Investment Terms</h2>
-            <p><strong>Profit Share:</strong> {pitch.InvProfShare}% of revenue</p>
-            <p><strong>Dividend Period:</strong> {pitch.DividEndPayoutPeriod}</p>
+            <h3 className="text-2xl font-semibold">Detailed Pitch</h3>
+            <textarea
+              value={detailedPitch}
+              onChange={(e) => setDetailedPitch(e.target.value)}
+              rows={6}
+              className="w-full p-2 border rounded-md"
+            />
           </div>
         </div>
       </div>
 
-      <div className="lg:col-span-1">
-        <div className="sticky top-19 space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Invest in {pitch.ProductTitle}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-            <Progress value={(raisedAmount / targetAmount) * 100} />
-            <p>${raisedAmount.toLocaleString()} raised of ${targetAmount.toLocaleString()} goal</p>
-            <p>${(targetAmount - raisedAmount).toLocaleString()} remaining</p>
-            <p><strong>Investors:</strong> {investorCount}</p>
-            </CardContent>
-          </Card>
-          <div className="pt-2">
-    <Button onClick={handleSave} className="w-full">
-      Save Changes
-    </Button>
-  </div>
-        </div>
+      <div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Investment Summary</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <Progress
+              value={(pitch.raised_amount / pitch.target_investment_amount) * 100}
+            />
+            <p>
+              ${pitch.raised_amount.toLocaleString()} raised of $
+              {pitch.target_investment_amount.toLocaleString()}
+            </p>
+            <p>
+              <strong>Profit Share:</strong>{" "}
+              {pitch.investor_profit_share_percent}%
+            </p>
+            <p>
+              <strong>Dividend Period:</strong>{" "}
+              {pitch.dividend_payout_period}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Button onClick={handleSave} className="w-full mt-4">
+          Save Changes
+        </Button>
       </div>
     </div>
   );

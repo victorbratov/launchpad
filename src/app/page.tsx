@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Shield, Rocket, Bot } from "lucide-react";
 import { SignUpButton } from "@clerk/nextjs";
+import Image from "next/image";
 
 export default function LandingPage() {
   return (
