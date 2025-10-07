@@ -3,7 +3,7 @@
 import { db } from "@/db";
 import { business_pitches, business_accounts } from "@/db/schema";
 import { fetchFeaturedMedia } from "@/lib/s3_utils";
-import { gt, asc } from "drizzle-orm";
+import { gt, desc } from "drizzle-orm";
 import { int } from "drizzle-orm/mysql-core";
 
 const PitchAd = {
@@ -21,7 +21,7 @@ const PitchAd = {
 export async function getAdvertisementPitches() {
     const pitches = await db.select(PitchAd).from(business_pitches)
         .where(gt(business_pitches.adverts_available, 0))
-        .orderBy(asc(business_pitches.adverts_available));
+        .orderBy(desc(business_pitches.adverts_available));
     // get the url of the featured media for each pitch
     for (const pitch of pitches) {
         if (pitch.media) {
