@@ -26,6 +26,7 @@ import { CalendarIcon } from "lucide-react";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { RAGGauge } from "@/components/rag_gauge";
+import { InfoBubble } from "@/components/ui/infobubble";
 
 import { Dropzone } from "@mantine/dropzone";
 import { Group, Text } from "@mantine/core";
@@ -360,7 +361,10 @@ export default function CreatePitchPage() {
               </div>
 
               {/* Profit Share % */}
-              <Label>Profit Share %</Label>
+              <div className="flex items-center gap-2">
+                <Label>Profit Share %</Label>
+                <InfoBubble message="The percentage of profits distributed between investors once you meet your dividend period" />
+              </div>
               <Input
                 type="number"
                 placeholder="Enter % of profits distributed"
@@ -373,7 +377,10 @@ export default function CreatePitchPage() {
 
               {/* Dividend period */}
               <div>
-                <Label>Dividend Period</Label>
+                <div className="flex items-center gap-2"> 
+                  <Label>Dividend Period</Label>
+                  <InfoBubble message="The frequency at which dividends are paid to investors. The time is measured in years or months." />
+                </div>
                 <Select
                   value={dividendPeriod}
                   onValueChange={setDividendPeriod}
@@ -431,20 +438,39 @@ export default function CreatePitchPage() {
 
               {/* Multipliers */}
               <div className="pt-4 font-semibold">Set Tier Multipliers</div>
-              <Label>Bronze Max (USD)</Label>
+              <div className="flex items-center gap-2">
+                <Label>Bronze Max (USD)</Label>
+                <InfoBubble message="Maximum investment amount allowed for bronze tier investors. Sets the entry-level investment threshold." />
+              </div>
               <Input type="number" placeholder="500" value={bronzeMax ?? ""} onChange={(e) => setBronzeMax(e.target.value === "" ? undefined : + e.target.value)} required />
-              <Label>Bronze Multiplier</Label>
+              <div className="flex items-center gap-2">
+                <Label>Bronze Multiplier</Label>
+                <InfoBubble message="Dividend multiplier for bronze investors. 1.0 = base dividend rate, 1.2 = 20% bonus on dividends." />
+              </div>
               <Input type="number" placeholder="1.0" step={0.1} value={bronzeMultiplier} onChange={(e) => setBronzeMultiplier(e.target.value)} required />
-              <Label>Silver Max (USD)</Label>
+              <div className="flex items-center gap-2">
+                <Label>Silver Max (USD)</Label>
+                <InfoBubble message="Maximum investment amount for silver tier. Higher investment threshold for increased dividend benefits." />
+              </div>
               <Input type="number" placeholder="800" value={silverMax ?? ""} onChange={(e) => setSilverMax(e.target.value === "" ? undefined : + e.target.value)} required />
-              <Label>Silver Multiplier</Label>
+              <div className="flex items-center gap-2">
+                <Label>Silver Multiplier</Label>
+                <InfoBubble message="Enhanced dividend multiplier for silver tier investors. Should be higher than bronze but lower than gold." />
+              </div>
               <Input type="number" placeholder="1.2" step={0.1} value={silverMultiplier} onChange={(e) => setSilverMultiplier(e.target.value)} required />
-              <Label>Gold Multiplier</Label>
+              
+              <div className="flex items-center gap-2">
+                <Label>Gold Multiplier</Label>
+                <InfoBubble message="Premium dividend multiplier for gold tier investors. Highest dividend rate for top-tier contributors." />
+              </div>
               <Input type="number" placeholder="1.5" step={0.1} value={goldMultiplier} onChange={(e) => setGoldMultiplier(e.target.value)} required />
 
               {/* Tags */}
               <div>
-                <Label>Tags</Label>
+                <div className="flex items-center gap-2">
+                  <Label >Tags</Label>
+                  <InfoBubble message="Select one or more tags relevant to your business to help investors pin point there search for your pitch." />
+                </div>
                 <div className="max-h-48 overflow-y-auto border rounded p-2 space-y-1">
                   {availableTags.map((tag) => (
                     <div key={tag} className="flex items-center gap-2">
@@ -472,7 +498,10 @@ export default function CreatePitchPage() {
         {/* Right panel: AI feedback */}
         <Card className="lg:col-span-1">
           <CardHeader>
-            <CardTitle>AI Assistance</CardTitle>
+            <div className = "flex items-center gap-2">
+              <CardTitle>AI Assistance</CardTitle>
+              <InfoBubble message="This is where the AI provides feedback on your pitch. You get three scores: RAG (Red, Amber, Green). Green is the best score the AI can give. Red is the worst." />
+            </div>
           </CardHeader>
           <CardContent>
             {ragScore ? (
