@@ -210,8 +210,13 @@ export const makeAdPayment = async (pitchId: string, amount: number) => {
   }
 
   await db.transaction(async (tx) => {
-    await tx.insert(transactions).values({ account_type: "business", account_id: userInfo.id, txn_type: "ad_payment", amount, description: `Ad payment for pitch ${latestPitch.product_title}` });  
-    await tx.update(business_accounts).set({ wallet_balance: sql`${business_accounts.wallet_balance} - ${amount}` }).where(eq(business_accounts.id, userInfo.id));
+    await tx.insert(transactions).values({ account_type: "business", account_id: userInfo.id, txn_type: "ad_payment", amount, description: `Ad payment for pitch ${latestPitch.product_title}` });
+    await tx.update(business_accounts).set({
+      wallet_balance: sql`${business_accounts.wallet_balance} - ${amount}`
+    }).where(eq(business_accounts.id, userInfo.id));
+    await tx.update(business_pitches).set({
+      total_advert_clicks: 0, // reset advert clicks to 0 after payment
+    }).where(eq(business_pitches.instance_id, latestPitch.instance_id));
   });
 }
 

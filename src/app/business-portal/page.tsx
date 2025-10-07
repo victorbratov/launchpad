@@ -166,6 +166,7 @@ export default function BusinessPortalPage() {
         onOpenChange={setAdPaymentDialogOpen}
         balance={accountInfo?.wallet_balance ?? 0}
         pitch={selectedPitch}
+        onProfitsDistributed={loadData}
       />
     </div>
   );

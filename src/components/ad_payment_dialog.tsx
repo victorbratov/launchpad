@@ -17,10 +17,11 @@ interface AdPaymentDialogProps {
     balance: number;
     pitch: BusinessPitch | null;
     onOpenChange: (open: boolean) => void;
+    onProfitsDistributed: () => void;
 }
 
 export const AdPaymentDialog: React.FC<AdPaymentDialogProps> = ({
-    open, onOpenChange, balance, pitch
+    open, onOpenChange, balance, pitch, onProfitsDistributed
 }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
@@ -49,6 +50,7 @@ export const AdPaymentDialog: React.FC<AdPaymentDialogProps> = ({
                 // reset state and close dialog
                 setLoading(false);
                 onOpenChange(false);
+                onProfitsDistributed();
             } catch (error) {
                 console.error("Error declaring profits:", error);
                 setLoading(false);

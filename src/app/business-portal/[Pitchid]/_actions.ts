@@ -34,6 +34,7 @@ export async function createPitchVersion(
     product_title: string;
     elevator_pitch: string;
     detailed_pitch: string;
+    adverts_available: number;
   }
 ) {
   const { isAuthenticated, userId } = await auth();
@@ -58,6 +59,7 @@ export async function createPitchVersion(
       product_title: values.product_title,
       elevator_pitch: values.elevator_pitch,
       detailed_pitch: values.detailed_pitch,
+      adverts_available: values.adverts_available,
       supporting_media: "", // will fill later
       created_at: new Date(),
     })
@@ -66,13 +68,3 @@ export async function createPitchVersion(
   return newVersion.instance_id;
 }
 
-/**
- * Update the media URLs for a specific instance
- */
-export async function updatePitchMedia(instanceId: string, mediaUrls: string) {
-  await db
-    .update(business_pitches)
-    .set({ supporting_media: mediaUrls })
-    .where(eq(business_pitches.instance_id, instanceId));
-  return { success: true };
-}
