@@ -35,7 +35,7 @@ import SortableList, { SortableItem } from "react-easy-sort";
 import { arrayMoveImmutable } from "array-move";
 
 import { format } from "date-fns";
-import { createPitch, checkBusinessAuthentication } from "./_actions";
+import { createPitch, checkBusinessAuthentication, PitchInput, evaluatePitch } from "./_actions";
 import {
   validateDates,
   validateMaxes,
@@ -44,7 +44,6 @@ import {
 } from "./utils";
 import Image from "next/image";
 
-// Available tags for pitch categorization
 const availableTags = [
   "green energy", "water", "sustainability", "education", "AI", "language", "community",
   "food", "fashion", "recycling", "VR", "technology", "transportation", "gaming", "indie", "packaging"
@@ -53,7 +52,6 @@ const availableTags = [
 export default function CreatePitchPage() {
   const router = useRouter();
 
-  // Core form state
   const [title, setTitle] = useState("");
   const [elevatorPitch, setElevatorPitch] = useState("");
   const [detailedPitch, setDetailedPitch] = useState("");
@@ -71,16 +69,14 @@ export default function CreatePitchPage() {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [status, setStatus] = useState("Pending");
 
-  // Media
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
   const [editing, setEditing] = useState(false);
 
-  // Feedback loader
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [ragScore, setRagScore] = useState<string | null>(null);
+  const [recommendations, setRecommendations] = useState<string[] | null>(null);
 
-  // ensure business authentication
   useEffect(() => {
     checkBusinessAuthentication().then((isBusiness) => {
       if (!isBusiness) {
@@ -90,21 +86,35 @@ export default function CreatePitchPage() {
     });
   }, []);
 
-  /** Toggle tags */
   const toggleTag = (tag: string) => {
     setSelectedTags((prev) =>
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
     );
   };
 
-  /** Handle AI mock evaluation */
   const handleEvaluate = () => {
-    const scores = ["Red", "Amber", "Green"];
-    const randomScore = scores[Math.floor(Math.random() * scores.length)];
-    setRagScore(randomScore);
-    setFeedback(
-      "This is a mocked AI evaluation: The pitch has a good problem/solution fit, but could elaborate further on target market sizing and competitor differentiation."
-    );
+    async function fetchEvaluation() {
+      if (title.trim() === "" || elevatorPitch.trim() === "" || detailedPitch.trim() === "" || goal.trim() === "" || dividendPeriod.trim() === "" || !profitShare) {
+        alert("Please fill in all required fields before running the evaluation.");
+      }
+
+      const pitchInput: PitchInput = {
+        title: title.trim(),
+        elevatorPitch: elevatorPitch.trim(),
+        detailedPitch: detailedPitch.trim(),
+        targetAmount: parseInt(goal.trim()),
+        profitShareFrequency: dividendPeriod.trim() as "quarterly" | "yearly",
+        profitSharePercentage: profitShare ?? 0,
+      }
+
+      const response = await evaluatePitch(pitchInput);
+
+      setRagScore(response.classification);
+      setFeedback(response.reasoning);
+      setRecommendations(response.recommendations);
+    }
+
+    fetchEvaluation();
   };
 
   /**
@@ -203,7 +213,6 @@ export default function CreatePitchPage() {
     }
   };
 
-  /** Drop / sort handlers */
   const handleDrop = (files: File[]) =>
     setMediaFiles((prev) => [...prev, ...files]);
   const deleteItem = (index: number) =>
@@ -211,7 +220,6 @@ export default function CreatePitchPage() {
   const onSortEnd = (oldIndex: number, newIndex: number) =>
     setMediaFiles((arr) => arrayMoveImmutable(arr, oldIndex, newIndex));
 
-  /** Previews */
   const previews = mediaFiles.map((file, index) => {
     const src = URL.createObjectURL(file);
     return (
@@ -224,7 +232,7 @@ export default function CreatePitchPage() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      
+
       <Dialog open={loading}>
         <DialogContent>
           <DialogHeader>
@@ -237,7 +245,6 @@ export default function CreatePitchPage() {
       </Dialog>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left: Pitch Form */}
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>Create New Pitch</CardTitle>
@@ -245,13 +252,11 @@ export default function CreatePitchPage() {
 
           <form onSubmit={handleSubmit}>
             <CardContent className="space-y-6">
-              {/* Title */}
               <div>
                 <Label>Pitch Title</Label>
                 <Input value={title} placeholder="Enter your pitch title" onChange={(e) => setTitle(e.target.value)} required />
               </div>
 
-              {/* Elevator Pitch */}
               <div>
                 <Label>Elevator Pitch</Label>
                 <Input
@@ -262,7 +267,6 @@ export default function CreatePitchPage() {
                 />
               </div>
 
-              {/* Detailed Pitch */}
               <div>
                 <Label>Detailed Pitch</Label>
                 <Textarea
@@ -273,7 +277,6 @@ export default function CreatePitchPage() {
                 />
               </div>
 
-              {/* Media */}
               <div>
                 <Label>Supporting Media</Label>
                 <p className="text-neutral-500 text-sm">
@@ -317,7 +320,6 @@ export default function CreatePitchPage() {
                 )}
               </div>
 
-              {/* Editing dialog */}
               <Dialog open={editing} onOpenChange={setEditing}>
                 <DialogContent className="max-w-3xl">
                   <DialogHeader>
@@ -348,7 +350,6 @@ export default function CreatePitchPage() {
                 </DialogContent>
               </Dialog>
 
-              {/* Goal */}
               <div>
                 <Label>Funding Goal (USD)</Label>
                 <Input
@@ -375,9 +376,8 @@ export default function CreatePitchPage() {
                 min={1} max={100} step={0.1}
                 required />
 
-              {/* Dividend period */}
               <div>
-                <div className="flex items-center gap-2"> 
+                <div className="flex items-center gap-2">
                   <Label>Dividend Period</Label>
                   <InfoBubble message="The frequency at which dividends are paid to investors. The time is measured in years or months." />
                 </div>
@@ -395,7 +395,6 @@ export default function CreatePitchPage() {
                 </Select>
               </div>
 
-              {/* Dates */}
               <div className="flex flex-col sm:flex-row gap-4">
                 <div className="flex-1">
                   <Label>Funding Start Date</Label>
@@ -436,7 +435,6 @@ export default function CreatePitchPage() {
                 </div>
               </div>
 
-              {/* Multipliers */}
               <div className="pt-4 font-semibold">Set Tier Multipliers</div>
               <div className="flex items-center gap-2">
                 <Label>Bronze Max (USD)</Label>
@@ -458,14 +456,13 @@ export default function CreatePitchPage() {
                 <InfoBubble message="Enhanced dividend multiplier for silver tier investors. Should be higher than bronze but lower than gold." />
               </div>
               <Input type="number" placeholder="1.2" step={0.1} value={silverMultiplier} onChange={(e) => setSilverMultiplier(e.target.value)} required />
-              
+
               <div className="flex items-center gap-2">
                 <Label>Gold Multiplier</Label>
                 <InfoBubble message="Premium dividend multiplier for gold tier investors. Highest dividend rate for top-tier contributors." />
               </div>
               <Input type="number" placeholder="1.5" step={0.1} value={goldMultiplier} onChange={(e) => setGoldMultiplier(e.target.value)} required />
 
-              {/* Tags */}
               <div>
                 <div className="flex items-center gap-2">
                   <Label >Tags</Label>
@@ -484,7 +481,6 @@ export default function CreatePitchPage() {
                 </div>
               </div>
 
-              {/* Actions */}
               <div className="flex gap-4">
                 <Button variant="outline" type="button" onClick={handleEvaluate}>
                   AI Evaluation
@@ -495,22 +491,35 @@ export default function CreatePitchPage() {
           </form>
         </Card>
 
-        {/* Right panel: AI feedback */}
-        <Card className="lg:col-span-1">
+        <Card className="lg:col-span-1 lg:sticky lg:top-20 h-[calc(100vh-7rem)] overflow-hidden">
           <CardHeader>
-            <div className = "flex items-center gap-2">
+            <div className="flex items-center gap-2">
               <CardTitle>AI Assistance</CardTitle>
               <InfoBubble message="This is where the AI provides feedback on your pitch. You get three scores: RAG (Red, Amber, Green). Green is the best score the AI can give. Red is the worst." />
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="h-full overflow-y-auto">
             {ragScore ? (
               <div className="space-y-6">
                 <RAGGauge ragScore={ragScore as "Red" | "Amber" | "Green"} />
+
                 <div className="p-4 border rounded bg-muted">
                   <p className="font-semibold mb-1">AI Feedback</p>
-                  <p className="text-sm text-muted-foreground">{feedback}</p>
+                  <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                    {feedback}
+                  </p>
                 </div>
+
+                {recommendations && recommendations.length > 0 && (
+                  <div className="p-4 border rounded bg-white shadow-sm">
+                    <p className="font-semibold mb-2">Recommendations</p>
+                    <ul className="list-disc pl-6 space-y-1 text-sm text-muted-foreground">
+                      {recommendations.map((rec, idx) => (
+                        <li key={idx}>{rec}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
