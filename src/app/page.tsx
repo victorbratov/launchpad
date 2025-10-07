@@ -5,8 +5,36 @@ import { Button } from "@/components/ui/button";
 import { Shield, Rocket, Bot } from "lucide-react";
 import { SignUpButton } from "@clerk/nextjs";
 import Image from "next/image";
+import { useEffect, useState } from "react";
+import { getAdvertisementPitches } from "./actions";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel"
+import { Advert } from "../../types/advert";
+import Autoplay from "embla-carousel-autoplay"
+
 
 export default function LandingPage() {
+  const [adverts, setAdverts] = useState<Advert[]>([]);
+  useEffect(() => {
+    const fetchAdverts = async () => {
+      try {
+        const adverts = await getAdvertisementPitches();
+        setAdverts(adverts);
+
+        console.log("Fetched adverts:", adverts);
+      } catch (error) {
+        console.error("Error fetching advertisement pitches:", error);
+      }
+    };
+    fetchAdverts();
+  }, []);
+
+
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
@@ -30,13 +58,31 @@ export default function LandingPage() {
             </Button>
           </SignUpButton>
         </div>
-        {/* optional hero image */}
-        <div className="mt-12">
-          <img
-            src="https://placehold.co/800x400?text=AI+Helping+Small+Businesses"
-            alt="AI helping create pitches"
-            className="rounded-lg shadow-lg"
-          />
+
+        {/* Advertisement space */}
+        <div className="mt-12 relative w-full max-w-xs">
+          <Carousel
+            opts={{
+              loop: true,
+            }}
+            plugins={[
+              Autoplay({
+                delay: 3000,
+              }),
+            ]}
+          >
+            <CarouselContent className="flex gap-4">
+              {adverts.map((advert) => (
+                <CarouselItem key={advert.id} className="max-h-[400px] space-y-3 mx-1 items-center gap-4 p-4 border border-2 rounded-lg border-gray-400 bg-white shadow-md">
+                  <Image className="rounded-lg object-contain" src={advert.media || "/nasa-dCgbRAQmTQA-unsplash.jpg"} alt={advert.title} width={500} height={300} />
+                  <h3 className="text-lg font-semibold line-clamp-2">{advert.title}</h3>
+                  <p className="line-clamp-5">{advert.elevator_pitch}</p>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselNext />
+            <CarouselPrevious />
+          </Carousel>
         </div>
       </section>
 

@@ -19,7 +19,7 @@ export function PitchCard({ pitch }: PitchCardProps) {
 
   useEffect(() => {
     async function loadMedia() {
-      const mediaUrl = await fetchFeaturedMedia(pitch.instance_id);
+      const mediaUrl = await fetchFeaturedMedia(pitch.pitch_id);
 
       setMedia(mediaUrl);
     }
