@@ -70,7 +70,7 @@ export async function investInPitch(entityId: string, amount: number) {
   const [pitch] = await db
     .select()
     .from(business_pitches)
-    .where(eq(business_pitches.pitch_id, entityId))
+    .where(eq(business_pitches.instance_id, entityId))
     .orderBy(sql`${business_pitches.version} DESC`)
     .limit(1);
 
@@ -113,9 +113,10 @@ export async function investInPitch(entityId: string, amount: number) {
     })
     .where(eq(investor_accounts.id, userId));
 
+  console.log(entityId);
   await db.insert(investment_ledger).values({
     investor_id: userId,
-    pitch_id: entityId, // canonical entity reference
+    pitch_id: entityId, // instance id of pitch
     tier,
     amount_invested: amount,
     shares_allocated: shares,
