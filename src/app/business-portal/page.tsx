@@ -12,20 +12,24 @@ import { FundsDialog } from "@/components/funds_dialog";
 import { PitchDialog } from "@/components/pitch_dialog";
 import { BusinessAccount, BusinessPitch } from "@/db/types";
 import { depositFunds, getBusinessAccountInfo, getPitches, withdrawFunds } from "./_actions";
-import { profitPeriodReached } from "@/lib/utils";
+import { hasDateBeenReached } from "@/lib/utils";
 import { TriangleAlert } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { ProfitsDialog } from "@/components/profits_dialog";
+import { AdPaymentDialog } from "@/components/ad_payment_dialog";
 
 export default function BusinessPortalPage() {
   const [accountInfo, setAccountInfo] = useState<BusinessAccount | null>(null);
   const [pitches, setPitches] = useState<BusinessPitch[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionablePitch, setActionablePitch] = useState(false);
+  const [adPaymentTime, setAdPaymentTime] = useState<boolean>(false);
 
   const [selectedPitch, setSelectedPitch] = useState<BusinessPitch | null>(null);
+
   const [dialogOpen, setDialogOpen] = useState(false);
   const [profitDialogOpen, setProfitDialogOpen] = useState(false);
+  const [adPaymentDialogOpen, setAdPaymentDialogOpen] = useState(false);
 
   useEffect(() => {
     loadData().then(() => setLoading(false));
@@ -41,8 +45,8 @@ export default function BusinessPortalPage() {
 
     setPitches(business_pitches);
     setAccountInfo(account_info);
-    setActionablePitch(business_pitches.some((pitch) => profitPeriodReached(pitch)));
-
+    setActionablePitch(business_pitches.some((pitch) => hasDateBeenReached(pitch.next_payout_date)));
+    setAdPaymentTime(business_pitches.some((pitch) => hasDateBeenReached(pitch.end_date) && pitch.total_advert_clicks > 0));
   }
 
   /**
@@ -101,6 +105,11 @@ export default function BusinessPortalPage() {
                   <Label className="flex justify-center h-10 border border-2 border-orange-800 bg-orange-200 "><TriangleAlert className="inline mr-2" />You have 1 or more pitches that require profit reporting!<TriangleAlert className="inline ml-2" /></Label>
                 </div>
               )}
+              {adPaymentTime &&(
+                <div className="space-y-2 mb-4">
+                  <Label className="flex justify-center h-10 border border-2 border-purple-800 bg-purple-200 "><TriangleAlert className="inline mr-2" />You have 1 or more pitches that require ad payment!<TriangleAlert className="inline ml-2" /></Label>
+                </div>
+              )}
               <Table>
                 <TableHeader>
                   <TableRow className="bg-muted">
@@ -116,8 +125,8 @@ export default function BusinessPortalPage() {
 
                     <TableRow
                       key={pitch.pitch_id}
-                      className={`cursor-pointer ${profitPeriodReached(pitch) ? "bg-orange-100 hover:bg-orange-200" : "hover:bg-muted/50"}`}
-                      onClick={() => { profitPeriodReached(pitch) ? handleProfitRowCLick(pitch) : handleRowClick(pitch) }}
+                      className={`cursor-pointer ${hasDateBeenReached(pitch.end_date) ? "bg-purple-100 hover:bg-purple-200" : hasDateBeenReached(pitch.next_payout_date) ? "bg-orange-100 hover:bg-orange-200": "hover:bg-muted/50"}`}
+                      onClick={() => { hasDateBeenReached(pitch.next_payout_date) ? handleProfitRowCLick(pitch) : handleRowClick(pitch) }}
                     >
                       <TableCell className="font-medium">{pitch.product_title}</TableCell>
                       <TableCell>
@@ -151,6 +160,12 @@ export default function BusinessPortalPage() {
         balance={accountInfo?.wallet_balance ?? 0}
         onOpenChange={setProfitDialogOpen}
         onProfitsDistributed={loadData}
+      />
+      <AdPaymentDialog
+        open={adPaymentDialogOpen}
+        onOpenChange={setAdPaymentDialogOpen}
+        balance={accountInfo?.wallet_balance ?? 0}
+        pitch={selectedPitch}
       />
     </div>
   );

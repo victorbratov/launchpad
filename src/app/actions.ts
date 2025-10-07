@@ -54,7 +54,6 @@ export async function getAdvertisementPitches() {
  * @param pitchInstanceId The pitch instance ID to update
  */
 export async function updateAdvertCount(pitchInstanceId: string) {
-    console.log("Updating advert count for pitch instance ID:", pitchInstanceId);
     await db
         .update(business_pitches)
         .set({ 
