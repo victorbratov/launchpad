@@ -11,7 +11,6 @@ import {
 } from "@/db/schema";
 import { BusinessPitch } from "@/db/types";
 import { eq, sql } from "drizzle-orm";
-import { id } from "date-fns/locale";
 
 /**
  * Get a pitch version by instance_id (a specific version).
@@ -134,12 +133,6 @@ export async function investInPitch(entityId: string, amount: number, withdrawCh
     })
     .where(eq(bank_accounts.id, investor.bank_account_id));
   }
-  
-
-
-
-
-
 
 
   console.log(entityId);
