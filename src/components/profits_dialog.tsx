@@ -24,13 +24,15 @@ interface ProfitDialogProps {
 }
 
 export function ProfitsDialog({ pitch, open, balance, onOpenChange, onProfitsDistributed }: ProfitDialogProps) {
-    if (!pitch) return null;
+    
     const [profitAmount, setProfitAmount] = useState<number | "">(0);
     const [chooseFunds, setChooseFunds] = useState<boolean>(false);
     const [sharedProfit, setSharedProfit] = useState<number>(0);
     const [message, setMessage] = useState<string>("");
     const [errorMessage, setErrorMessage] = useState<string>("");
 
+    if (!pitch) return null;
+    
     function reportProfits() {
         if (profitAmount === "" || profitAmount <= 0) {
             alert("Please enter a valid profit amount");
@@ -48,11 +50,11 @@ export function ProfitsDialog({ pitch, open, balance, onOpenChange, onProfitsDis
         } catch (error) {
             console.error("Error depositing from bank:", error);
         }
-        usePlatformBalance();
+        UsePlatformBalance();
 
     }
 
-    async function usePlatformBalance() {
+    async function UsePlatformBalance() {
         if (pitch) {
             try {
                 await declareProfits(pitch.pitch_id, sharedProfit, message);
@@ -81,7 +83,7 @@ export function ProfitsDialog({ pitch, open, balance, onOpenChange, onProfitsDis
                 {!chooseFunds ? (
                     <div>
                         <div className="space-y-4">
-                            <p className="text-sm text-muted-foreground">It's time to declare profits for this pitch. Please enter your profits.</p>
+                            <p className="text-sm text-muted-foreground">It is time to declare profits for this pitch. Please enter your profits.</p>
                             <div className="space-y-2">
                                 <Label>Profit Amount ($)</Label>
                                 <Input
@@ -121,7 +123,7 @@ export function ProfitsDialog({ pitch, open, balance, onOpenChange, onProfitsDis
                             <p className="mb-4">Where will you distribute profits from?</p>
                             <div className="flex justify-between gap-4">
                                 <Button className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded" onClick={depositFromBank}>Linked Bank Account</Button>
-                                <Button disabled={balance < sharedProfit} className={`flex-1 ${balance > sharedProfit ? "bg-indigo-600 hover:bg-indigo-700" : "bg-gray-600 hover:bg-gray-700"} text-white px-4 py-2 rounded`} onClick={usePlatformBalance}>Platform Balance</Button>
+                                <Button disabled={balance < sharedProfit} className={`flex-1 ${balance > sharedProfit ? "bg-indigo-600 hover:bg-indigo-700" : "bg-gray-600 hover:bg-gray-700"} text-white px-4 py-2 rounded`} onClick={UsePlatformBalance}>Platform Balance</Button>
                             </div>
                         </div>
                     )
