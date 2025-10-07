@@ -65,7 +65,7 @@ export default function PitchDetailsPage() {
         setPitch(pitchData);
         setVersions(versions);
         setInvestmentSummary(total);
-        fetchAllMedia(pitchData.instance_id).then((m) => setMedia(m));
+        fetchAllMedia(pitchData.pitch_id).then((m) => setMedia(m));
       } catch (err) {
         console.error(err);
         setMessage("Error loading pitch data.");

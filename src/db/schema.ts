@@ -73,7 +73,7 @@ export const business_pitches = pgTable("business_pitches", {
 
   created_at: timestamp("created_at").defaultNow(),
   adverts_available: integer("adverts_available").notNull().default(0),
-
+  total_advert_clicks: integer("total_advert_clicks").notNull().default(0),
 });
 
 export const investment_ledger = pgTable("investment_ledger", {

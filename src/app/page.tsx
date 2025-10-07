@@ -6,7 +6,7 @@ import { Shield, Rocket, Bot } from "lucide-react";
 import { SignUpButton } from "@clerk/nextjs";
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { getAdvertisementPitches } from "./actions";
+import { getAdvertisementPitches, updateAdvertCount } from "./actions";
 import {
   Carousel,
   CarouselContent,
@@ -16,10 +16,13 @@ import {
 } from "@/components/ui/carousel"
 import { Advert } from "../../types/advert";
 import Autoplay from "embla-carousel-autoplay"
+import { useRouter } from "next/navigation";
 
 
 export default function LandingPage() {
   const [adverts, setAdverts] = useState<Advert[]>([]);
+  const router = useRouter();
+
   useEffect(() => {
     const fetchAdverts = async () => {
       try {
@@ -34,6 +37,14 @@ export default function LandingPage() {
     fetchAdverts();
   }, []);
 
+  async function advertClicked(advertID: string) {
+    // Each advert click costs 0.01 from the advert 
+    try { await updateAdvertCount(advertID); }
+    catch (error) { console.error("Error updating advert count:", error); }
+    // Redirect to the advert's pitch page
+    router.push(`/pitches/${advertID}`);
+  }
+
 
   return (
     <div className="flex flex-col">
@@ -43,22 +54,6 @@ export default function LandingPage() {
           Launchpad<br />
           <span className="text-primary">Powered by AI</span>
         </h1>
-        <p className="mt-6 text-lg text-muted-foreground max-w-2xl">
-          Launchpad helps small businesses craft winning pitches with AI while
-          empowering private investors to discover secure and fraud-free
-          opportunities.
-        </p>
-        <div className="mt-8 flex gap-4">
-          <Link href="/pitches">
-            <Button size="lg">Discover Pitches</Button>
-          </Link>
-          <SignUpButton mode="redirect">
-            <Button size="lg" variant="outline">
-              Get Started
-            </Button>
-          </SignUpButton>
-        </div>
-
         {/* Advertisement space */}
         <div className="mt-12 relative w-full max-w-xs">
           <Carousel
@@ -73,7 +68,7 @@ export default function LandingPage() {
           >
             <CarouselContent className="flex gap-4">
               {adverts.map((advert) => (
-                <CarouselItem key={advert.id} className="max-h-[400px] space-y-3 mx-1 items-center gap-4 p-4 border border-2 rounded-lg border-gray-400 bg-white shadow-md">
+                <CarouselItem onClick={() => advertClicked(advert.instance_id)} key={advert.instance_id} className="max-h-[400px] space-y-3 mx-1 items-center gap-4 p-4 border border-2 rounded-lg border-gray-400 bg-white shadow-md">
                   <Image className="rounded-lg object-contain" src={advert.media || "/nasa-dCgbRAQmTQA-unsplash.jpg"} alt={advert.title} width={500} height={300} />
                   <h3 className="text-lg font-semibold line-clamp-2">{advert.title}</h3>
                   <p className="line-clamp-5">{advert.elevator_pitch}</p>
@@ -83,6 +78,21 @@ export default function LandingPage() {
             <CarouselNext />
             <CarouselPrevious />
           </Carousel>
+        </div>
+        <p className="mt-6 text-lg text-muted-foreground max-w-2xl">
+          Launchpad helps small businesses craft winning pitches with AI while
+          empowering private investors to discover secure and fraud-free
+          opportunities.
+        </p>
+        <div className="mt-8 flex gap-4">
+          <Link href="/pitches">
+            <Button size="lg">Discover Pitches</Button>
+          </Link>
+          <SignUpButton mode="redirect">
+            <Button size="lg" variant="outline">
+              Get Started
+            </Button>
+          </SignUpButton>
         </div>
       </section>
 
