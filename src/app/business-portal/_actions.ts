@@ -7,6 +7,7 @@ import { calculateDividendPayoutDate } from "@/lib/utils";
 import { auth } from "@clerk/nextjs/server";
 import { eq, sql, inArray, desc } from "drizzle-orm";
 import { calculateInvestorProfits } from "@/lib/utils"
+import { getLatestPitchVersion } from "@/app/actions";
 
 
 /**
@@ -218,19 +219,4 @@ export const makeAdPayment = async (pitchId: string, amount: number) => {
       total_advert_clicks: 0, // reset advert clicks to 0 after payment
     }).where(eq(business_pitches.instance_id, latestPitch.instance_id));
   });
-}
-
-/**
- * Get the latest version of a specific pitch by pitch ID.
- * @param pitchId Pitch ID to fetch the latest version for
- * @returns The latest pitch version or undefined if not found
- */
-export async function getLatestPitchVersion(pitchId: string) {
-  const [latestPitch] = await db
-    .select()
-    .from(business_pitches)
-    .where(eq(business_pitches.pitch_id, pitchId))
-    .orderBy(desc(business_pitches.version))
-    .limit(1);
-  return latestPitch;
 }
