@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { format } from "date-fns";
 
 import { Card, CardHeader, CardContent, CardTitle } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
@@ -40,6 +41,8 @@ export default function PitchDetailsPage() {
   const [input, setInput] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
+
+  const [WithdrawChoice, setIsToggled] = useState(false);
 
   const [media, setMedia] = useState<string[]>([]);
   const amount = parseFloat(input) || 0;
@@ -83,7 +86,7 @@ export default function PitchDetailsPage() {
     if (!pitch) return;
     startTransition(async () => {
       try {
-        const res = await investInPitch(pitch.instance_id, amount); // invest by instance_id
+        const res = await investInPitch(pitch.instance_id, amount, WithdrawChoice); // invest by instance_id
         setMessage(res.message);
       } catch (err: any) {
         console.error(err);
@@ -136,7 +139,7 @@ export default function PitchDetailsPage() {
           <Card>
             <CardHeader>
               <CardTitle>
-                Invest in {pitch ? pitch.product_title : "Pitch"}
+                Invest in: {pitch ? pitch.product_title : "Pitch"}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -206,15 +209,32 @@ export default function PitchDetailsPage() {
                 </div>
               )}
 
-              <Button
-                disabled={!pitch || isPending || amount <= 0 || amount > remaining}
-                onClick={handleInvest}
-                className="w-full"
-              >
-                {isPending
-                  ? "Processing..."
-                  : `Invest ${amount > 0 ? `$${amount.toLocaleString()}` : ""}`}
-              </Button>
+              <div className = "flex items-center space-x-2"> 
+                {/* Invest Button */}
+                <div className = "flex-grow">
+                  <Button
+                    disabled={!pitch || isPending || amount <= 0 || amount > remaining}
+                    onClick={handleInvest}
+                    className="w-full"
+                  >
+                    {isPending
+                      ? "Processing..."
+                      : `Invest ${amount > 0 ? `$${amount.toLocaleString()}` : ""}`}
+                  </Button>
+                </div>
+
+                <div>Wallet</div>
+
+                <div>
+                  <Switch 
+                    checked={WithdrawChoice}
+                    onCheckedChange={setIsToggled}
+                  />
+                </div>
+
+                <div>Bank</div>
+
+              </div>
 
               {message && <p className="text-sm mt-2">{message}</p>}
 
@@ -226,7 +246,6 @@ export default function PitchDetailsPage() {
 
                   <Select
                     value={pitch?.instance_id || ""}
-                    // ✅ Use router.push instead of full page reloads
                     onValueChange={(id) => router.push(`/pitches/${id}`)}
                   >
                     <SelectTrigger className="mt-1 w-full">
@@ -234,7 +253,7 @@ export default function PitchDetailsPage() {
                     </SelectTrigger>
 
                     <SelectContent>
-                      {[...versions] // ✅ Sort newest → oldest
+                      {[...versions] // Sort newest to oldest
                         .sort((a, b) => b.version - a.version)
                         .map((v) => {
                           const isCurrent = v.instance_id === pitch?.instance_id;

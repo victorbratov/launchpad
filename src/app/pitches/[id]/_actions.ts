@@ -7,6 +7,7 @@ import {
   investor_accounts,
   investment_ledger,
   business_accounts,
+  bank_accounts,
 } from "@/db/schema";
 import { BusinessPitch } from "@/db/types";
 import { eq, sql } from "drizzle-orm";
@@ -61,7 +62,7 @@ export async function getTotalMoneyInvestedInPitch(
  *
  * Investments always attach to the canonical entity (entity_id), not the instance_id/version.
  */
-export async function investInPitch(entityId: string, amount: number) {
+export async function investInPitch(entityId: string, amount: number, withdrawChoice: boolean) {
   const { userId } = await auth();
   if (!userId) throw new Error("User not authenticated");
   if (amount <= 0) throw new Error("Invalid investment amount");
@@ -88,8 +89,15 @@ export async function investInPitch(entityId: string, amount: number) {
   const investedSoFar = totalResult?.totalAmount || 0;
   const remaining = pitch.target_investment_amount - investedSoFar;
 
+  const userBankAccount = await db
+    .select()
+    .from(bank_accounts)
+    .where(eq(bank_accounts.id, investor.bank_account_id))
+    .limit(1)
+    .then((rows) => rows[0]);
+
   if (amount > remaining) throw new Error("Investment exceeds remaining target");
-  if (investor.wallet_balance < amount) throw new Error("Insufficient wallet balance");
+  if (((investor.wallet_balance < amount) && withdrawChoice === false) || (userBankAccount.balance < amount && withdrawChoice === true)) throw new Error("Insufficient wallet balance");
 
   // Determine tier based on thresholds
   let tier = "Bronze";
@@ -106,12 +114,26 @@ export async function investInPitch(entityId: string, amount: number) {
 
   // -- Apply updates --
 
-  await db
+
+
+
+  if (withdrawChoice === false) {
+    await db
     .update(investor_accounts)
     .set({
       wallet_balance: sql`${investor_accounts.wallet_balance} - ${amount}`,
     })
     .where(eq(investor_accounts.id, userId));
+  }
+  else{
+    await db
+    .update(bank_accounts)
+    .set({
+      balance: sql`${bank_accounts.balance} - ${amount}`
+    })
+    .where(eq(bank_accounts.id, investor.bank_account_id));
+  }
+
 
   console.log(entityId);
   await db.insert(investment_ledger).values({
