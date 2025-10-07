@@ -35,7 +35,6 @@ export function profitPeriodReached(pitch: BusinessPitch | null): boolean {
     if (new Date().getFullYear() >= pitch.next_payout_date.getFullYear() &&
       new Date().getMonth() >= pitch.next_payout_date.getMonth() &&
       new Date().getDate() >= pitch.next_payout_date.getDate()) {
-      console.log("Profit period reached: true");
       return true;
     }
   }
@@ -63,13 +62,13 @@ export function calculateDividendPayoutDate(period: string, end: Date): Date {
  * Calculate the profit for an investor based on their shares, total shares, profit amount and profit share percentage
  * @param shares number of shares allocated to the investor
  * @param totalShares total number of shares for the pitch
- * @param profitAmount total profit amount to be distributed
+ * @param profitAmount total profit share to be distributed
  * @param profitSharePercent percentage of profit share for the investor
  * @returns calculated profit for the investor
  */
 export function calculateInvestorProfits(shares: number, totalShares: number, profitAmount: number, profitSharePercent: number): number {
-  const profitShare = (profitSharePercent / 100) * profitAmount;
-  const profitPerShare = profitShare / totalShares;
+   if (totalShares === 0 || shares === 0) return 0;
+  const profitPerShare = profitAmount / totalShares;
   const investorProfit = shares * profitPerShare;
-  return investorProfit;
+  return Math.floor(investorProfit*100)/100;
 }

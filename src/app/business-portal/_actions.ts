@@ -156,18 +156,26 @@ export const declareProfits = async (pitchId: string, profitAmount: number, upda
   }
 
   await db.transaction(async (tx) => {
-
     await tx.insert(transactions).values({ account_type: "business", account_id: userInfo.id, txn_type: "profit_declaration", amount: profitAmount, description: updateMessage });
 
     // update account balance
     await tx.update(business_accounts).set({ wallet_balance: sql`${business_accounts.wallet_balance} - ${profitAmount}` }).where(eq(business_accounts.id, userInfo.id));
 
     // get all pitch versions with this pitch id
-    const pitchVersions = await getPitches();
+    const pitchVersions = await tx.select().from(business_pitches).where(eq(business_pitches.pitch_id, pitchId));
+    if (!pitchVersions || pitchVersions.length === 0) {
+      throw new Error("No pitch versions found");
+    }
+    console.log("Pitch versions found:", pitchVersions.length);
 
     // get all investments from the investment ledger with any of these pitch instance ids
     const pitchInstanceIds = pitchVersions.map(p => p.instance_id);
     const pitchInvestments = await tx.select().from(investment_ledger).where(inArray(investment_ledger.pitch_id, pitchInstanceIds));
+    console.log("Investments found for pitch:", pitchInvestments);
+    if (pitchInvestments.length === 0) {
+      // no investments, nothing more to do
+      return;
+    }
 
     const totalShares = pitchInvestments.reduce((acc, curr) => acc + curr.shares_allocated, 0);
     for (const investment of pitchInvestments) {
@@ -175,7 +183,7 @@ export const declareProfits = async (pitchId: string, profitAmount: number, upda
 
       // update the investor account balance and create a transaction
       await tx.update(investor_accounts).set({ wallet_balance: sql`${investor_accounts.wallet_balance} + ${investorProfit}` }).where(eq(investor_accounts.id, investment.investor_id));
-      await tx.insert(transactions).values({ account_type: "investor", account_id: investment.investor_id, txn_type: "profit_distribution", amount: investorProfit });
+      await tx.insert(transactions).values({ account_type: "investor", account_id: investment.investor_id, txn_type: "profit_distribution", amount: investorProfit, description: updateMessage });
     }
 
     // then need to update the pitch next payout date based on the dividend payout period and todays date

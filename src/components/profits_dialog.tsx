@@ -13,15 +13,17 @@ import { Button } from "@/components/ui/button";
 import { declareProfits } from "@/app/business-portal/_actions";
 import { FundsDialog } from "@/components/funds_dialog";
 import { depositFunds } from "@/app/business-portal/_actions";
+import { on } from "events";
 
 interface ProfitDialogProps {
     pitch: BusinessPitch | null;
     open: boolean;
     balance: number;
     onOpenChange: (open: boolean) => void;
+    onProfitsDistributed: () => void;
 }
 
-export function ProfitsDialog({ pitch, open, balance, onOpenChange }: ProfitDialogProps) {
+export function ProfitsDialog({ pitch, open, balance, onOpenChange, onProfitsDistributed }: ProfitDialogProps) {
     if (!pitch) return null;
     const [profitAmount, setProfitAmount] = useState<number | "">(0);
     const [chooseFunds, setChooseFunds] = useState<boolean>(false);
@@ -53,13 +55,14 @@ export function ProfitsDialog({ pitch, open, balance, onOpenChange }: ProfitDial
     async function usePlatformBalance() {
         if (pitch) {
             try {
-                await declareProfits(pitch.pitch_id, profitAmount === "" ? 0 : profitAmount, message);
+                await declareProfits(pitch.pitch_id, sharedProfit, message);
                 // reset state and close dialog
                 setChooseFunds(false);
                 setProfitAmount(0);
                 setSharedProfit(0);
                 setMessage("");
                 onOpenChange(false);
+                onProfitsDistributed();
             } catch (error) {
                 console.error("Error declaring profits:", error);
                 setChooseFunds(false);
@@ -79,7 +82,7 @@ export function ProfitsDialog({ pitch, open, balance, onOpenChange }: ProfitDial
                     <div>
                         <div className="space-y-4">
                             <p className="text-sm text-muted-foreground">It's time to declare profits for this pitch. Please enter your profits.</p>
-                            <div>
+                            <div className="space-y-2">
                                 <Label>Profit Amount ($)</Label>
                                 <Input
                                     placeholder="Enter your profit amount"
@@ -95,7 +98,7 @@ export function ProfitsDialog({ pitch, open, balance, onOpenChange }: ProfitDial
                                 <p>Investor Profit Share: {pitch.investor_profit_share_percent}%</p>
                                 <p>Total being distributed: ${sharedProfit.toFixed(2)}</p>
                             </div>
-                            <div>
+                            <div className="space-y-2">
                                 <Label>Pitch Update Message</Label>
                                 <Input
                                     placeholder="Enter a message to update your investors"
@@ -112,13 +115,13 @@ export function ProfitsDialog({ pitch, open, balance, onOpenChange }: ProfitDial
                     </div>
                 ) : (
                     profitAmount !== "" && profitAmount > 0 && (
-                        <div className="space-y-4">
-                            <p className="">Where will you distribute profits from?</p>
+                        <div className="space-y-2">
                             <p className="font-bold">Platform Balance: ${balance.toFixed(2)}</p>
-                            <p className="font-bold">Profits to distribute: ${sharedProfit.toFixed(2)}</p>
+                            <p className="font-bold mb-4">Profits to distribute: ${sharedProfit.toFixed(2)}</p>
+                            <p className="mb-4">Where will you distribute profits from?</p>
                             <div className="flex justify-between gap-4">
-                                <Button className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded" onClick={depositFromBank}>Deposit Funds</Button>
-                                <Button disabled={balance < sharedProfit} className={`flex-1 ${balance > sharedProfit ? "bg-indigo-600 hover:bg-indigo-700" : "bg-gray-600 hover:bg-gray-700"} text-white px-4 py-2 rounded`} onClick={usePlatformBalance}>Use Platform Balance</Button>
+                                <Button className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded" onClick={depositFromBank}>Linked Bank Account</Button>
+                                <Button disabled={balance < sharedProfit} className={`flex-1 ${balance > sharedProfit ? "bg-indigo-600 hover:bg-indigo-700" : "bg-gray-600 hover:bg-gray-700"} text-white px-4 py-2 rounded`} onClick={usePlatformBalance}>Platform Balance</Button>
                             </div>
                         </div>
                     )

@@ -28,18 +28,22 @@ export default function BusinessPortalPage() {
   const [profitDialogOpen, setProfitDialogOpen] = useState(false);
 
   useEffect(() => {
-
-    async function loadData() {
-      const account_info = await getBusinessAccountInfo();
-      const business_pitches = await getPitches();
-
-      setPitches(business_pitches);
-      setAccountInfo(account_info);
-      setActionablePitch(business_pitches.some((pitch) => profitPeriodReached(pitch)));
-
-    }
     loadData().then(() => setLoading(false));
   }, []);
+
+
+  /**
+   * Used to load data for the page
+   */
+  async function loadData() {
+    const account_info = await getBusinessAccountInfo();
+    const business_pitches = await getPitches();
+
+    setPitches(business_pitches);
+    setAccountInfo(account_info);
+    setActionablePitch(business_pitches.some((pitch) => profitPeriodReached(pitch)));
+
+  }
 
   /**
    * Handle clicking on a pitch row
@@ -56,7 +60,7 @@ export default function BusinessPortalPage() {
    * Opens the profits dialog
    * @param pitch The pitch that was clicked on
    */
-  function handleProfitRowCLick(pitch: BusinessPitch) {
+  async function handleProfitRowCLick(pitch: BusinessPitch) {
     setSelectedPitch(pitch);
     setProfitDialogOpen(true);
   }
@@ -146,6 +150,7 @@ export default function BusinessPortalPage() {
         open={profitDialogOpen}
         balance={accountInfo?.wallet_balance ?? 0}
         onOpenChange={setProfitDialogOpen}
+        onProfitsDistributed={loadData}
       />
     </div>
   );
