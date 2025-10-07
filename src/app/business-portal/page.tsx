@@ -144,6 +144,7 @@ export default function BusinessPortalPage() {
       <ProfitsDialog
         pitch={selectedPitch}
         open={profitDialogOpen}
+        balance={accountInfo?.wallet_balance ?? 0}
         onOpenChange={setProfitDialogOpen}
       />
     </div>

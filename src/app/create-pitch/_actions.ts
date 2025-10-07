@@ -5,6 +5,7 @@ import { business_pitches, business_accounts } from "@/db/schema";
 import { NewBusinessPitch } from "@/db/types";
 import { auth } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
+import { calculateDividendPayoutDate } from "@/lib/utils";
 
 export interface Pitch {
   title: string;
@@ -95,20 +96,4 @@ export async function createPitch(pitch: Pitch): Promise<{
     .where(eq(business_pitches.pitch_id, inserted.pitch_id));
 
   return { success: true, message: mediaUrl };
-}
-
-/**
- * Calculates the next dividend payout date based on the given period and end date.
- * @param period Payout period - "quarterly" or "yearly"
- * @param end end date of the pitch
- * @returns {Date} The next payout date
- */
-function calculateDividendPayoutDate(period: string, end: Date): Date {
-  const payout = new Date(end);
-  if (period === "quarterly") {
-    payout.setMonth(payout.getMonth() + 3);
-  } else if (period === "yearly") {
-    payout.setFullYear(payout.getFullYear() + 1);
-  }
-  return payout;
 }

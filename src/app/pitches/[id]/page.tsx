@@ -83,7 +83,7 @@ export default function PitchDetailsPage() {
     if (!pitch) return;
     startTransition(async () => {
       try {
-        const res = await investInPitch(pitch.pitch_id, amount); // invest by entity_id
+        const res = await investInPitch(pitch.instance_id, amount); // invest by instance_id
         setMessage(res.message);
       } catch (err: any) {
         console.error(err);
