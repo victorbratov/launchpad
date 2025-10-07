@@ -46,10 +46,11 @@ export const AdPaymentDialog: React.FC<AdPaymentDialogProps> = ({
     async function UsePlatformBalance() {
         if (pitch) {
             try {
-                await makeAdPayment(pitch.pitch_id, pitch.total_advert_clicks);
+                await makeAdPayment(pitch.pitch_id, adPaymentAmount);
                 // reset state and close dialog
                 setLoading(false);
                 onOpenChange(false);
+                setAdPaymentAmount(0);
                 onProfitsDistributed();
             } catch (error) {
                 console.error("Error declaring profits:", error);
@@ -79,9 +80,8 @@ export const AdPaymentDialog: React.FC<AdPaymentDialogProps> = ({
                     </div>
                 ) : (
                     <>
-                        <p>
-                            <strong>Balance:</strong> £{balance?.toFixed(2)}
-                        </p>
+                        <p><strong>Balance:</strong> £{balance?.toFixed(2)}</p>
+                        <p><strong>Ad Payment Amount:</strong> £{adPaymentAmount?.toFixed(2)}</p>
                         {error && <p className="text-red-600 mt-1">{error}</p>}
 
                         <div className="flex justify-between gap-4">

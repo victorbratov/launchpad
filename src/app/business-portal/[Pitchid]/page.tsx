@@ -259,7 +259,7 @@ export default function PitchDetailsPage() {
             <p>Used: ${pitch.total_advert_clicks / 100}</p>
             <p>Remaining: ${pitch.adverts_available / 100}</p>
             <div className="space-y-2">
-              <Label className="mt-4">Update your maximum advertising budget:</Label>
+              <Label className="mt-4">Update your maximum advertising budget (USD):</Label>
               <Input
                 type="number"
                 placeholder="Maximum amount to spend on adverts"

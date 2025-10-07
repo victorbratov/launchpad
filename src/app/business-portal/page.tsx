@@ -69,6 +69,11 @@ export default function BusinessPortalPage() {
     setProfitDialogOpen(true);
   }
 
+  async function handleAdRowClick(pitch: BusinessPitch) {
+    setSelectedPitch(pitch);
+    setAdPaymentDialogOpen(true);
+  }
+
   return (
     <div className="p-6 space-y-6">
       <Card>
@@ -125,8 +130,8 @@ export default function BusinessPortalPage() {
 
                     <TableRow
                       key={pitch.pitch_id}
-                      className={`cursor-pointer ${hasDateBeenReached(pitch.end_date) ? "bg-purple-100 hover:bg-purple-200" : hasDateBeenReached(pitch.next_payout_date) ? "bg-orange-100 hover:bg-orange-200": "hover:bg-muted/50"}`}
-                      onClick={() => { hasDateBeenReached(pitch.next_payout_date) ? handleProfitRowCLick(pitch) : handleRowClick(pitch) }}
+                      className={`cursor-pointer ${hasDateBeenReached(pitch.end_date) && pitch.total_advert_clicks > 0 ? "bg-purple-100 hover:bg-purple-200" : hasDateBeenReached(pitch.next_payout_date) ? "bg-orange-100 hover:bg-orange-200": "hover:bg-muted/50"}`}
+                      onClick={() => {{hasDateBeenReached(pitch.end_date) && pitch.total_advert_clicks > 0 ? handleAdRowClick(pitch) : hasDateBeenReached(pitch.next_payout_date) ? handleProfitRowCLick(pitch) : handleRowClick(pitch) }}}
                     >
                       <TableCell className="font-medium">{pitch.product_title}</TableCell>
                       <TableCell>

@@ -59,7 +59,7 @@ export async function createPitchVersion(
       product_title: values.product_title,
       elevator_pitch: values.elevator_pitch,
       detailed_pitch: values.detailed_pitch,
-      adverts_available: values.adverts_available,
+      adverts_available: values.adverts_available * 100,
       supporting_media: "", // will fill later
       created_at: new Date(),
     })
