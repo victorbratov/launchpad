@@ -103,18 +103,25 @@ export async function investInPitch(entityId: string, amount: number, withdrawCh
   }
 
   const funded = (pitch.raised_amount + amount == pitch.target_investment_amount);
+  const [existingInvestment] = await db.select().from(investment_ledger).where(and(eq(investment_ledger.pitch_id, pitch.instance_id), eq(investment_ledger.investor_id, investor.id))).limit(1);
+
+  let investmentAmount = amount;
+
+  if (existingInvestment) {
+    investmentAmount = amount + existingInvestment.amount_invested;
+  }
 
   let tier = "bronze";
   let multiplier = pitch.bronze_multiplier;
-  if (amount > pitch.gold_threshold) {
+  if (investmentAmount > pitch.gold_threshold) {
     tier = "gold";
     multiplier = pitch.gold_multiplier;
-  } else if (amount > pitch.silver_threshold) {
+  } else if (investmentAmount > pitch.silver_threshold) {
     tier = "silver";
     multiplier = pitch.silver_multiplier;
   }
 
-  const shares = amount * multiplier;
+  const shares = investmentAmount * multiplier;
 
   const investmentRecord: NewInvestmentRecord = {
     pitch_id: pitch.instance_id,
@@ -136,8 +143,16 @@ export async function investInPitch(entityId: string, amount: number, withdrawCh
 
 
   await db.transaction(async (tx) => {
-    await tx.insert(investment_ledger).values(investmentRecord);
     await tx.insert(transactions).values(transactionRecord);
+    if (existingInvestment) {
+      await tx.update(investment_ledger).set({
+        amount_invested: sql`${investment_ledger.amount_invested} + ${amount}`,
+        tier: tier,
+        shares_allocated: shares,
+      }).where(eq(investment_ledger.id, existingInvestment.id));
+    } else {
+      await tx.insert(investment_ledger).values(investmentRecord);
+    }
     await tx.update(business_pitches).set({
       raised_amount: sql`${business_pitches.raised_amount} + ${amount}`,
     }).where(eq(business_pitches.instance_id, pitch.instance_id));
