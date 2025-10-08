@@ -38,7 +38,7 @@ export default function OnboardingPage() {
     <div className="flex h-screen w-full items-center justify-center bg-muted/40">
       <Card className="w-full max-w-md">
         <CardHeader>
-          <CardTitle>Welcome 👋</CardTitle>
+          <CardTitle><span className="text-2xl font-bold">Welcome 👋</span></CardTitle>
           <CardDescription>
             Let’s get you started by completing your onboarding.
           </CardDescription>

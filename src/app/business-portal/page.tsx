@@ -68,7 +68,14 @@ export default function BusinessPortalPage() {
   return (
     <div className="p-6 space-y-6">
       <Card>
-        <CardHeader><CardTitle>Business Overview</CardTitle></CardHeader>
+        <CardHeader>
+  <CardTitle>
+    <span className="text-2xl font-bold">
+      Business Overview
+    </span>
+  </CardTitle>
+</CardHeader>
+
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 justify-between flex-wrap items-center">
             <div className="space-y-2">
@@ -87,7 +94,11 @@ export default function BusinessPortalPage() {
       </Card>
 
       <Card>
-        <CardHeader><CardTitle>Your Pitches</CardTitle></CardHeader>
+        <CardHeader><CardTitle>
+          <span className="text-[#677DB7] text-2xl font-bold">
+          Your Pitches
+          </span>
+          </CardTitle></CardHeader>
         <CardContent>
 
           {loading ? (
