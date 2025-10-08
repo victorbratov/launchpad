@@ -8,6 +8,7 @@ import Link from "next/link";
 import { BusinessPitch } from "@/db/types";
 import { fetchFeaturedMedia } from "@/lib/s3_utils";
 import { useEffect, useState } from "react";
+import { updateAdvertCount } from "@/app/actions";
 
 type PitchCardProps = {
   pitch: BusinessPitch;
@@ -19,7 +20,7 @@ export function PitchCard({ pitch }: PitchCardProps) {
 
   useEffect(() => {
     async function loadMedia() {
-      const mediaUrl = await fetchFeaturedMedia(pitch.instance_id);
+      const mediaUrl = await fetchFeaturedMedia(pitch.pitch_id);
 
       setMedia(mediaUrl);
     }
@@ -28,7 +29,7 @@ export function PitchCard({ pitch }: PitchCardProps) {
 
   return (
     <Link href={`/pitches/${pitch.instance_id}`}>
-      <Card className="flex flex-col overflow-hidden">
+      <Card className="flex flex-col overflow-hidden" onClick={() => { updateAdvertCount(pitch.instance_id) }}>
         <CardHeader>
           <CardTitle>{pitch.product_title}</CardTitle>
           <p className="text-sm text-muted-foreground">{pitch.status}</p>

@@ -5,9 +5,9 @@ import { bank_accounts, business_accounts, business_pitches, transactions, inves
 import { BusinessAccount, BusinessPitch } from "@/db/types";
 import { calculateDividendPayoutDate } from "@/lib/utils";
 import { auth } from "@clerk/nextjs/server";
-import { eq, sql, inArray } from "drizzle-orm";
-import next from "next";
+import { eq, sql, inArray, desc } from "drizzle-orm";
 import { calculateInvestorProfits } from "@/lib/utils"
+import { getLatestPitchVersion } from "@/app/actions";
 
 
 /**
@@ -137,12 +137,14 @@ export const getPitches = async (): Promise<BusinessPitch[]> => {
 };
 
 /**
- * 
- * @param pitchId 
- * @param profitAmount 
- * @param updateMessage 
+ * Declare profits for a specific pitch and distribute to investors
+ * @param pitchId the ID of the pitch to declare profits for
+ * @param profitAmount the amount of profit to declare
+ * @param updateMessage Message to include with the profit declaration transaction
+ * @throws Error if the user is not authenticated, pitch not found, or insufficient funds
+ * @returns {Promise<void>}
  */
-export const declareProfits = async (pitchId: string, profitAmount: number, updateMessage: string): Promise<string | undefined> => {
+export const declareProfits = async (pitchId: string, profitAmount: number, updateMessage: string) => {
 
   const userInfo = await getBusinessAccountInfo();
   const [pitch] = await db.select().from(business_pitches).where(eq(business_pitches.pitch_id, pitchId)).limit(1);
@@ -152,7 +154,7 @@ export const declareProfits = async (pitchId: string, profitAmount: number, upda
   }
 
   if (userInfo.wallet_balance < profitAmount) {
-    return "Insufficient funds in platform wallet";
+    throw new Error("Insufficient funds in platform wallet");
   }
 
   await db.transaction(async (tx) => {
@@ -166,14 +168,11 @@ export const declareProfits = async (pitchId: string, profitAmount: number, upda
     if (!pitchVersions || pitchVersions.length === 0) {
       throw new Error("No pitch versions found");
     }
-    console.log("Pitch versions found:", pitchVersions.length);
 
     // get all investments from the investment ledger with any of these pitch instance ids
     const pitchInstanceIds = pitchVersions.map(p => p.instance_id);
     const pitchInvestments = await tx.select().from(investment_ledger).where(inArray(investment_ledger.pitch_id, pitchInstanceIds));
-    console.log("Investments found for pitch:", pitchInvestments);
     if (pitchInvestments.length === 0) {
-      // no investments, nothing more to do
       return;
     }
 
@@ -186,9 +185,38 @@ export const declareProfits = async (pitchId: string, profitAmount: number, upda
       await tx.insert(transactions).values({ account_type: "investor", account_id: investment.investor_id, txn_type: "profit_distribution", amount: investorProfit, description: updateMessage });
     }
 
-    // then need to update the pitch next payout date based on the dividend payout period and todays date
+    // update the pitch next payout date based on the dividend payout period and todays date
     const nextPayout = calculateDividendPayoutDate(pitch.dividend_payout_period, new Date());
     await tx.update(business_pitches).set({ next_payout_date: nextPayout }).where(eq(business_pitches.pitch_id, pitchId));;
   });
 }
 
+
+/**
+ * Make an ad payment for a specific pitch
+ * @param pitchId Pitch ID to pay for adverts for
+ * @param amount Amount to pay for adverts
+ * @throws Error if the user is not authenticated, pitch not found, or insufficient funds
+ * @returns {Promise<void>}
+ */
+export const makeAdPayment = async (pitchId: string, amount: number) => {
+  const userInfo = await getBusinessAccountInfo();
+  const latestPitch = await getLatestPitchVersion(pitchId);
+
+  if (latestPitch === undefined) {
+    throw new Error("Pitch not found");
+  }
+  if (userInfo.wallet_balance < amount) {
+    throw new Error("Insufficient funds in platform wallet");
+  }
+
+  await db.transaction(async (tx) => {
+    await tx.insert(transactions).values({ account_type: "business", account_id: userInfo.id, txn_type: "ad_payment", amount, description: `Ad payment for pitch ${latestPitch.product_title}` });
+    await tx.update(business_accounts).set({
+      wallet_balance: sql`${business_accounts.wallet_balance} - ${amount}`
+    }).where(eq(business_accounts.id, userInfo.id));
+    await tx.update(business_pitches).set({
+      total_advert_clicks: 0, // reset advert clicks to 0 after payment
+    }).where(eq(business_pitches.instance_id, latestPitch.instance_id));
+  });
+}

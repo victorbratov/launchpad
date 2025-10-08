@@ -1,13 +1,13 @@
 import { parseStringPromise } from "xml2js";
 
-export async function fetchAllMedia(instanceId: string): Promise<string[]> {
+export async function fetchAllMedia(pitchId: string): Promise<string[]> {
   const bucketUrl = process.env.NEXT_PUBLIC_BUCKET_URL!;
-  const endpoint = `${bucketUrl}?list-type=2&prefix=${instanceId}/`;
+  const endpoint = `${bucketUrl}?list-type=2&prefix=${pitchId}/`;
 
   const res = await fetch(endpoint);
 
   if (!res.ok) {
-    throw new Error(`Failed to list objects for ${instanceId}: ${res.statusText}`);
+    throw new Error(`Failed to list objects for ${pitchId}: ${res.statusText}`);
   }
 
   const xmlText = await res.text();
@@ -20,20 +20,20 @@ export async function fetchAllMedia(instanceId: string): Promise<string[]> {
 
   const urls = keys.map((key) => `${bucketUrl}/${key}`);
 
-  const featured = urls.find((url) => url.includes(`${instanceId}/featured/`));
-  const others = urls.filter((url) => !url.includes(`${instanceId}/featured/`));
+  const featured = urls.find((url) => url.includes(`${pitchId}/featured/`));
+  const others = urls.filter((url) => !url.includes(`${pitchId}/featured/`));
 
   return featured ? [featured, ...others] : others;
 }
 
-export async function fetchFeaturedMedia(instanceId: string): Promise<string | null> {
+export async function fetchFeaturedMedia(pitchId: string): Promise<string | null> {
   const bucketUrl = process.env.NEXT_PUBLIC_BUCKET_URL!;
-  const endpoint = `${bucketUrl}?list-type=2&prefix=${instanceId}/featured/`;
+  const endpoint = `${bucketUrl}?list-type=2&prefix=${pitchId}/featured/`;
 
   const res = await fetch(endpoint);
 
   if (!res.ok) {
-    throw new Error(`Failed to fetch featured object for ${instanceId}: ${res.statusText}`);
+    throw new Error(`Failed to fetch featured object for ${pitchId}: ${res.statusText}`);
   }
 
   const xmlText = await res.text();

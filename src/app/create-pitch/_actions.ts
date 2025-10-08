@@ -12,7 +12,7 @@ export interface Pitch {
   status: string;
   elevatorPitch: string;
   detailedPitch: string;
-  targetAmount: string;
+  targetAmount: number;
   startDate: Date;
   endDate: Date;
   bronzeMultiplier: string;
@@ -23,6 +23,7 @@ export interface Pitch {
   dividendPayoutPeriod: string;
   tags: string[];
   profitShare: number;
+  advertMax: number;
 }
 
 export interface PitchInput {
@@ -86,7 +87,7 @@ export async function createPitch(pitch: Pitch): Promise<{
     product_title: pitch.title,
     elevator_pitch: pitch.elevatorPitch,
     detailed_pitch: pitch.detailedPitch,
-    target_investment_amount: Number(pitch.targetAmount),
+    target_investment_amount: pitch.targetAmount,
     raised_amount: 0,
     investor_profit_share_percent: pitch.profitShare,
     start_date: pitch.startDate,
@@ -99,6 +100,7 @@ export async function createPitch(pitch: Pitch): Promise<{
     dividend_payout_period: pitch.dividendPayoutPeriod,
     next_payout_date: nextPayout,
     tags: pitch.tags,
+    adverts_available: pitch.advertMax ? pitch.advertMax *100 : 0, // store as integer number of adverts, as each advert click costs 0.01
   };
 
   const [inserted] = await db.insert(business_pitches).values(newPitch).returning({
