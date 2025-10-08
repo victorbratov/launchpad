@@ -67,7 +67,13 @@ export const depositFunds = async (amount: number): Promise<void> => {
       wallet_balance: userInfo.wallet_balance + amount,
     }).where(eq(business_accounts.id, userId));
 
-    await tx.insert(transactions).values({ account_type: "business", account_id: userId, txn_type: "deposit", amount });
+    await tx.insert(transactions).values({
+      account_type: "business",
+      account_id: userId,
+      txn_type: "deposit",
+      tnx_status: "completed",
+      amount
+    });
   })
 }
 
@@ -99,7 +105,13 @@ export const withdrawFunds = async (amount: number): Promise<void> => {
       wallet_balance: userInfo.wallet_balance - amount,
     }).where(eq(business_accounts.id, userInfo.id))
 
-    await tx.insert(transactions).values({ account_type: "business", account_id: userInfo.id, txn_type: "withdrawal", amount });
+    await tx.insert(transactions).values({
+      account_type: "business",
+      account_id: userInfo.id,
+      txn_type: "withdrawal",
+      tnx_status: "completed",
+      amount
+    });
   })
 }
 
@@ -158,10 +170,19 @@ export const declareProfits = async (pitchId: string, profitAmount: number, upda
   }
 
   await db.transaction(async (tx) => {
-    await tx.insert(transactions).values({ account_type: "business", account_id: userInfo.id, txn_type: "profit_declaration", amount: profitAmount, description: updateMessage });
+    await tx.insert(transactions).values({
+      account_type: "business",
+      account_id: userInfo.id,
+      txn_type: "profit_declaration",
+      amount: profitAmount,
+      tnx_status: "completed",
+      description: updateMessage
+    });
 
     // update account balance
-    await tx.update(business_accounts).set({ wallet_balance: sql`${business_accounts.wallet_balance} - ${profitAmount}` }).where(eq(business_accounts.id, userInfo.id));
+    await tx.update(business_accounts).set({
+      wallet_balance: sql`${business_accounts.wallet_balance} - ${profitAmount}`
+    }).where(eq(business_accounts.id, userInfo.id));
 
     // get all pitch versions with this pitch id
     const pitchVersions = await tx.select().from(business_pitches).where(eq(business_pitches.pitch_id, pitchId));
@@ -182,7 +203,14 @@ export const declareProfits = async (pitchId: string, profitAmount: number, upda
 
       // update the investor account balance and create a transaction
       await tx.update(investor_accounts).set({ wallet_balance: sql`${investor_accounts.wallet_balance} + ${investorProfit}` }).where(eq(investor_accounts.id, investment.investor_id));
-      await tx.insert(transactions).values({ account_type: "investor", account_id: investment.investor_id, txn_type: "profit_distribution", amount: investorProfit, description: updateMessage });
+      await tx.insert(transactions).values({
+        account_type: "investor",
+        account_id: investment.investor_id,
+        txn_type: "profit_distribution",
+        amount: investorProfit,
+        tnx_status: "completed",
+        description: updateMessage
+      });
     }
 
     // update the pitch next payout date based on the dividend payout period and todays date
@@ -211,7 +239,13 @@ export const makeAdPayment = async (pitchId: string, amount: number) => {
   }
 
   await db.transaction(async (tx) => {
-    await tx.insert(transactions).values({ account_type: "business", account_id: userInfo.id, txn_type: "ad_payment", amount, description: `Ad payment for pitch ${latestPitch.product_title}` });
+    await tx.insert(transactions).values({
+      account_type: "business",
+      account_id: userInfo.id,
+      txn_type: "ad_payment",
+      tnx_status: "completed",
+      amount, description: `Ad payment for pitch ${latestPitch.product_title}`
+    });
     await tx.update(business_accounts).set({
       wallet_balance: sql`${business_accounts.wallet_balance} - ${amount}`
     }).where(eq(business_accounts.id, userInfo.id));

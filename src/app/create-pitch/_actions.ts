@@ -5,7 +5,7 @@ import { business_pitches, business_accounts } from "@/db/schema";
 import { NewBusinessPitch } from "@/db/types";
 import { auth } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
-import { calculateDividendPayoutDate } from "@/lib/utils";
+import { calculateDividendPayoutDate, compareDates } from "@/lib/utils";
 
 export interface Pitch {
   title: string;
@@ -74,16 +74,22 @@ export async function createPitch(pitch: Pitch): Promise<{
     return { success: false, message: "User not authenticated" };
   }
 
-  // derive next payout date
   const nextPayout = calculateDividendPayoutDate(
     pitch.dividendPayoutPeriod,
     pitch.endDate
   );
 
-  /** Map frontend fields → DB column names */
+  let status = "active"
+
+  const now = new Date();
+
+  if (compareDates(pitch.startDate, now) == 1) {
+    status = "upcoming"
+  }
+
   const newPitch: NewBusinessPitch = {
     business_account_id: userId,
-    status: pitch.status,
+    status: status,
     product_title: pitch.title,
     elevator_pitch: pitch.elevatorPitch,
     detailed_pitch: pitch.detailedPitch,
@@ -107,7 +113,6 @@ export async function createPitch(pitch: Pitch): Promise<{
     pitch_id: business_pitches.pitch_id,
   });
 
-  // Build S3 media path
   const mediaUrl = `${process.env.NEXT_PUBLIC_BUCKET_URL}/${inserted.pitch_id}`;
   await db
     .update(business_pitches)
