@@ -1,5 +1,0 @@
-NEXT_PUBLIC_BUCKET_URL=https://launchpad-media-storage.s3.us-east-1.amazonaws.com
-DATABASE_URL=postgresql://neondb_owner:npg_d4cDRnrg6XAP@ep-withered-mouse-abn42mzt-pooler.eu-west-2.aws.neon.tech/neondb?sslmode=require
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_aGFwcHktdGljay00Ni5jbGVyay5hY2NvdW50cy5kZXYk
-CLERK_SECRET_KEY=sk_test_y94vuVoYrGvnP8omo4WBTucD2b8k4cQkwIb8pJt2jx
-GEMINI_API_KEY=AIzaSyAENA5_5HVInpXsYrq5ZwKG84_SV8kGpww
