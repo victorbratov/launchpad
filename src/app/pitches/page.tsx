@@ -9,6 +9,7 @@ import { PitchCard } from "../../components/pitch_preview_card";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
+import { BusinessPitch } from "@/db/types";
 
 interface Filters {
   search: string;
@@ -20,7 +21,7 @@ interface Filters {
 }
 
 export default function PitchSearchPage() {
-  const [pitches, setPitches] = useState<PitchWithStats[]>([]);
+  const [pitches, setPitches] = useState<BusinessPitch[]>([]);
   const [filters, setFilters] = useState<Filters>({
     search: "",
     tags: [] as string[],
@@ -69,7 +70,7 @@ export default function PitchSearchPage() {
     if (!matchesSearch || !matchesTags) return false;
 
     if (filters.enabled) {
-      if (p.invested_percent < filters.priceRange[0]) return false;
+      if ((p.raised_amount / p.target_investment_amount ** 100) < filters.priceRange[0]) return false;
 
       const startDate = new Date(p.start_date);
       if (filters.date) {

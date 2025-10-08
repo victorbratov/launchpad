@@ -67,8 +67,26 @@ export function calculateDividendPayoutDate(period: string, end: Date): Date {
  * @returns calculated profit for the investor
  */
 export function calculateInvestorProfits(shares: number, totalShares: number, profitAmount: number, profitSharePercent: number): number {
-   if (totalShares === 0 || shares === 0) return 0;
+  if (totalShares === 0 || shares === 0) return 0;
   const profitPerShare = profitAmount / totalShares;
   const investorProfit = shares * profitPerShare;
-  return Math.floor(investorProfit*100)/100;
+  return Math.floor(investorProfit * 100) / 100;
+}
+
+export function compareDates(a: Date, b: Date): -1 | 0 | 1 {
+  const aY = a.getFullYear();
+  const aM = a.getMonth();
+  const aD = a.getDate();
+
+  const bY = b.getFullYear();
+  const bM = b.getMonth();
+  const bD = b.getDate();
+
+  if (aY < bY) return -1;
+  if (aY > bY) return 1;
+  if (aM < bM) return -1;
+  if (aM > bM) return 1;
+  if (aD < bD) return -1;
+  if (aD > bD) return 1;
+  return 0;
 }
