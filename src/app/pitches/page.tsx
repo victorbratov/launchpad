@@ -4,12 +4,11 @@ import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { getPitches, PitchWithStats } from "./_actions";
-import { X } from "lucide-react";
+import { X, Filter } from "lucide-react";
 import { PitchCard } from "../../components/pitch_preview_card";
 import { Card, CardHeader } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
-import { BusinessPitch } from "@/db/types";
 
 interface Filters {
   search: string;
@@ -21,7 +20,8 @@ interface Filters {
 }
 
 export default function PitchSearchPage() {
-  const [pitches, setPitches] = useState<BusinessPitch[]>([]);
+  const [pitches, setPitches] = useState<PitchWithStats[]>([]);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [filters, setFilters] = useState<Filters>({
     search: "",
     tags: [] as string[],
@@ -57,7 +57,6 @@ export default function PitchSearchPage() {
       enabled: false,
     });
 
-
   const filteredPitches = pitches.filter((p) => {
     const matchesSearch = filters.search
       ? p.product_title.toLowerCase().includes(filters.search.toLowerCase())
@@ -70,7 +69,7 @@ export default function PitchSearchPage() {
     if (!matchesSearch || !matchesTags) return false;
 
     if (filters.enabled) {
-      if ((p.raised_amount / p.target_investment_amount ** 100) < filters.priceRange[0]) return false;
+      if (p.invested_percent < filters.priceRange[0]) return false;
 
       const startDate = new Date(p.start_date);
       if (filters.date) {
@@ -87,39 +86,110 @@ export default function PitchSearchPage() {
     return true;
   });
 
-  return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar Left */}
-      <aside className="hidden lg:block w-80 bg-white border-r min-h-screen sticky top-16">
-        <div className="p-6">
-          <h1 className="text-2xl font-bold mb-6">
-             <span className="text-2xl font-bold">
-            Discover Pitches
-            </span>
-            </h1>
-          <FilterSidebar
-            filters={filters}
-            setFilters={setFilters}
-            toggleTag={toggleTag}
-            resetFilters={resetFilters}
-          />
-        </div>
-      </aside>
+  // Count active filters for mobile badge
+  const activeFilterCount = 
+    (filters.search ? 1 : 0) + 
+    filters.tags.length + 
+    (filters.date ? 1 : 0) + 
+    (filters.enabled ? 1 : 0);
 
-      <main className="flex-1 p-6">
-        {filteredPitches.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
-            {filteredPitches.map((pitch) => (
-              <PitchCard
-                key={pitch.instance_id}
-                pitch={pitch}
-              />
-            ))}
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Mobile Header with Filter Toggle */}
+      <div className="lg:hidden bg-white border-b px-4 py-3 sticky top-16 z-40">
+        <div className="flex items-center justify-between">
+          <h1 className="text-xl font-bold">Discover Pitches</h1>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsFilterOpen(true)}
+            className="flex items-center gap-2"
+          >
+            <Filter size={16} />
+            Filters
+            {activeFilterCount > 0 && (
+              <span className="bg-primary text-primary-foreground text-xs px-1.5 py-0.5 rounded-full">
+                {activeFilterCount}
+              </span>
+            )}
+          </Button>
+        </div>
+      </div>
+
+      <div className="flex">
+        {/* Desktop Sidebar */}
+        <aside className="hidden lg:block w-80 bg-white border-r min-h-screen sticky top-16">
+          <div className="p-6">
+            <h1 className="text-2xl font-bold mb-6">Discover Pitches</h1>
+            <FilterSidebar
+              filters={filters}
+              setFilters={setFilters}
+              toggleTag={toggleTag}
+              resetFilters={resetFilters}
+            />
           </div>
-        ) : (
-          <div className="text-center text-muted-foreground">No pitches match your filters.</div>
-        )}
-      </main>
+        </aside>
+
+        {/* Main Content */}
+        <main className="flex-1 p-4 lg:p-6">
+          {filteredPitches.length > 0 ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+              {filteredPitches.map((pitch) => (
+                <PitchCard
+                  key={pitch.instance_id}
+                  pitch={pitch}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center text-muted-foreground">No pitches match your filters.</div>
+          )}
+        </main>
+      </div>
+
+      {/* Mobile Filter Modal */}
+      {isFilterOpen && (
+        <>
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 bg-black/50 z-50 lg:hidden"
+            onClick={() => setIsFilterOpen(false)}
+          />
+          
+          {/* Modal */}
+          <div className="fixed inset-y-0 right-0 w-full max-w-sm bg-white z-50 lg:hidden transform transition-transform duration-300">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h2 className="text-lg font-semibold">Filters</h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsFilterOpen(false)}
+              >
+                <X size={20} />
+              </Button>
+            </div>
+            
+            <div className="p-4 overflow-y-auto max-h-[calc(100vh-120px)]">
+              <FilterSidebar
+                filters={filters}
+                setFilters={setFilters}
+                toggleTag={toggleTag}
+                resetFilters={resetFilters}
+              />
+            </div>
+
+            {/* Apply Button */}
+            <div className="p-4 border-t bg-white">
+              <Button 
+                onClick={() => setIsFilterOpen(false)}
+                className="w-full"
+              >
+                Apply Filters
+              </Button>
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -181,7 +251,7 @@ function FilterSidebar({
                 {tag}
                 <X size={12} />
               </span>
-            ))}
+            ))} 
           </div>
         </div>
       )}
