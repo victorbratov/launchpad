@@ -106,6 +106,9 @@ export default function CreatePitchPage() {
         targetAmount: goal || 0,
         profitShareFrequency: dividendPeriod.trim() as "quarterly" | "yearly",
         profitSharePercentage: profitShare ?? 0,
+        startDate: startDate,
+        endDate: endDate,
+        hasMedia: mediaFiles.length > 0,
       }
 
       const response = await evaluatePitch(pitchInput);
