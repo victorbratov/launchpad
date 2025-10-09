@@ -33,6 +33,9 @@ export interface PitchInput {
   targetAmount: number;
   profitSharePercentage: number;
   profitShareFrequency: "quarterly" | "yearly";
+  startDate: Date;
+  endDate: Date;
+  hasMedia: boolean;
 }
 
 export interface PitchEvaluation {
@@ -106,7 +109,7 @@ export async function createPitch(pitch: Pitch): Promise<{
     dividend_payout_period: pitch.dividendPayoutPeriod,
     next_payout_date: nextPayout,
     tags: pitch.tags,
-    adverts_available: pitch.advertMax ? pitch.advertMax *100 : 0, // store as integer number of adverts, as each advert click costs 0.01
+    adverts_available: pitch.advertMax ? pitch.advertMax * 100 : 0, // store as integer number of adverts, as each advert click costs 0.01
   };
 
   const [inserted] = await db.insert(business_pitches).values(newPitch).returning({
@@ -136,14 +139,24 @@ export async function evaluatePitch(pitch: PitchInput): Promise<PitchEvaluation>
 You are an expert crowdfunding pitch evaluator.
 
 Evaluate the following startup pitch and classify it as Red, Amber, or Green (RAG) based on investment readiness and overall quality.
-Provide reasoning and short actionable improvement recommendations.
+
+In addition to the overall classification, please:
+1. Evaluate spelling and grammar quality; note if the text contains errors or could use improvement.
+2. Assess if the pitch duration (between start and end date) is reasonable for a crowdfunding campaign, and provide guidance if it is too short or too long.
+3. Check if the pitch includes any supporting media (images, videos, etc.). If not, recommend adding relevant media to enhance campaign appeal.
+4. Comment on whether the funding goal appears realistic given the information provided.
+5. Encourage the business to mention their industry experience, and any past crowdfunding success or failure, to improve perceived credibility.
+6. Provide 3–5 concise, actionable improvement recommendations.
 
 Pitch details:
 Title: ${pitch.title}
 Elevator Pitch: ${pitch.elevatorPitch}
 Detailed Description: ${pitch.detailedPitch}
 Target Amount: $${pitch.targetAmount}
-Profit Share: ${pitch.profitSharePercentage}% shared ${pitch.profitShareFrequency}ly.
+Profit Share: ${pitch.profitSharePercentage}% paid ${pitch.profitShareFrequency}ly
+Start Date: ${pitch.startDate}
+End Date: ${pitch.endDate}
+Has Media: ${pitch.hasMedia ? "Yes" : "No"}
 
 Respond strictly as JSON like:
 {
