@@ -26,15 +26,15 @@ export function validateWithdrawalAmount(amount: number | null, balance: number)
 }
 
 /**
- * Determine whether it is time to declare profits or not
- * @param {BusinessPitch | null} pitch - The business pitch to check
- * @returns {boolean} True or false, depending on whether the profit period has been reached
+ * Determine whether a certain date has been reached or passed
+ * @param {Date | null} date - The date to check
+ * @returns {boolean} True or false, depending on whether the date has been reached
  */
-export function profitPeriodReached(pitch: BusinessPitch | null): boolean {
-  if (pitch && pitch.next_payout_date) {
-    if (new Date().getFullYear() >= pitch.next_payout_date.getFullYear() &&
-      new Date().getMonth() >= pitch.next_payout_date.getMonth() &&
-      new Date().getDate() >= pitch.next_payout_date.getDate()) {
+export function hasDateBeenReached(date: Date | null): boolean {
+  if (date) {
+    if (new Date().getFullYear() >= date.getFullYear() &&
+      new Date().getMonth() >= date.getMonth() &&
+      new Date().getDate() >= date.getDate()) {
       return true;
     }
   }
@@ -67,8 +67,26 @@ export function calculateDividendPayoutDate(period: string, end: Date): Date {
  * @returns calculated profit for the investor
  */
 export function calculateInvestorProfits(shares: number, totalShares: number, profitAmount: number, profitSharePercent: number): number {
-   if (totalShares === 0 || shares === 0) return 0;
+  if (totalShares === 0 || shares === 0) return 0;
   const profitPerShare = profitAmount / totalShares;
   const investorProfit = shares * profitPerShare;
-  return Math.floor(investorProfit*100)/100;
+  return Math.floor(investorProfit * 100) / 100;
+}
+
+export function compareDates(a: Date, b: Date): -1 | 0 | 1 {
+  const aY = a.getFullYear();
+  const aM = a.getMonth();
+  const aD = a.getDate();
+
+  const bY = b.getFullYear();
+  const bM = b.getMonth();
+  const bD = b.getDate();
+
+  if (aY < bY) return -1;
+  if (aY > bY) return 1;
+  if (aM < bM) return -1;
+  if (aM > bM) return 1;
+  if (aD < bD) return -1;
+  if (aD > bD) return 1;
+  return 0;
 }

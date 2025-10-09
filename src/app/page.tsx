@@ -5,16 +5,80 @@ import { Button } from "@/components/ui/button";
 import { Shield, Rocket, Bot } from "lucide-react";
 import { SignUpButton } from "@clerk/nextjs";
 import Image from "next/image";
+import { useEffect, useState } from "react";
+import { getAdvertisementPitches, updateAdvertCount } from "./actions";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel"
+import { Advert } from "../../types/advert";
+import Autoplay from "embla-carousel-autoplay"
+import { useRouter } from "next/navigation";
+
 
 export default function LandingPage() {
+  const [adverts, setAdverts] = useState<Advert[]>([]);
+  const router = useRouter();
+
+  useEffect(() => {
+    const fetchAdverts = async () => {
+      try {
+        const adverts = await getAdvertisementPitches();
+        setAdverts(adverts);
+
+        console.log("Fetched adverts:", adverts);
+      } catch (error) {
+        console.error("Error fetching advertisement pitches:", error);
+      }
+    };
+    fetchAdverts();
+  }, []);
+
+  async function advertClicked(advertID: string) {
+    // Each advert click costs 0.01 from the advert 
+    try { await updateAdvertCount(advertID); }
+    catch (error) { console.error("Error updating advert count:", error); }
+    // Redirect to the advert's pitch page
+    router.push(`/pitches/${advertID}`);
+  }
+
+
   return (
     <div className="flex flex-col">
       {/* Hero Section */}
       <section className="relative flex flex-col items-center justify-center text-center px-6 py-20 sm:py-32 bg-gradient-to-b from-slate-50 to-white">
-<h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight max-w-3xl">
+       <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight max-w-3xl">
   Launchpad<br />
   <span className="text-[#677DB7]">Powered by AI</span>
 </h1>
+        {/* Advertisement space */}
+        <div className="mt-12 relative w-full max-w-xs">
+          <Carousel
+            opts={{
+              loop: true,
+            }}
+            plugins={[
+              Autoplay({
+                delay: 3000,
+              }),
+            ]}
+          >
+            <CarouselContent className="flex gap-4">
+              {adverts.map((advert) => (
+                <CarouselItem onClick={() => advertClicked(advert.instance_id)} key={advert.instance_id} className="max-h-[400px] space-y-3 mx-1 items-center gap-4 p-4 border border-2 rounded-lg border-gray-400 bg-white shadow-md">
+                  <Image className="rounded-lg object-contain" src={advert.media || "/nasa-dCgbRAQmTQA-unsplash.jpg"} alt={advert.title} width={500} height={300} />
+                  <h3 className="text-lg font-semibold line-clamp-2">{advert.title}</h3>
+                  <p className="line-clamp-5">{advert.elevator_pitch}</p>
+                </CarouselItem>
+              ))}
+            </CarouselContent>
+            <CarouselNext />
+            <CarouselPrevious />
+          </Carousel>
+        </div>
         <p className="mt-6 text-lg text-muted-foreground max-w-2xl">
           Launchpad helps small businesses craft winning pitches with AI while
           empowering private investors to discover secure and fraud-free
@@ -29,14 +93,6 @@ export default function LandingPage() {
               Get Started
             </Button>
           </SignUpButton>
-        </div>
-        {/* optional hero image */}
-        <div className="mt-12">
-          <img
-            src="https://placehold.co/800x400?text=AI+Helping+Small+Businesses"
-            alt="AI helping create pitches"
-            className="rounded-lg shadow-lg"
-          />
         </div>
       </section>
 

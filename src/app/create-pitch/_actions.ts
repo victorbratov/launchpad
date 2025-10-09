@@ -5,14 +5,14 @@ import { business_pitches, business_accounts } from "@/db/schema";
 import { NewBusinessPitch } from "@/db/types";
 import { auth } from "@clerk/nextjs/server";
 import { eq } from "drizzle-orm";
-import { calculateDividendPayoutDate } from "@/lib/utils";
+import { calculateDividendPayoutDate, compareDates } from "@/lib/utils";
 
 export interface Pitch {
   title: string;
   status: string;
   elevatorPitch: string;
   detailedPitch: string;
-  targetAmount: string;
+  targetAmount: number;
   startDate: Date;
   endDate: Date;
   bronzeMultiplier: string;
@@ -23,6 +23,7 @@ export interface Pitch {
   dividendPayoutPeriod: string;
   tags: string[];
   profitShare: number;
+  advertMax: number;
 }
 
 export interface PitchInput {
@@ -73,20 +74,26 @@ export async function createPitch(pitch: Pitch): Promise<{
     return { success: false, message: "User not authenticated" };
   }
 
-  // derive next payout date
   const nextPayout = calculateDividendPayoutDate(
     pitch.dividendPayoutPeriod,
     pitch.endDate
   );
 
-  /** Map frontend fields → DB column names */
+  let status = "active"
+
+  const now = new Date();
+
+  if (compareDates(pitch.startDate, now) == 1) {
+    status = "upcoming"
+  }
+
   const newPitch: NewBusinessPitch = {
     business_account_id: userId,
-    status: pitch.status,
+    status: status,
     product_title: pitch.title,
     elevator_pitch: pitch.elevatorPitch,
     detailed_pitch: pitch.detailedPitch,
-    target_investment_amount: Number(pitch.targetAmount),
+    target_investment_amount: pitch.targetAmount,
     raised_amount: 0,
     investor_profit_share_percent: pitch.profitShare,
     start_date: pitch.startDate,
@@ -99,13 +106,13 @@ export async function createPitch(pitch: Pitch): Promise<{
     dividend_payout_period: pitch.dividendPayoutPeriod,
     next_payout_date: nextPayout,
     tags: pitch.tags,
+    adverts_available: pitch.advertMax ? pitch.advertMax *100 : 0, // store as integer number of adverts, as each advert click costs 0.01
   };
 
   const [inserted] = await db.insert(business_pitches).values(newPitch).returning({
     pitch_id: business_pitches.pitch_id,
   });
 
-  // Build S3 media path
   const mediaUrl = `${process.env.NEXT_PUBLIC_BUCKET_URL}/${inserted.pitch_id}`;
   await db
     .update(business_pitches)

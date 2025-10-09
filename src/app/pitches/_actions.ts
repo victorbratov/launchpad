@@ -1,7 +1,6 @@
 "use server";
 
 import { db } from "@/db";
-import { business_pitches, investment_ledger } from "@/db/schema";
 import { BusinessPitch } from "@/db/types";
 import { sql } from "drizzle-orm";
 
@@ -10,24 +9,17 @@ export interface PitchWithStats extends BusinessPitch {
   invested_percent: number;
 }
 
-export async function getPitches(): Promise<PitchWithStats[]> {
-  const pitches = await db.select().from(business_pitches);
+export async function getPitches(): Promise<BusinessPitch[]> {
+  const result = await db.execute(sql`
+    SELECT *
+    FROM (
+      SELECT *,
+             ROW_NUMBER() OVER (PARTITION BY pitch_id ORDER BY version DESC) AS rn
+      FROM business_pitches
+      WHERE status = 'active'
+    ) ranked
+    WHERE rn = 1;
+  `);
 
-  const investments = await db
-    .select({
-      pitch_id: investment_ledger.pitch_id,
-      total_invested: sql<number>`sum(${investment_ledger.amount_invested})`,
-    })
-    .from(investment_ledger)
-    .groupBy(investment_ledger.pitch_id);
-
-  const investmentMap = new Map(investments.map((i) => [i.pitch_id, Number(i.total_invested)]));
-
-  const enriched: PitchWithStats[] = pitches.map((pitch) => {
-    const total = investmentMap.get(pitch.instance_id) || 0;
-    const invested_percent = (total / (pitch.target_investment_amount || 1)) * 100;
-    return { ...pitch, total_invested: total, invested_percent };
-  });
-
-  return enriched;
+  return result.rows as BusinessPitch[];
 }

@@ -69,7 +69,13 @@ export const depositFunds = async (amount: number): Promise<void> => {
   await db.transaction(async (tx) => {
     await tx.update(bank_accounts).set({ balance: bankAccount.balance - amount }).where(eq(bank_accounts.id, bankAccount.id));
     await tx.update(investor_accounts).set({ wallet_balance: investorAccount.wallet_balance + amount }).where(eq(investor_accounts.id, investorAccount.id));
-    await tx.insert(transactions).values({ account_type: "investor", account_id: userId, txn_type: "deposit", amount });
+    await tx.insert(transactions).values({
+      account_type: "investor",
+      account_id: userId,
+      txn_type: "deposit",
+      tnx_status: "completed",
+      amount
+    });
   })
 }
 
@@ -95,6 +101,12 @@ export const withdrawFunds = async (amount: number): Promise<void> => {
   await db.transaction(async (tx) => {
     await tx.update(bank_accounts).set({ balance: bankAccount.balance + amount }).where(eq(bank_accounts.id, bankAccount.id));
     await tx.update(investor_accounts).set({ wallet_balance: investorAccount.wallet_balance - amount }).where(eq(investor_accounts.id, investorAccount.id));
-    await tx.insert(transactions).values({ account_type: "investor", account_id: userId, txn_type: "withdrawal", amount });
+    await tx.insert(transactions).values({
+      account_type: "investor",
+      account_id: userId,
+      txn_type: "withdrawal",
+      tnx_status: "completed",
+      amount
+    });
   })
 }

@@ -6,10 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { getPitch, createPitchVersion, updatePitchMedia } from "./_actions";
+import { getPitch, createPitchVersion } from "./_actions";
 import { fetchAllMedia } from "@/lib/s3_utils";
 import Image from "next/image";
 import type { BusinessPitch } from "@/db/types";
+import {Label} from "@/components/ui/label";
 
 export default function PitchDetailsPage() {
   const { Pitchid: pitchIdParam } = useParams();
@@ -27,6 +28,7 @@ export default function PitchDetailsPage() {
   const [pitchName, setPitchName] = useState("");
   const [elevatorPitch, setElevatorPitch] = useState("");
   const [detailedPitch, setDetailedPitch] = useState("");
+  const [advertMax, setAdvertMax] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     async function loadPitch() {
@@ -39,7 +41,7 @@ export default function PitchDetailsPage() {
         setElevatorPitch(fetchedPitch.elevator_pitch);
         setDetailedPitch(fetchedPitch.detailed_pitch);
 
-        const mediaURLs = await fetchAllMedia(fetchedPitch.instance_id);
+        const mediaURLs = await fetchAllMedia(fetchedPitch.pitch_id);
         setMediaFiles(mediaURLs);
         if (mediaURLs.length > 0) setFeatured(mediaURLs[0]); // Default first as featured
       } catch (err) {
@@ -57,11 +59,12 @@ export default function PitchDetailsPage() {
 
   const handleSave = async () => {
     try {
-      // 1️⃣ Create a new DB version entry (metadata only)
+      // Create a new DB version entry (metadata only)
       const newInstanceId = await createPitchVersion(pitch.pitch_id, {
         product_title: pitchName,
         elevator_pitch: elevatorPitch,
         detailed_pitch: detailedPitch,
+        adverts_available: advertMax ?? pitch.adverts_available,
       });
 
       const allowedTypes = ["image/", "video/"];
@@ -70,7 +73,7 @@ export default function PitchDetailsPage() {
         ...pendingFiles,
       ];
 
-      // 2️⃣ Loop over all media and upload each to the right subpath
+      // Loop over all media and upload each to the right subpath
       for (const item of allMedia) {
         let file: File;
         let fileName: string;
@@ -113,7 +116,7 @@ export default function PitchDetailsPage() {
 
         const uploadUrl = `${BUCKET_URL.replace(/\/$/, "")}/${key}`;
 
-        // Upload to public S3
+        // Upload to S3
         const response = await fetch(uploadUrl, {
           method: "PUT",
           headers: { "Content-Type": file.type },
@@ -126,9 +129,6 @@ export default function PitchDetailsPage() {
 
         console.log("✅ Uploaded:", uploadUrl);
       }
-
-      // 3️⃣ Finally update the new pitch version’s supporting_media with the folder path
-      await updatePitchMedia(newInstanceId, `${BUCKET_URL.replace(/\/$/, "")}/${newInstanceId}`);
 
       alert("New version with featured media saved successfully!");
       router.push("/business-portal");
@@ -253,6 +253,21 @@ export default function PitchDetailsPage() {
               rows={6}
               className="w-full p-2 border rounded-md"
             />
+          </div>
+
+          <div className="space-y-2 border p-4 rounded-md">
+            <h3 className="text-2xl font-semibold">Advertising Budget</h3>
+            <p>Used: ${pitch.total_advert_clicks / 100}</p>
+            <p>Remaining: ${pitch.adverts_available / 100}</p>
+            <div className="space-y-2">
+              <Label className="mt-4">Update your maximum advertising budget (USD):</Label>
+              <Input
+                type="number"
+                placeholder="Maximum amount to spend on adverts"
+                value={advertMax ?? ""}
+                onChange={(e) => setAdvertMax(e.target.value === "" ? undefined : Math.round(Number(e.target.value) * 100) / 100)}
+              />
+            </div>
           </div>
         </div>
       </div>

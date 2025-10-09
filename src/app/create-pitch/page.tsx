@@ -55,7 +55,7 @@ export default function CreatePitchPage() {
   const [title, setTitle] = useState("");
   const [elevatorPitch, setElevatorPitch] = useState("");
   const [detailedPitch, setDetailedPitch] = useState("");
-  const [goal, setGoal] = useState<string>("");
+  const [goal, setGoal] = useState<number | undefined>();
   const [dividendPeriod, setDividendPeriod] = useState("quarterly");
   const [startDate, setStartDate] = useState<Date>(new Date());
   const [endDate, setEndDate] = useState<Date>(new Date());
@@ -65,6 +65,7 @@ export default function CreatePitchPage() {
   const [silverMax, setSilverMax] = useState<number | undefined>();
   const [goldMultiplier, setGoldMultiplier] = useState("");
   const [profitShare, setProfitShare] = useState<number>();
+  const [advertMax, setAdvertMax] = useState<number | undefined>();
 
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [status, setStatus] = useState("Pending");
@@ -94,7 +95,7 @@ export default function CreatePitchPage() {
 
   const handleEvaluate = () => {
     async function fetchEvaluation() {
-      if (title.trim() === "" || elevatorPitch.trim() === "" || detailedPitch.trim() === "" || goal.trim() === "" || dividendPeriod.trim() === "" || !profitShare) {
+      if (title.trim() === "" || elevatorPitch.trim() === "" || detailedPitch.trim() === "" || goal === undefined || dividendPeriod.trim() === "" || !profitShare) {
         alert("Please fill in all required fields before running the evaluation.");
       }
 
@@ -102,7 +103,7 @@ export default function CreatePitchPage() {
         title: title.trim(),
         elevatorPitch: elevatorPitch.trim(),
         detailedPitch: detailedPitch.trim(),
-        targetAmount: parseInt(goal.trim()),
+        targetAmount: goal || 0,
         profitShareFrequency: dividendPeriod.trim() as "quarterly" | "yearly",
         profitSharePercentage: profitShare ?? 0,
       }
@@ -135,8 +136,7 @@ export default function CreatePitchPage() {
       return false;
     }
 
-    const goalNum = parseInt(goal || "0");
-    if (!validateMaxes(bronzeMax!, silverMax!, goalNum)) {
+    if (!validateMaxes(bronzeMax!, silverMax!, goal!)) {
       alert("Error with maximum tier values");
       return false;
     }
@@ -177,7 +177,7 @@ export default function CreatePitchPage() {
         status,
         elevatorPitch,
         detailedPitch,
-        targetAmount: goal,
+        targetAmount: goal!,
         startDate,
         endDate,
         bronzeMultiplier,
@@ -188,6 +188,7 @@ export default function CreatePitchPage() {
         dividendPayoutPeriod: dividendPeriod,
         tags: selectedTags,
         profitShare: profitShare!,
+        advertMax: advertMax ?? 0,
       });
 
       if (!success) {
@@ -356,12 +357,11 @@ export default function CreatePitchPage() {
                   type="number"
                   placeholder="10000"
                   value={goal ?? ""}
-                  onChange={(e) => setGoal(e.target.value)}
+                  onChange={(e) => setGoal(e.target.value === "" ? undefined : Math.round(Number(e.target.value) * 100) / 100)}
                   required
                 />
               </div>
 
-              {/* Profit Share % */}
               <div className="flex items-center gap-2">
                 <Label>Profit Share %</Label>
                 <InfoBubble message="The percentage of profits distributed between investors once you meet your dividend period" />
@@ -375,6 +375,18 @@ export default function CreatePitchPage() {
                 }}
                 min={1} max={100} step={0.1}
                 required />
+
+              {/* Advert Maximum Amount */}
+              <div>
+                <Label>Advert Maximum Amount (USD)</Label>
+                <Input
+                  type="number"
+                  placeholder="Maximum amount to spend on adverts"
+                  value={advertMax ?? ""}
+                  onChange={(e) => setAdvertMax(e.target.value === "" ? undefined : Math.round(Number(e.target.value) * 100) / 100)}
+                />
+              </div>
+
 
               <div>
                 <div className="flex items-center gap-2">

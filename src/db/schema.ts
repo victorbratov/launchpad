@@ -72,6 +72,8 @@ export const business_pitches = pgTable("business_pitches", {
   tags: text("tags").array(),
 
   created_at: timestamp("created_at").defaultNow(),
+  adverts_available: integer("adverts_available").notNull().default(0),
+  total_advert_clicks: integer("total_advert_clicks").notNull().default(0),
 });
 
 export const investment_ledger = pgTable("investment_ledger", {
@@ -93,6 +95,7 @@ export const transactions = pgTable("transactions", {
   account_type: varchar("account_type", { length: 20 }).notNull(),
   account_id: text("account_id").notNull(),
   txn_type: varchar("txn_type", { length: 50 }).notNull(),
+  tnx_status: varchar("tnx_status", { length: 50 }).notNull(),
   related_pitch_id: text("related_pitch_id").references(() => business_pitches.instance_id),
   amount: doublePrecision("amount").notNull(),
   description: text("description"),

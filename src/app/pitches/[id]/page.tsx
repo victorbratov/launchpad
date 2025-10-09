@@ -42,7 +42,7 @@ export default function PitchDetailsPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  const [WithdrawChoice, setIsToggled] = useState(false);
+  const [withdrawChoice, setIsToggled] = useState(false);
 
   const [media, setMedia] = useState<string[]>([]);
   const amount = parseFloat(input) || 0;
@@ -65,7 +65,7 @@ export default function PitchDetailsPage() {
         setPitch(pitchData);
         setVersions(versions);
         setInvestmentSummary(total);
-        fetchAllMedia(pitchData.instance_id).then((m) => setMedia(m));
+        fetchAllMedia(pitchData.pitch_id).then((m) => setMedia(m));
       } catch (err) {
         console.error(err);
         setMessage("Error loading pitch data.");
@@ -86,7 +86,7 @@ export default function PitchDetailsPage() {
     if (!pitch) return;
     startTransition(async () => {
       try {
-        const res = await investInPitch(pitch.instance_id, amount, WithdrawChoice); // invest by instance_id
+        const res = await investInPitch(pitch.instance_id, amount, withdrawChoice ? "bank_account" : "wallet"); // invest by instance_id
         setMessage(res.message);
       } catch (err: any) {
         console.error(err);
@@ -209,9 +209,9 @@ export default function PitchDetailsPage() {
                 </div>
               )}
 
-              <div className = "flex items-center space-x-2"> 
+              <div className="flex items-center space-x-2">
                 {/* Invest Button */}
-                <div className = "flex-grow">
+                <div className="flex-grow">
                   <Button
                     disabled={!pitch || isPending || amount <= 0 || amount > remaining}
                     onClick={handleInvest}
@@ -226,8 +226,8 @@ export default function PitchDetailsPage() {
                 <div>Wallet</div>
 
                 <div>
-                  <Switch 
-                    checked={WithdrawChoice}
+                  <Switch
+                    checked={withdrawChoice}
                     onCheckedChange={setIsToggled}
                   />
                 </div>
