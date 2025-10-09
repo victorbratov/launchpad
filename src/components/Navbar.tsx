@@ -172,14 +172,14 @@ export default function Navbar() {
           <div className="px-2 pt-2 pb-3 space-y-1 border-t bg-white">
             <Link
               href="/pitches"
-              className="block px-3 py-2 text-white hover:text-gray-300 hover:bg-gray-50 rounded-md transition-all duration-200"
+              className="block px-3 py-2 text-black hover:text-gray-300 hover:bg-gray-50 rounded-md transition-all duration-200"
               onClick={() => setIsOpen(false)}
             >
               Discover Pitches
             </Link>
             <Link
               href="/portal_redirect"
-              className="block px-3 py-2 text-white hover:text-gray-300 hover:bg-gray-50 rounded-md transition-all duration-200"
+              className="block px-3 py-2 text-black hover:text-gray-300 hover:bg-gray-50 rounded-md transition-all duration-200"
               onClick={() => setIsOpen(false)}
             >
               Personal Portal
