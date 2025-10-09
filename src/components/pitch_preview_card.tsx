@@ -29,7 +29,7 @@ export function PitchCard({ pitch }: PitchCardProps) {
 
   return (
     <Link href={`/pitches/${pitch.instance_id}`}>
-      <Card className="flex flex-col overflow-hidden" onClick={() => { updateAdvertCount(pitch.instance_id) }}>
+      <Card className="flex flex-col overflow-hidden" onClick={() => { pitch.adverts_available > 0 &&updateAdvertCount(pitch.instance_id) }}>
         <CardHeader>
           <CardTitle><span className="text-xl">{pitch.product_title}</span></CardTitle>
           <p className="text-sm text-muted-foreground">{pitch.status}</p>
