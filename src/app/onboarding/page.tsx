@@ -13,25 +13,24 @@ import {
 } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { completeOnboarding } from "./_actions";
+import { redirect } from "next/navigation";
+import { useUser } from "@clerk/nextjs";
 
 export default function OnboardingPage() {
   const [role, setRole] = useState<"business" | "investor">("business");
   const [name, setName] = useState("");
   const [bankAccount, setBankAccount] = useState("");
   const [loading, setLoading] = useState(false);
+  const { user } = useUser();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    try {
-      await completeOnboarding(role, name, bankAccount);
-    } catch (err) {
-      console.error(err);
-      alert("Something went wrong while onboarding. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+    await completeOnboarding(role, name, bankAccount)
+    await user?.reload();
+    setLoading(false);
+    redirect("/")
   };
 
   return (
