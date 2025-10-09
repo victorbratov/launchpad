@@ -45,13 +45,15 @@
 
 @layer theme, base, clerk, components, utilities;
 
+/* Changed main font to lato, earlier font felt too techy for use, feel free to replace if wanted */
+
 body {
-  font-family: var(--font-jetbrains-mono), monospace;
+  font-family: var(--font-lato), sans-serif;
 }
 
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
+  --background: #F3F3F3; 
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
@@ -126,3 +128,4 @@ body {
     @apply bg-background text-foreground;
   }
 }
+

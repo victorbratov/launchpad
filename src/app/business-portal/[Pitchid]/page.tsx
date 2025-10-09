@@ -143,7 +143,7 @@ export default function PitchDetailsPage() {
       <div className="lg:col-span-2 space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Supporting Media</CardTitle>
+            <CardTitle><span className="text-2xl font-bold">Supporting Media</span></CardTitle>
           </CardHeader>
           <CardContent>
             {/* Existing media */}
@@ -228,6 +228,7 @@ export default function PitchDetailsPage() {
         </Card>
 
         {/* Editable text fields */}
+        <div className="space-y-6 mt-6 bg-white rounded-lg shadow-md p-6">
         <div className="space-y-6 mt-6">
           <div>
             <h2 className="text-2xl font-semibold">Title</h2>
@@ -270,11 +271,12 @@ export default function PitchDetailsPage() {
           </div>
         </div>
       </div>
+      </div>
 
       <div>
         <Card>
           <CardHeader>
-            <CardTitle>Investment Summary</CardTitle>
+            <CardTitle><span className="text-[#677DB7] text-2xl font-bold">Investment Summary</span></CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <Progress

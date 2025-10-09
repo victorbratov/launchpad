@@ -102,9 +102,27 @@ export default function InvestorPortalPage() {
     <div className="p-6">
       <Tabs defaultValue="profile">
         <TabsList>
-          <TabsTrigger value="profile">Profile</TabsTrigger>
-          <TabsTrigger value="investments">Investments</TabsTrigger>
-          <TabsTrigger value="dividends">Dividends</TabsTrigger>
+          <div className="flex space-x-2">
+          <TabsTrigger
+            value="profile"
+            className="bg-white text-black hover:bg-gray-200 data-[state=active]:bg-gray-200 data-[state=active]:font-semibold"
+          >
+            Profile
+          </TabsTrigger>
+          <TabsTrigger
+            value="investments"
+            className="bg-white text-black hover:bg-gray-200 data-[state=active]:bg-gray-200 data-[state=active]:font-semibold"
+          >
+            Investments
+          </TabsTrigger>
+          <TabsTrigger
+            value="dividends"
+            className="bg-white text-black hover:bg-gray-200 data-[state=active]:bg-gray-200 data-[state=active]:font-semibold"
+          >
+            Dividends
+          </TabsTrigger>
+          </div>
+
         </TabsList>
 
         <TabsContent value="profile" className="space-y-6">
@@ -115,7 +133,7 @@ export default function InvestorPortalPage() {
                 <User className="w-6 h-6 text-primary" />
               </div>
               <div>
-                <CardTitle>{investorInfo.name}</CardTitle>
+                <CardTitle><span className="text-[#677DB7] text-2xl font-bold">{investorInfo.name}</span></CardTitle>
                 <p className="text-sm text-muted-foreground">{investorInfo.email}</p>
               </div>
             </CardHeader>
@@ -209,7 +227,7 @@ export default function InvestorPortalPage() {
         <TabsContent value="investments">
           <Card>
             <CardHeader>
-              <CardTitle>Investments</CardTitle>
+              <CardTitle><span className="text-[#677DB7] text-2xl font-bold">Investments</span></CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <Table>
@@ -236,7 +254,7 @@ export default function InvestorPortalPage() {
 
               {/* Investment Bar Chart */}
               <div className="mt-6">
-                <h4 className="font-semibold mb-2">Investment Breakdown</h4>
+                <h4 className="font-semibold mb-2"><span className="text-lg">Investment Breakdown</span></h4>
                 <div className="h-64 bg-muted rounded-lg p-4">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={investments}>
@@ -257,7 +275,7 @@ export default function InvestorPortalPage() {
         <TabsContent value="dividends">
           <Card>
             <CardHeader>
-              <CardTitle>Dividends</CardTitle>
+              <CardTitle><span className="text-[#677DB7] text-2xl font-bold">Dividends</span></CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <Table>
@@ -281,7 +299,7 @@ export default function InvestorPortalPage() {
 
               {/* Cumulative Dividends Chart */}
               <div className="mt-6">
-                <h4 className="font-semibold mb-2">Cumulative Dividends Over Time</h4>
+                <h4 className="font-semibold mb-2"> <span className="text-lg">Cumulative Dividends Over Time </span></h4>
                 <div className="h-64 bg-muted rounded-lg p-4">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={dividendsOverTime}>

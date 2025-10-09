@@ -50,10 +50,10 @@ export default function LandingPage() {
     <div className="flex flex-col">
       {/* Hero Section */}
       <section className="relative flex flex-col items-center justify-center text-center px-6 py-20 sm:py-32 bg-gradient-to-b from-slate-50 to-white">
-        <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight max-w-3xl">
-          Launchpad<br />
-          <span className="text-primary">Powered by AI</span>
-        </h1>
+       <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight max-w-3xl">
+  Launchpad<br />
+  <span className="text-[#677DB7]">Powered by AI</span>
+</h1>
         {/* Advertisement space */}
         <div className="mt-12 relative w-full max-w-xs">
           <Carousel

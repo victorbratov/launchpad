@@ -92,7 +92,11 @@ export default function PitchSearchPage() {
       {/* Sidebar Left */}
       <aside className="hidden lg:block w-80 bg-white border-r min-h-screen sticky top-16">
         <div className="p-6">
-          <h1 className="text-2xl font-bold mb-6">Discover Pitches</h1>
+          <h1 className="text-2xl font-bold mb-6">
+             <span className="text-2xl font-bold">
+            Discover Pitches
+            </span>
+            </h1>
           <FilterSidebar
             filters={filters}
             setFilters={setFilters}

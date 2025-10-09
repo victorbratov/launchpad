@@ -248,7 +248,7 @@ export default function CreatePitchPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Create New Pitch</CardTitle>
+            <CardTitle> <span className="text-2xl font-bold">Create New Pitch  </span></CardTitle>
           </CardHeader>
 
           <form onSubmit={handleSubmit}>
@@ -506,7 +506,7 @@ export default function CreatePitchPage() {
         <Card className="lg:col-span-1 lg:sticky lg:top-20 h-[calc(100vh-7rem)] overflow-hidden">
           <CardHeader>
             <div className="flex items-center gap-2">
-              <CardTitle>AI Assistance</CardTitle>
+              <CardTitle><span className="text-[#677DB7] text-2xl font-bold">AI Assistance</span></CardTitle>
               <InfoBubble message="This is where the AI provides feedback on your pitch. You get three scores: RAG (Red, Amber, Green). Green is the best score the AI can give. Red is the worst." />
             </div>
           </CardHeader>
