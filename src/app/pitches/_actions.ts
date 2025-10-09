@@ -18,7 +18,8 @@ export async function getPitches(): Promise<BusinessPitch[]> {
       FROM business_pitches
       WHERE status = 'active'
     ) ranked
-    WHERE rn = 1;
+    WHERE rn = 1
+    ORDER BY adverts_available DESC;
   `);
 
   return result.rows as BusinessPitch[];
