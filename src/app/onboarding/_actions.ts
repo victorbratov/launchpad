@@ -56,11 +56,9 @@ export const completeOnboarding = async (
     await client.users.updateUser(userId, {
       publicMetadata: { role: 'business', onboardingComplete: true },
     })
-    redirect('/business-portal');
   } else {
     await client.users.updateUser(userId, {
       publicMetadata: { role: 'investor', onboardingComplete: true },
     })
-    redirect('/investor-portal');
   }
 };

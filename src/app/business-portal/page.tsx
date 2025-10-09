@@ -17,6 +17,8 @@ import { TriangleAlert } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { ProfitsDialog } from "@/components/profits_dialog";
 import { AdPaymentDialog } from "@/components/ad_payment_dialog";
+import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 
 export default function BusinessPortalPage() {
   const [accountInfo, setAccountInfo] = useState<BusinessAccount | null>(null);
@@ -30,6 +32,8 @@ export default function BusinessPortalPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [profitDialogOpen, setProfitDialogOpen] = useState(false);
   const [adPaymentDialogOpen, setAdPaymentDialogOpen] = useState(false);
+
+  const router = useRouter();
 
   useEffect(() => {
     loadData().then(() => setLoading(false));
@@ -78,25 +82,53 @@ export default function BusinessPortalPage() {
     <div className="p-6 space-y-6">
       <Card>
         <CardHeader>
-  <CardTitle>
-    <span className="text-2xl font-bold">
-      Business Overview
-    </span>
-  </CardTitle>
-</CardHeader>
+          <CardTitle>
+            <span className="text-2xl font-bold">
+              Business Overview
+            </span>
+          </CardTitle>
+        </CardHeader>
 
         <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 justify-between flex-wrap items-center">
-            <div className="space-y-2">
-              <p><strong>Business:</strong> {accountInfo?.name ?? "Loading..."}</p>
-              <p><strong>Email:</strong> {accountInfo?.email ?? "Loading..."}</p>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-start">
+            <div>
+              <p>
+                <strong>Business:</strong> {accountInfo?.name ?? "Loading..."}
+              </p>
+              <p>
+                <strong>Email:</strong> {accountInfo?.email ?? "Loading..."}
+              </p>
             </div>
-            <div className="sm:text-right space-x-2 space-y-2">
-              <p className="pt-2 sm:pt-0"><strong>Wallet Balance:</strong></p>
-              <p className="text-2xl font-bold">{accountInfo?.wallet_balance ?? "Loading..."}</p>
 
-              <FundsDialog mode="deposit" balance={accountInfo?.wallet_balance ?? 0} onSubmit={depositFunds} />
-              <FundsDialog mode="withdraw" balance={accountInfo?.wallet_balance ?? 0} onSubmit={withdrawFunds} />
+            <div className="sm:self-start sm:ml-auto">
+              <Button
+                variant="default"
+                onClick={() => router.push("/create-pitch")}
+              >
+                Create New Pitch
+              </Button>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:items-end space-y-1">
+            <p className="font-semibold">
+              Wallet Balance:
+            </p>
+            <p className="text-2xl font-bold">
+              {accountInfo?.wallet_balance ?? "Loading..."}
+            </p>
+
+            <div className="flex flex-wrap gap-2 sm:justify-end">
+              <FundsDialog
+                mode="deposit"
+                balance={accountInfo?.wallet_balance ?? 0}
+                onSubmit={depositFunds}
+              />
+              <FundsDialog
+                mode="withdraw"
+                balance={accountInfo?.wallet_balance ?? 0}
+                onSubmit={withdrawFunds}
+              />
             </div>
           </div>
         </CardContent>
@@ -105,9 +137,9 @@ export default function BusinessPortalPage() {
       <Card>
         <CardHeader><CardTitle>
           <span className="text-[#677DB7] text-2xl font-bold">
-          Your Pitches
+            Your Pitches
           </span>
-          </CardTitle></CardHeader>
+        </CardTitle></CardHeader>
         <CardContent>
 
           {loading ? (
@@ -121,7 +153,7 @@ export default function BusinessPortalPage() {
                   <Label className="flex justify-center h-10 border border-2 border-orange-800 bg-orange-200 "><TriangleAlert className="inline mr-2" />You have 1 or more pitches that require profit reporting!<TriangleAlert className="inline ml-2" /></Label>
                 </div>
               )}
-              {adPaymentTime &&(
+              {adPaymentTime && (
                 <div className="space-y-2 mb-4">
                   <Label className="flex justify-center h-10 border border-2 border-purple-800 bg-purple-200 "><TriangleAlert className="inline mr-2" />You have 1 or more pitches that require ad payment!<TriangleAlert className="inline ml-2" /></Label>
                 </div>
@@ -141,8 +173,8 @@ export default function BusinessPortalPage() {
 
                     <TableRow
                       key={pitch.pitch_id}
-                      className={`cursor-pointer ${hasDateBeenReached(pitch.end_date) && pitch.total_advert_clicks > 0 ? "bg-purple-100 hover:bg-purple-200" : hasDateBeenReached(pitch.next_payout_date) ? "bg-orange-100 hover:bg-orange-200": "hover:bg-muted/50"}`}
-                      onClick={() => {{hasDateBeenReached(pitch.end_date) && pitch.total_advert_clicks > 0 ? handleAdRowClick(pitch) : hasDateBeenReached(pitch.next_payout_date) ? handleProfitRowCLick(pitch) : handleRowClick(pitch) }}}
+                      className={`cursor-pointer ${hasDateBeenReached(pitch.end_date) && pitch.total_advert_clicks > 0 ? "bg-purple-100 hover:bg-purple-200" : hasDateBeenReached(pitch.next_payout_date) ? "bg-orange-100 hover:bg-orange-200" : "hover:bg-muted/50"}`}
+                      onClick={() => { { hasDateBeenReached(pitch.end_date) && pitch.total_advert_clicks > 0 ? handleAdRowClick(pitch) : hasDateBeenReached(pitch.next_payout_date) ? handleProfitRowCLick(pitch) : handleRowClick(pitch) } }}
                     >
                       <TableCell className="font-medium">{pitch.product_title}</TableCell>
                       <TableCell>

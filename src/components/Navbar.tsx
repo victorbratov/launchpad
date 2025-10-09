@@ -41,7 +41,7 @@ export default function Navbar() {
                 Discover Pitches
               </Link>
               <Link
-                href="/investor-portal"
+                href="/portal_redirect"
                 className={`text-white hover:text-gray-300 transition-colors duration-200 font-bold ${lato.className}`}
               >
                 Personal Portal
@@ -98,12 +98,12 @@ export default function Navbar() {
           <div className="hidden md:flex items-center space-x-8 absolute left-1/2 transform -translate-x-1/2">
             <Link
               href="/pitches"
-               className={`text-white hover:text-gray-300 transition-colors duration-200 font-bold ${lato.className}`}
-  >
+              className={`text-white hover:text-gray-300 transition-colors duration-200 font-bold ${lato.className}`}
+            >
               Discover Pitches
             </Link>
             <Link
-              href="/investor-portal"
+              href="/portal_redirect"
               className={`text-white hover:text-gray-300 transition-colors duration-200 font-bold ${lato.className}`}
             >
               Personal Portal
@@ -124,16 +124,16 @@ export default function Navbar() {
             </SignedOut>
 
             <SignedIn>
-<div className="inline-flex rounded-full ring-2 ring-white">
-  <UserButton
-    appearance={{
-      elements: { 
-        avatarBox: "rounded-full", 
-        avatarImage: "w-12 h-12" // set width and height
-      }
-    }}
-  />
-</div>
+              <div className="inline-flex rounded-full ring-2 ring-white">
+                <UserButton
+                  appearance={{
+                    elements: {
+                      avatarBox: "rounded-full",
+                      avatarImage: "w-12 h-12" // set width and height
+                    }
+                  }}
+                />
+              </div>
 
 
             </SignedIn>
@@ -142,16 +142,16 @@ export default function Navbar() {
           {/* Mobile - UserButton and Menu Button */}
           <div className="md:hidden flex items-center space-x-4">
             <SignedIn>
-<div className="inline-flex rounded-full ring-2 ring-white">
-  <UserButton
-    appearance={{
-      elements: { 
-        avatarBox: "rounded-full", 
-        avatarImage: "w-12 h-12" // set width and height
-      }
-    }}
-  />
-</div>
+              <div className="inline-flex rounded-full ring-2 ring-white">
+                <UserButton
+                  appearance={{
+                    elements: {
+                      avatarBox: "rounded-full",
+                      avatarImage: "w-12 h-12" // set width and height
+                    }
+                  }}
+                />
+              </div>
 
 
             </SignedIn>
@@ -166,9 +166,8 @@ export default function Navbar() {
 
         {/* Mobile Menu */}
         <div
-          className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
-            isOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
-          }`}
+          className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
+            }`}
         >
           <div className="px-2 pt-2 pb-3 space-y-1 border-t bg-white">
             <Link
@@ -179,7 +178,7 @@ export default function Navbar() {
               Discover Pitches
             </Link>
             <Link
-              href="/investor-portal"
+              href="/portal_redirect"
               className="block px-3 py-2 text-white hover:text-gray-300 hover:bg-gray-50 rounded-md transition-all duration-200"
               onClick={() => setIsOpen(false)}
             >
