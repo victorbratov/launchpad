@@ -29,8 +29,12 @@ export default function LandingPage() {
     const fetchAdverts = async () => {
       try {
         const adverts = await getAdvertisementPitches();
+        console.log("Fetched adverts with media:", adverts.map(a => ({ 
+          id: a.id, 
+          title: a.title, 
+          media: a.media 
+        })));
         setAdverts(adverts);
-        console.log("Fetched adverts:", adverts);
       } catch (error) {
         console.error("Error fetching advertisement pitches:", error);
       } finally {
@@ -143,15 +147,18 @@ export default function LandingPage() {
                       onClick={() => advertClicked(advert.instance_id)}
                     >
                       <div className="relative overflow-hidden">
-                        {advert.media &&
-                          <Image
-                            className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                            src={advert.media || "/nasa-dCgbRAQmTQA-unsplash.jpg"}
-                            alt={advert.title}
-                            width={400}
-                            height={200}
-                          />
-                        }
+                        <Image
+                          className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                          src={advert.media || "/nasa-dCgbRAQmTQA-unsplash.jpg"}
+                          alt={advert.title}
+                          width={400}
+                          height={200}
+                          onError={(e) => {
+                            // Fallback to default image if media URL fails to load
+                            const target = e.target as HTMLImageElement;
+                            target.src = "/nasa-dCgbRAQmTQA-unsplash.jpg";
+                          }}
+                        />
                         <div className="absolute top-3 right-3">
                           <Badge className="bg-blue-600 hover:bg-blue-700 text-white">
                             Featured

@@ -41,8 +41,14 @@ export async function getAdvertisementPitches() {
 
     // get the url of the featured media for each pitch
     for (const pitch of pitches) {
-        if (pitch.media) {
-            pitch.media = await fetchFeaturedMedia(pitch.id);
+        try {
+            // Always try to fetch media, regardless of supporting_media value
+            const mediaUrl = await fetchFeaturedMedia(pitch.id);
+            pitch.media = mediaUrl || null; // Set to null if fetchFeaturedMedia returns falsy value
+            console.log(`Pitch ${pitch.id}: Media URL = ${pitch.media}`);
+        } catch (error) {
+            console.error(`Error fetching media for pitch ${pitch.id}:`, error);
+            pitch.media = null;
         }
     }
     return pitches;
