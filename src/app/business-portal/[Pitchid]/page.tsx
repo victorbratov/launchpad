@@ -93,7 +93,7 @@ export default function PitchDetailsPage() {
         product_title: pitchName,
         elevator_pitch: elevatorPitch,
         detailed_pitch: detailedPitch,
-        adverts_available: advertMax ?? pitch.adverts_available,
+        adverts_available: advertMax ? advertMax * 100 : pitch.adverts_available,
       });
 
       const allowedTypes = ["image/", "video/"];
@@ -137,8 +137,8 @@ export default function PitchDetailsPage() {
           (typeof item === "string" && item === featured);
 
         const key = isFeatured
-          ? `${newInstanceId}/featured/${fileName}`
-          : `${newInstanceId}/${fileName}`;
+          ? `${pitchId}/featured/${fileName}`
+          : `${pitchId}/${fileName}`;
 
         const uploadUrl = `${BUCKET_URL.replace(/\/$/, "")}/${key}`;
 
@@ -395,13 +395,13 @@ export default function PitchDetailsPage() {
                   <div className="bg-slate-50 p-4 rounded-lg">
                     <p className="text-sm text-slate-600 mb-1">Used Budget</p>
                     <p className="text-2xl font-bold text-slate-800">
-                      ${(pitch.total_advert_clicks / 100).toLocaleString()}
+                      ${pitch.total_advert_clicks > 0 ? (pitch.total_advert_clicks / 100) : 0}
                     </p>
                   </div>
                   <div className="bg-green-50 p-4 rounded-lg">
                     <p className="text-sm text-green-600 mb-1">Remaining Budget</p>
                     <p className="text-2xl font-bold text-green-700">
-                      ${(pitch.adverts_available / 100).toLocaleString()}
+                      ${pitch.adverts_available > 0 ? (pitch.adverts_available / 100) : 0}
                     </p>
                   </div>
                 </div>
