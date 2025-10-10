@@ -2,12 +2,13 @@
 
 import { db } from "@/db";
 import { bank_accounts, business_pitches, investment_ledger, investor_accounts, transactions } from "@/db/schema";
-import { InvestmentRecord, InvestorAccount, Transaction } from "@/db/types";
+import { InvestmentRecord, InvestorAccount, Transaction, TransactionType } from "@/db/types";
 import { auth } from "@clerk/nextjs/server";
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 
 export interface InvestmentEnriched extends InvestmentRecord {
   pitchTitle: string | null;
+  pitchStatus: string | null;
 }
 
 export async function getInvestments(): Promise<InvestmentEnriched[]> {
@@ -27,6 +28,7 @@ export async function getInvestments(): Promise<InvestmentEnriched[]> {
       shares_allocated: investment_ledger.shares_allocated,
       investment_date: investment_ledger.investment_date,
       pitchTitle: business_pitches.product_title,
+      pitchStatus: business_pitches.status,
     })
     .from(investment_ledger)
     .where(eq(investment_ledger.investor_id, userId))
@@ -127,4 +129,16 @@ export const withdrawFunds = async (amount: number): Promise<void> => {
       amount
     });
   })
+}
+
+export const getTransactions = async (): Promise<Transaction[]> => {
+  const { userId } = await auth();
+
+  if (userId === null) {
+    throw new Error("User not authenticated");
+  }
+
+  const transactionsList = await db.select().from(transactions).where(eq(transactions.account_id, userId)).orderBy(transactions.created_at);
+
+  return transactionsList;
 }
