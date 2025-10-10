@@ -78,8 +78,11 @@ export default function BusinessPortalPage() {
     if (progress >= 100) {
       return <Badge variant="default" className="bg-green-100 text-green-800">Funded</Badge>;
     }
-    if (hasDateBeenReached(pitch.end_date)) {
-      return <Badge variant="destructive">Expired</Badge>;
+    if (pitch.status === "failed") {
+      return <Badge variant="destructive">Failed</Badge>;
+    }
+    if (pitch.status === "upcoming") {
+      return <Badge variant="default">Upcoming</Badge>;
     }
     return <Badge variant="outline">Active</Badge>;
   };
@@ -241,7 +244,7 @@ export default function BusinessPortalPage() {
                   <TableBody>
                     {pitches.map((pitch) => {
                       const progress = (pitch.raised_amount / Number(pitch.target_investment_amount || 1)) * 100;
-                      const isAdPaymentDue = (pitch.status == "funded") && pitch.total_advert_clicks > 0;
+                      const isAdPaymentDue = (pitch.status === "funded") && pitch.total_advert_clicks > 0;
                       const isProfitReportDue = hasDateBeenReached(pitch.next_payout_date);
 
                       return (
