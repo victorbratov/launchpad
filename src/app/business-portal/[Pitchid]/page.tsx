@@ -137,8 +137,8 @@ export default function PitchDetailsPage() {
           (typeof item === "string" && item === featured);
 
         const key = isFeatured
-          ? `${newInstanceId}/featured/${fileName}`
-          : `${newInstanceId}/${fileName}`;
+          ? `${pitchId}/featured/${fileName}`
+          : `${pitchId}/${fileName}`;
 
         const uploadUrl = `${BUCKET_URL.replace(/\/$/, "")}/${key}`;
 
