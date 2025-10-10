@@ -13,11 +13,13 @@ const PitchAd = {
     adverts_available: business_pitches.adverts_available,
     media: business_pitches.supporting_media,
     version: business_pitches.version,
+    status: business_pitches.status,
 }
 
 /**
  * Fetch all pitches that have funding available for advertisement.
- * @returns {Promise<Array>} List of pitches with adverts available
+ * Only returns active pitches that are currently seeking funding.
+ * @returns {Promise<Array>} List of active pitches with adverts available
  */
 export async function getAdvertisementPitches() {
     // group by pitch_id to get the latest version of each pitch
@@ -29,11 +31,13 @@ export async function getAdvertisementPitches() {
             eq(business_pitches.version, lp.version)
         )
     );
-    // get the full details of these latest pitches
+    
+    // get the full details of these latest pitches - only active ones
     const pitches = await db.select(PitchAd).from(business_pitches)
         .where(
             and(
                 gt(business_pitches.adverts_available, 0),
+                eq(business_pitches.status, 'active'), // Only show active pitches
                 or(...conditions)
             )
         )
@@ -45,7 +49,7 @@ export async function getAdvertisementPitches() {
             // Always try to fetch media, regardless of supporting_media value
             const mediaUrl = await fetchFeaturedMedia(pitch.id);
             pitch.media = mediaUrl || null; // Set to null if fetchFeaturedMedia returns falsy value
-            console.log(`Pitch ${pitch.id}: Media URL = ${pitch.media}`);
+            console.log(`Pitch ${pitch.id}: Media URL = ${pitch.media}, Status: ${pitch.status}`);
         } catch (error) {
             console.error(`Error fetching media for pitch ${pitch.id}:`, error);
             pitch.media = null;
