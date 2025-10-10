@@ -62,7 +62,7 @@ export async function getDividends(): Promise<Transaction[]> {
     throw new Error("User not authenticated");
   }
 
-  const dividends = await db.select().from(transactions).where(and(eq(transactions.txn_type, "dividend"), eq(transactions.account_id, userId)));
+  const dividends = await db.select().from(transactions).where(and(eq(transactions.txn_type, "profit_distribution"), eq(transactions.account_id, userId)));
 
   return dividends;
 }

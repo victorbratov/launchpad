@@ -87,13 +87,11 @@ export default function BusinessPortalPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto p-6 space-y-8">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Business Portal</h1>
           <p className="text-gray-600">Manage your pitches and track your funding progress</p>
         </div>
 
-        {/* Alerts Section */}
         {(actionablePitch || adPaymentTime) && (
           <div className="space-y-4">
             {actionablePitch && (
@@ -123,7 +121,6 @@ export default function BusinessPortalPage() {
           </div>
         )}
 
-        {/* Business Overview Card */}
         <Card className="shadow-lg border-0">
           <CardHeader className="bg-white rounded-t-lg">
             <CardTitle className="flex items-center gap-3">
@@ -134,7 +131,6 @@ export default function BusinessPortalPage() {
 
           <CardContent className="p-8">
             <div className="grid lg:grid-cols-2 gap-8">
-              {/* Business Info */}
               <div className="space-y-6">
                 <div className="space-y-4">
                   <div className="flex items-center gap-3">
@@ -163,7 +159,6 @@ export default function BusinessPortalPage() {
                 </Button>
               </div>
 
-              {/* Wallet Section */}
               <div className="lg:text-right">
                 <Card className="bg-slate-50 border-slate-200">
                   <CardContent className="p-6">
@@ -241,7 +236,7 @@ export default function BusinessPortalPage() {
                   <TableBody>
                     {pitches.map((pitch) => {
                       const progress = (pitch.raised_amount / Number(pitch.target_investment_amount || 1)) * 100;
-                      const isAdPaymentDue = (pitch.status == "funded") && pitch.total_advert_clicks > 0;
+                      const isAdPaymentDue = (pitch.status === "funded") && pitch.total_advert_clicks > 0;
                       const isProfitReportDue = hasDateBeenReached(pitch.next_payout_date);
 
                       return (
