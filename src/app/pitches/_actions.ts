@@ -16,9 +16,8 @@ export async function getPitches(): Promise<BusinessPitch[]> {
       SELECT *,
              ROW_NUMBER() OVER (PARTITION BY pitch_id ORDER BY version DESC) AS rn
       FROM business_pitches
-      WHERE status = 'active'
     ) ranked
-    WHERE rn = 1
+    WHERE rn = 1 AND status = 'active'
     ORDER BY adverts_available DESC;
   `);
 
