@@ -45,8 +45,7 @@ import {
 import Image from "next/image";
 
 const availableTags = [
-  "green energy", "water", "sustainability", "education", "AI", "language", "community",
-  "food", "fashion", "recycling", "VR", "technology", "transportation", "gaming", "indie", "packaging"
+  "Tech" , "Health" , "Finance" , "AI"
 ];
 
 export default function CreatePitchPage() {
