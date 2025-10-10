@@ -32,7 +32,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { User, LineChart as ChartIcon, Coins, BarChart3 } from "lucide-react";
-import { getInvestorInfo, getDividends, getInvestments, depositFunds, withdrawFunds } from "./_actions";
+import { getInvestorInfo, getDividends, getInvestments, depositFunds, withdrawFunds, InvestmentEnriched } from "./_actions";
 import { useEffect, useState } from "react";
 import { InvestmentRecord, InvestorAccount, Transaction } from "@/db/types";
 import { FundsDialog } from "@/components/funds_dialog";
@@ -44,7 +44,7 @@ import { FundsDialog } from "@/components/funds_dialog";
 export default function InvestorPortalPage() {
 
   const [investorInfo, setInvestorInfo] = useState<InvestorAccount | null>(null);
-  const [investments, setInvestments] = useState<InvestmentRecord[]>([]);
+  const [investments, setInvestments] = useState<InvestmentEnriched[]>([]);
   const [dividends, setDividends] = useState<Transaction[]>([]);
   const [reloadInvestorInfo, setReloadInvestorInfo] = useState(false);
 
@@ -103,30 +103,35 @@ export default function InvestorPortalPage() {
       <Tabs defaultValue="profile">
         <TabsList>
           <div className="flex space-x-2">
-          <TabsTrigger
-            value="profile"
-            className="bg-white text-black hover:bg-gray-200 data-[state=active]:bg-gray-200 data-[state=active]:font-semibold"
-          >
-            Profile
-          </TabsTrigger>
-          <TabsTrigger
-            value="investments"
-            className="bg-white text-black hover:bg-gray-200 data-[state=active]:bg-gray-200 data-[state=active]:font-semibold"
-          >
-            Investments
-          </TabsTrigger>
-          <TabsTrigger
-            value="dividends"
-            className="bg-white text-black hover:bg-gray-200 data-[state=active]:bg-gray-200 data-[state=active]:font-semibold"
-          >
-            Dividends
-          </TabsTrigger>
+            <TabsTrigger
+              value="profile"
+              className="bg-white text-black hover:bg-gray-200 data-[state=active]:bg-gray-200 data-[state=active]:font-semibold"
+            >
+              Profile
+            </TabsTrigger>
+            <TabsTrigger
+              value="investments"
+              className="bg-white text-black hover:bg-gray-200 data-[state=active]:bg-gray-200 data-[state=active]:font-semibold"
+            >
+              Investments
+            </TabsTrigger>
+            <TabsTrigger
+              value="dividends"
+              className="bg-white text-black hover:bg-gray-200 data-[state=active]:bg-gray-200 data-[state=active]:font-semibold"
+            >
+              Dividends
+            </TabsTrigger>
+            <TabsTrigger
+              value="transactions"
+              className="bg-white text-black hover:bg-gray-200 data-[state=active]:bg-gray-200 data-[state=active]:font-semibold"
+            >
+              Transactions
+            </TabsTrigger>
           </div>
 
         </TabsList>
 
         <TabsContent value="profile" className="space-y-6">
-          {/* Investor Info */}
           <Card>
             <CardHeader className="flex flex-row items-center gap-4">
               <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
@@ -139,7 +144,6 @@ export default function InvestorPortalPage() {
             </CardHeader>
           </Card>
 
-          {/* Quick Stats Grid */}
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <Card>
               <CardContent className="grid-rows-2 grid-flow-col flex items-center justify-between py-6">
@@ -223,7 +227,6 @@ export default function InvestorPortalPage() {
           </Card>
         </TabsContent>
 
-        {/* Investments */}
         <TabsContent value="investments">
           <Card>
             <CardHeader>
@@ -243,6 +246,7 @@ export default function InvestorPortalPage() {
                 <TableBody>
                   {investments.map((inv) => (
                     <TableRow key={inv.id}>
+                      <TableCell>{inv.pitchTitle}</TableCell>
                       <TableCell>{inv.investment_date!.toDateString()}</TableCell>
                       <TableCell>${inv.amount_invested}</TableCell>
                       <TableCell>{inv.shares_allocated}</TableCell>
@@ -271,7 +275,6 @@ export default function InvestorPortalPage() {
           </Card>
         </TabsContent>
 
-        {/* Dividends */}
         <TabsContent value="dividends">
           <Card>
             <CardHeader>
@@ -321,6 +324,10 @@ export default function InvestorPortalPage() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="transactions">
+
         </TabsContent>
       </Tabs>
     </div>
