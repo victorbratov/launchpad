@@ -1,19 +1,39 @@
 "use server";
 
 import { db } from "@/db";
-import { bank_accounts, investment_ledger, investor_accounts, transactions } from "@/db/schema";
-import { InvestmentRecord, InvestorAccount, Transaction } from "@/db/types";
+import { bank_accounts, business_pitches, investment_ledger, investor_accounts, transactions } from "@/db/schema";
+import { InvestmentRecord, InvestorAccount, Transaction, TransactionType } from "@/db/types";
 import { auth } from "@clerk/nextjs/server";
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 
-export async function getInvestments(): Promise<InvestmentRecord[]> {
+export interface InvestmentEnriched extends InvestmentRecord {
+  pitchTitle: string | null;
+  pitchStatus: string | null;
+}
+
+export async function getInvestments(): Promise<InvestmentEnriched[]> {
   const { userId } = await auth();
 
   if (userId === null) {
     throw new Error("User not authenticated");
   }
 
-  const investments = await db.select().from(investment_ledger).where(eq(investment_ledger.investor_id, userId));
+  const investments = await db
+    .select({
+      pitch_id: investment_ledger.pitch_id,
+      id: investment_ledger.id,
+      investor_id: investment_ledger.investor_id,
+      tier: investment_ledger.tier,
+      amount_invested: investment_ledger.amount_invested,
+      shares_allocated: investment_ledger.shares_allocated,
+      investment_date: investment_ledger.investment_date,
+      pitchTitle: business_pitches.product_title,
+      pitchStatus: business_pitches.status,
+    })
+    .from(investment_ledger)
+    .where(eq(investment_ledger.investor_id, userId))
+    .leftJoin(business_pitches, eq(investment_ledger.pitch_id, business_pitches.instance_id))
+    ;
 
   return investments;
 }
@@ -109,4 +129,16 @@ export const withdrawFunds = async (amount: number): Promise<void> => {
       amount
     });
   })
+}
+
+export const getTransactions = async (): Promise<Transaction[]> => {
+  const { userId } = await auth();
+
+  if (userId === null) {
+    throw new Error("User not authenticated");
+  }
+
+  const transactionsList = await db.select().from(transactions).where(eq(transactions.account_id, userId)).orderBy(transactions.created_at);
+
+  return transactionsList;
 }
