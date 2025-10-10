@@ -59,8 +59,8 @@ export async function createPitchVersion(
       product_title: values.product_title,
       elevator_pitch: values.elevator_pitch,
       detailed_pitch: values.detailed_pitch,
-      adverts_available: values.adverts_available * 100,
-      supporting_media: "", // will fill later
+      adverts_available: values.adverts_available,
+      supporting_media: `${process.env.NEXT_PUBLIC_BUCKET_URL}/${pitchId}`, // will fill later
       created_at: new Date(),
     })
     .returning({ instance_id: business_pitches.instance_id });
