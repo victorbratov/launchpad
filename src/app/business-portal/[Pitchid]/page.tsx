@@ -25,6 +25,9 @@ import {
   Save
 } from "lucide-react";
 
+/*
+ * This page allows a business user to view and edit details of their pitch
+ * */
 export default function PitchDetailsPage() {
   const { Pitchid: pitchIdParam } = useParams();
   const router = useRouter();
@@ -168,17 +171,14 @@ export default function PitchDetailsPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       <div className="container mx-auto px-4 py-8">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-slate-900 mb-2">Edit Your Pitch</h1>
           <p className="text-slate-600">Update your pitch details, media, and investment information</p>
         </div>
 
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-          {/* Main Content */}
           <div className="xl:col-span-2 space-y-8">
 
-            {/* Media Section */}
             <Card className="shadow-lg border-0 bg-white">
               <CardHeader className="pb-6">
                 <CardTitle className="flex items-center gap-3 text-2xl">
@@ -189,14 +189,13 @@ export default function PitchDetailsPage() {
               </CardHeader>
               <CardContent className="space-y-6">
 
-                {/* Existing Media Gallery */}
                 {media.length > 0 && (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {media.map((url, idx) => (
                       <div key={idx} className="group relative">
                         <div className={`relative rounded-xl overflow-hidden border-4 transition-all duration-200 ${featured === url
-                            ? "border-yellow-400 shadow-lg shadow-yellow-100"
-                            : "border-slate-200 hover:border-slate-300"
+                          ? "border-yellow-400 shadow-lg shadow-yellow-100"
+                          : "border-slate-200 hover:border-slate-300"
                           }`}>
                           {url.endsWith(".mp4") ? (
                             <div className="relative">
@@ -243,7 +242,6 @@ export default function PitchDetailsPage() {
                   </div>
                 )}
 
-                {/* Pending Uploads */}
                 {pendingFiles.length > 0 && (
                   <div className="space-y-4">
                     <div className="flex items-center gap-2">
@@ -258,8 +256,8 @@ export default function PitchDetailsPage() {
                         return (
                           <div key={idx} className="group relative">
                             <div className={`relative rounded-xl overflow-hidden border-4 transition-all duration-200 ${featured === fileURL
-                                ? "border-yellow-400 shadow-lg shadow-yellow-100"
-                                : "border-orange-200 hover:border-orange-300"
+                              ? "border-yellow-400 shadow-lg shadow-yellow-100"
+                              : "border-orange-200 hover:border-orange-300"
                               }`}>
                               {file.type.startsWith("video/") ? (
                                 <div className="relative">
@@ -314,7 +312,6 @@ export default function PitchDetailsPage() {
                   </div>
                 )}
 
-                {/* Upload Area */}
                 <div className="border-2 border-dashed border-slate-300 rounded-xl p-8 hover:border-slate-400 transition-colors">
                   <div className="text-center">
                     <Upload className="mx-auto h-12 w-12 text-slate-400 mb-4" />
@@ -341,7 +338,6 @@ export default function PitchDetailsPage() {
               </CardContent>
             </Card>
 
-            {/* Pitch Details */}
             <Card className="shadow-lg border-0 bg-white">
               <CardHeader>
                 <CardTitle className="text-2xl">Pitch Details</CardTitle>
@@ -382,7 +378,6 @@ export default function PitchDetailsPage() {
               </CardContent>
             </Card>
 
-            {/* Advertising Budget */}
             <Card className="shadow-lg border-0 bg-white">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-2xl">
@@ -421,9 +416,7 @@ export default function PitchDetailsPage() {
             </Card>
           </div>
 
-          {/* Sidebar */}
           <div className="space-y-6">
-            {/* Investment Summary */}
             <Card className="shadow-lg border-0 bg-gradient-to-br from-blue-50 to-indigo-50">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-2xl text-blue-800">
@@ -480,7 +473,6 @@ export default function PitchDetailsPage() {
               </CardContent>
             </Card>
 
-            {/* Save Button */}
             <Button
               onClick={handleSave}
               size="lg"

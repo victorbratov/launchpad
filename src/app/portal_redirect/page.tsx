@@ -2,6 +2,9 @@
 
 import { auth, clerkClient } from "@clerk/nextjs/server";
 
+/**
+ * This page redirects users to their respective portals based on their role.
+ * */
 export default async function PortalRedirectPage() {
   const { userId } = await auth();
   const client = await clerkClient();

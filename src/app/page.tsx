@@ -20,6 +20,9 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
+/**
+ * This is the landing page of the application.
+ * */
 export default function LandingPage() {
   const [adverts, setAdverts] = useState<Advert[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -29,10 +32,10 @@ export default function LandingPage() {
     const fetchAdverts = async () => {
       try {
         const adverts = await getAdvertisementPitches();
-        console.log("Fetched adverts with media:", adverts.map(a => ({ 
-          id: a.id, 
-          title: a.title, 
-          media: a.media 
+        console.log("Fetched adverts with media:", adverts.map(a => ({
+          id: a.id,
+          title: a.title,
+          media: a.media
         })));
         setAdverts(adverts);
       } catch (error) {
@@ -55,7 +58,6 @@ export default function LandingPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
         <div className="absolute inset-0 bg-grid-slate-100 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))] -z-10" />
 
@@ -96,7 +98,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Featured Pitches Carousel - Full Width */}
       <section className="py-16 bg-white border-t">
         <div className="container mx-auto px-6 mb-12">
           <div className="text-center max-w-3xl mx-auto">
@@ -203,7 +204,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Features Section */}
       <section className="py-20 bg-gradient-to-b from-gray-50 to-white">
         <div className="container mx-auto px-6">
           <div className="text-center max-w-3xl mx-auto mb-16">
@@ -235,7 +235,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* How It Works */}
       <section className="py-20 bg-white">
         <div className="container mx-auto px-6">
           <div className="text-center max-w-3xl mx-auto mb-16">
@@ -272,7 +271,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* CTA Section */}
       <section className="py-20 bg-gradient-to-r from-blue-600 to-purple-600 text-white">
         <div className="container mx-auto px-6 text-center">
           <div className="flex flex-col sm:flex-row justify-center gap-4">
@@ -294,6 +292,9 @@ export default function LandingPage() {
   );
 }
 
+/**
+ * This component represents a feature card with an icon, title, and description.
+ * */
 function FeatureCard({ icon, title, description }: {
   icon: React.ReactNode;
   title: string;

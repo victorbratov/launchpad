@@ -16,6 +16,9 @@ import { getPitchByInstanceId, getPitchVersions, investInPitch } from "./_action
 import { BusinessPitch } from "@/db/types";
 import { fetchAllMedia } from "@/lib/s3_utils";
 
+/**
+ * This function calculates the number of shares based on the investment amount and pitch details.
+ * */
 function calculateShares(amount: number, pitch: BusinessPitch | null) {
   if (!pitch || amount <= 0) return { tier: null, shares: 0 };
 
@@ -30,6 +33,9 @@ function calculateShares(amount: number, pitch: BusinessPitch | null) {
   }
 }
 
+/**
+ * This is the pitch details page where users can view detailed information about a specific business pitch and invest in it.
+ * */
 export default function PitchDetailsPage() {
   const params = useParams();
   const instanceId = params.id as string; // version-level ID
@@ -189,7 +195,6 @@ export default function PitchDetailsPage() {
               </div>
 
               <CardContent className="p-6 space-y-6">
-                {/* Progress Section */}
                 <div className="space-y-4">
                   <div className="flex justify-between items-end">
                     <div>

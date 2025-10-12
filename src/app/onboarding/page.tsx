@@ -16,6 +16,9 @@ import { completeOnboarding } from "./_actions";
 import { redirect } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 
+/**
+ * This is the onboarding page where users can select their role (business or investor), add their name, and bank account number to complete the onboarding process.
+ * */
 export default function OnboardingPage() {
   const [role, setRole] = useState<"business" | "investor">("business");
   const [name, setName] = useState("");
@@ -44,7 +47,6 @@ export default function OnboardingPage() {
         </CardHeader>
         <CardContent>
           <form className="space-y-6" onSubmit={handleSubmit}>
-            {/* Role Selection */}
             <div className="space-y-2">
               <Label>Choose your role</Label>
               <RadioGroup
@@ -63,7 +65,6 @@ export default function OnboardingPage() {
               </RadioGroup>
             </div>
 
-            {/* Name */}
             <div className="space-y-2">
               <Label htmlFor="name">Name</Label>
               <Input
@@ -75,7 +76,6 @@ export default function OnboardingPage() {
               />
             </div>
 
-            {/* Bank Account Number */}
             <div className="space-y-2">
               <Label htmlFor="bankAccount">Bank Account Number</Label>
               <Input

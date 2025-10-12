@@ -62,6 +62,10 @@ export async function getTotalMoneyInvestedInPitch(
  * Handle investment into a pitch.
  *
  * Investments always attach to the canonical entity (entity_id), not the instance_id/version.
+ * @param entityId - The canonical entity_id of the pitch to invest in.
+ * @param amount - The amount to invest.
+ * @param withdrawChoice - "wallet" to withdraw from investor wallet, "bank_account" to withdraw from linked bank account.
+ * @throws Error if user not authenticated, pitch not found, insufficient funds, or other validation errors.
  */
 export async function investInPitch(entityId: string, amount: number, withdrawChoice: "wallet" | "bank_account") {
   const { userId } = await auth();

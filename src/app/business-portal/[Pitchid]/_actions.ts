@@ -7,6 +7,9 @@ import { eq, desc } from "drizzle-orm";
 
 /**
  * Fetch the latest version of a pitch by pitch_id
+ * @param pitchId - pitch_id of the pitch to fetch
+ * @returns The latest version of the pitch
+ * @throws Error if the user is not authenticated, pitch not found, or unauthorized
  */
 export async function getPitch(pitchId: string) {
   const { isAuthenticated, userId } = await auth();
@@ -27,6 +30,10 @@ export async function getPitch(pitchId: string) {
 
 /**
  * Create new version (metadata only) and return instance_id
+ * @param pitchId - pitch_id of the pitch to create a new version for
+ * @param values - new values for the pitch
+ * @returns instance_id of the new version
+ * @throws Error if the user is not authenticated, pitch not found, or unauthorized
  */
 export async function createPitchVersion(
   pitchId: string,
