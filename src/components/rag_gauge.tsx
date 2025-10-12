@@ -21,7 +21,6 @@ export function RAGGauge({ ragScore }: RAGProps) {
   return (
     <div className="flex flex-col items-center">
       <svg width="150" height="150" className="-rotate-90">
-        {/* Background circle */}
         <circle
           cx="75"
           cy="75"
@@ -30,7 +29,6 @@ export function RAGGauge({ ragScore }: RAGProps) {
           strokeWidth={strokeWidth}
           fill="transparent"
         />
-        {/* Progress circle */}
         <circle
           cx="75"
           cy="75"

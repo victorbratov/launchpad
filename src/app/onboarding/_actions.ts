@@ -3,8 +3,14 @@
 import { db } from '@/db';
 import { bank_accounts, business_accounts, investor_accounts } from '@/db/schema';
 import { auth, clerkClient, currentUser } from '@clerk/nextjs/server';
-import { redirect } from 'next/navigation';
 
+/**
+ * this function completes the onboarding process for a user by creating either a business or investor account and associating it with a bank account.
+ * @param role - 'business' or 'investor' to specify the type of account to create
+ * @param name - the name of the user
+ * @param bank_account_number - the bank account number to associate with the user
+ * @throws Error if the user is not authenticated or if there are issues creating the accounts
+ * */
 export const completeOnboarding = async (
   role: 'business' | 'investor',
   name: string,

@@ -1,7 +1,13 @@
 import { db } from "@/db";
 import { business_pitches, investor_accounts, transactions } from "@/db/schema";
-import { and, eq, gte, inArray, lt, sql } from "drizzle-orm";
+import { and, eq, inArray, lt, sql } from "drizzle-orm";
 
+/*
+ * This cron job runs every day at midnight UTC. It performs the following tasks:
+ * start_date has passed and status is still "upcoming" -> set status to "active"
+ * end_date has passed and status is still "active" -> set status to "failed"
+ * refund all "pending" transactions related to the failed pitches
+ * */
 export async function GET(req: Request) {
   if (req.headers.get('Authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
     return new Response('Unauthorized', { status: 401 });

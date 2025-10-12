@@ -14,6 +14,9 @@ type MediaCarouselProps = {
   media: string[];
 };
 
+/**
+ * This component displays a carousel of media items (images and videos) with navigation controls and thumbnails.
+ * */
 export function MediaCarousel({ media }: MediaCarouselProps) {
   const [api, setApi] = React.useState<CarouselApi>();
   const [current, setCurrent] = React.useState(0);

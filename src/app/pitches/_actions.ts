@@ -9,6 +9,10 @@ export interface PitchWithStats extends BusinessPitch {
   invested_percent: number;
 }
 
+/**
+ * This function retrieves all active business pitches along with their latest versions,
+ * @returns An array of active business pitches sorted by adverts available in descending order.
+ * */
 export async function getPitches(): Promise<BusinessPitch[]> {
   const result = await db.execute(sql`
     SELECT *

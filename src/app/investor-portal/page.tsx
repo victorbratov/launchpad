@@ -32,9 +32,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import {
-  User,
-  LineChart as ChartIcon,
-  Coins,
+  User, Coins,
   BarChart3,
   TrendingUp,
   Wallet,
@@ -44,13 +42,13 @@ import {
 } from "lucide-react";
 import { getInvestorInfo, getDividends, getInvestments, depositFunds, withdrawFunds, InvestmentEnriched, getTransactions } from "./_actions";
 import { useEffect, useState } from "react";
-import { InvestmentRecord, InvestorAccount, Transaction } from "@/db/types";
+import { InvestorAccount, Transaction } from "@/db/types";
 import { FundsDialog } from "@/components/funds_dialog";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 
 /**
- * Investor Portal Page, showing an overview of the investor account, their investments and dividends
+ * Investor Portal Page, showing an overview of the investor account, their investments, dividends and transactions.
  * @returns The investor portal page
  */
 export default function InvestorPortalPage() {
@@ -156,7 +154,6 @@ export default function InvestorPortalPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <div className="container mx-auto p-6">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Investor Portal</h1>
           <p className="text-gray-600">Manage your investments and track your portfolio performance</p>
@@ -201,7 +198,6 @@ export default function InvestorPortalPage() {
               </CardContent>
             </Card>
 
-            {/* Stats Grid */}
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
               <StatsCard
                 title="Wallet Balance"
@@ -238,7 +234,6 @@ export default function InvestorPortalPage() {
               />
             </div>
 
-            {/* Charts */}
             <div className="grid gap-6 lg:grid-cols-2">
               <ChartCard
                 title="ROI Over Time"
@@ -310,7 +305,6 @@ export default function InvestorPortalPage() {
                       </Table>
                     </div>
 
-                    {/* Investment Bar Chart */}
                     <Card>
                       <CardHeader>
                         <CardTitle>Investment Breakdown</CardTitle>

@@ -2,15 +2,20 @@
 
 import { db } from "@/db";
 import { bank_accounts, business_pitches, investment_ledger, investor_accounts, transactions } from "@/db/schema";
-import { InvestmentRecord, InvestorAccount, Transaction, TransactionType } from "@/db/types";
+import { InvestmentRecord, InvestorAccount, Transaction } from "@/db/types";
 import { auth } from "@clerk/nextjs/server";
-import { and, desc, eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 export interface InvestmentEnriched extends InvestmentRecord {
   pitchTitle: string | null;
   pitchStatus: string | null;
 }
 
+/**
+ * This function retrieves all investments made by the authenticated user,
+ * @returns An array of investments enriched with pitch title and status.
+ * @throws Error if the user is not authenticated.
+ * */
 export async function getInvestments(): Promise<InvestmentEnriched[]> {
   const { userId } = await auth();
 
@@ -38,7 +43,11 @@ export async function getInvestments(): Promise<InvestmentEnriched[]> {
   return investments;
 }
 
-
+/**
+ * This function retrieves the investor account information for the authenticated user.
+ * @returns The investor account information.
+ * @throws Error if the user is not authenticated or the investor account is not found.
+ * */
 export async function getInvestorInfo(): Promise<InvestorAccount> {
   const { userId } = await auth();
 
@@ -67,6 +76,11 @@ export async function getDividends(): Promise<Transaction[]> {
   return dividends;
 }
 
+/**
+ * This function allows an authenticated user to deposit funds from their linked bank account to their investor account.
+ * @param amount The amount to deposit
+ * @throws Error if the user is not authenticated, bank account not found, or insufficient funds
+ * */
 export const depositFunds = async (amount: number): Promise<void> => {
   const { userId } = await auth();
 
@@ -99,6 +113,11 @@ export const depositFunds = async (amount: number): Promise<void> => {
   })
 }
 
+/**
+ * This function allows an authenticated user to withdraw funds from their investor account to their linked bank account.
+ * @param amount The amount to withdraw
+ * @throws Error if the user is not authenticated, bank account not found, or insufficient funds
+ * */
 export const withdrawFunds = async (amount: number): Promise<void> => {
   const { userId } = await auth();
 
@@ -131,6 +150,11 @@ export const withdrawFunds = async (amount: number): Promise<void> => {
   })
 }
 
+/**
+ * This function retrieves all transactions for the authenticated user.
+ * @returns An array of transactions.
+ * @throws Error if the user is not authenticated.
+ * */
 export const getTransactions = async (): Promise<Transaction[]> => {
   const { userId } = await auth();
 

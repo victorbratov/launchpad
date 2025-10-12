@@ -15,6 +15,9 @@ type PitchCardProps = {
   pitch: BusinessPitch;
 };
 
+/**
+ * This component displays a card preview of a business pitch.
+ * */
 export function PitchCard({ pitch }: PitchCardProps) {
   const progress = (pitch.raised_amount / pitch.target_investment_amount) * 100;
   const [media, setMedia] = useState<string | null>()

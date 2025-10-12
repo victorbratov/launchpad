@@ -13,13 +13,17 @@ import { PitchDialog } from "@/components/pitch_dialog";
 import { BusinessAccount, BusinessPitch } from "@/db/types";
 import { depositFunds, getBusinessAccountInfo, getPitches, withdrawFunds } from "./_actions";
 import { hasDateBeenReached } from "@/lib/utils";
-import { TriangleAlert, Building2, Mail, Wallet, Plus, TrendingUp, Calendar, Target } from "lucide-react";
+import { TriangleAlert, Building2, Mail, Wallet, Plus, TrendingUp, Calendar } from "lucide-react";
 import { ProfitsDialog } from "@/components/profits_dialog";
 import { AdPaymentDialog } from "@/components/ad_payment_dialog";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 
+/*
+ * This is the main page for the Business Portal.
+ * it provides an overview of the business account, wallet balance, pitches, and actions to manage pitches and funds.
+ * */
 export default function BusinessPortalPage() {
   const [accountInfo, setAccountInfo] = useState<BusinessAccount | null>(null);
   const [pitches, setPitches] = useState<BusinessPitch[]>([]);
@@ -193,7 +197,6 @@ export default function BusinessPortalPage() {
           </CardContent>
         </Card>
 
-        {/* Pitches Card */}
         <Card className="shadow-lg border-0">
           <CardHeader className="bg-white rounded-t-lg border-b">
             <CardTitle className="flex items-center gap-3">
@@ -314,7 +317,6 @@ export default function BusinessPortalPage() {
           </CardContent>
         </Card>
 
-        {/* Dialogs */}
         <PitchDialog
           pitch={selectedPitch}
           open={dialogOpen}

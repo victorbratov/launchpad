@@ -22,6 +22,9 @@ interface Filters {
   priceRange: [number, number];
 }
 
+/**
+ * This component represents the main pitch search page where users can discover and filter business pitches.
+ * */
 export default function PitchSearchPage() {
   const [pitches, setPitches] = useState<BusinessPitch[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -265,6 +268,9 @@ export default function PitchSearchPage() {
   );
 }
 
+/**
+ * This component renders the sidebar containing various filter options for pitches.
+ * */
 function FilterSidebar({
   filters,
   setFilters,

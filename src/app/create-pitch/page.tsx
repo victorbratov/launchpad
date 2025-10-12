@@ -45,9 +45,12 @@ import {
 import Image from "next/image";
 
 const availableTags = [
-  "Tech" , "Health" , "Finance" , "AI"
+  "Tech", "Health", "Finance", "AI"
 ];
 
+/*
+ * This page allows a business user to create a new pitch.
+ * */
 export default function CreatePitchPage() {
   const router = useRouter();
 
@@ -378,7 +381,6 @@ export default function CreatePitchPage() {
                 min={1} max={100} step={0.1}
                 required />
 
-              {/* Advert Maximum Amount */}
               <div>
                 <Label>Advert Maximum Amount (USD)</Label>
                 <Input
