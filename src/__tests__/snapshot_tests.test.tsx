@@ -30,7 +30,7 @@ it("pitch-card-with-media", async () => {
     elevator_pitch: "This pitch has media content for testing.",
   })
   
-  const { fetchFeaturedMedia } = require("@/lib/s3_utils")
+  const { fetchFeaturedMedia } = require("@/lib/s3_utils") // eslint-disable-line @typescript-eslint/no-require-imports
   fetchFeaturedMedia.mockResolvedValue("https://example.com/test-image.jpg")
   
   const tree = render(<PitchCard pitch={testPitch}></PitchCard>)
@@ -48,7 +48,7 @@ it("pitch-card-video-media", async () => {
     elevator_pitch: "This pitch has video content for testing.",
   })
   
-  const { fetchFeaturedMedia } = require("@/lib/s3_utils")
+  const { fetchFeaturedMedia } = require("@/lib/s3_utils") // eslint-disable-line @typescript-eslint/no-require-imports
   fetchFeaturedMedia.mockResolvedValue("https://example.com/test-video.mp4")
   
   const tree = render(<PitchCard pitch={testPitch}></PitchCard>)
