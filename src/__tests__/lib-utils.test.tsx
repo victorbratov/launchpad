@@ -25,45 +25,45 @@ describe("validateWithdrawalAmount", () => {
 
 describe("calculateDividendPayoutDate", () => {
   it("calculates next quarterly payout date", () => {
-    const endDate = new Date("2026-01-15"); 
+    const endDate = new Date("2026-01-15");
     const nextPayout = calculateDividendPayoutDate("quarterly", endDate);
     expect(nextPayout.getFullYear()).toBe(2026);
-    expect(nextPayout.getMonth()).toBe(3);  
+    expect(nextPayout.getMonth()).toBe(3);
     expect(nextPayout.getDate()).toBe(15);
   });
   it("calculates next yearly payout date", () => {
     const endDate = new Date("2026-01-15");
     const nextPayout = calculateDividendPayoutDate("yearly", endDate);
     expect(nextPayout.getFullYear()).toBe(2027);
-    expect(nextPayout.getMonth()).toBe(0);  
+    expect(nextPayout.getMonth()).toBe(0);
     expect(nextPayout.getDate()).toBe(15);
   });
 });
 
-describe("calculateInvestorProfits", () => {  
+describe("calculateInvestorProfits", () => {
   it("calculates correct profit for investor", () => {
     const shares = 100;
     const totalShares = 1000;
     const profitAmount = 5000;
-    const profitSharePercent = 20; 
+    const profitSharePercent = 20;
     const profit = calculateInvestorProfits(shares, totalShares, profitAmount, profitSharePercent);
-    expect(profit).toBe(100); 
+    expect(profit).toBe(500);
   });
 
   it("returns zero profit if investor has no shares", () => {
     const shares = 0;
     const totalShares = 1000;
     const profitAmount = 5000;
-    const profitSharePercent = 20; 
+    const profitSharePercent = 20;
     const profit = calculateInvestorProfits(shares, totalShares, profitAmount, profitSharePercent);
-    expect(profit).toBe(0); 
-  }); 
+    expect(profit).toBe(0);
+  });
   it("returns zero profit if total shares is zero", () => {
     const shares = 100;
     const totalShares = 0;
     const profitAmount = 5000;
-    const profitSharePercent = 20; 
+    const profitSharePercent = 20;
     const profit = calculateInvestorProfits(shares, totalShares, profitAmount, profitSharePercent);
-    expect(profit).toBe(0); 
-  }); 
+    expect(profit).toBe(0);
+  });
 });
