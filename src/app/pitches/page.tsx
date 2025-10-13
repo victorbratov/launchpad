@@ -107,7 +107,7 @@ export default function PitchSearchPage() {
     const matchesProgress = fundingProgress >= filters.priceRange[0] && fundingProgress <= filters.priceRange[1];
 
     // Date filtering
-    const pitchDate = new Date(p.start_date);
+    const pitchDate = new Date(p.end_date);
     const dateRange = getDateFilterRange();
     const matchesDate = !dateRange.start || !dateRange.end ||
       (pitchDate >= dateRange.start && pitchDate <= dateRange.end);
@@ -392,7 +392,7 @@ function FilterSidebar({
             <div className="space-y-3">
               <label className="text-sm font-medium text-slate-900 flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-purple-500" />
-                Launch Date Range
+                End Date Range
               </label>
 
               <Select
